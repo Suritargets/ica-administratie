@@ -9,3 +9,6 @@ next-env.d.ts
 *.tsbuildinfo
 scripts/patch-spa.mjs
 scripts/spa-parts/
+
+.vercel
+.env*.local

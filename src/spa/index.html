@@ -890,6 +890,193 @@ function renderHelp(m) {
   m.querySelectorAll('[data-go]').forEach(a => a.onclick = e => { e.preventDefault(); if (a.dataset.go === 'sjabloon') S.tpl = null; go(a.dataset.go); });
 }
 
+// ================= settings =================
+const COMPANY_FIELDS = [
+  ['Algemeen', [['company_name', 'Bedrijfsnaam'], ['tagline', 'Tagline (onder titel offerte)'], ['website', 'Website']]],
+  ['Adres', [['address', 'Adres'], ['postal_city', 'Postcode + plaats'], ['country', 'Land']]],
+  ['Contact', [['phone', 'Telefoon'], ['email', 'Algemeen e-mail'], ['invoice_email', 'Facturatie e-mail']]],
+  ['Registratie & bank', [['kvk', 'KvK-nummer'], ['btw', 'BTW-nummer'], ['iban', 'IBAN'], ['bic', 'BIC'], ['payment_info', 'Betaalinformatie op factuur (vervangt IBAN/BIC als ingevuld; **vet** mag)', 'area']]],
+];
+function renderCompany(m) {
+  const s = S.settings;
+  m.innerHTML = `<div class="top"><h1>Bedrijfsgegevens</h1><div class="row"><button class="btn" id="toTpl">Documentindeling bewerken</button><button class="btn pri" id="saveC">Opslaan</button></div></div>
+  <div class="editor">
+    <div class="card"><form id="cf2" autocomplete="off">
+      <div class="sect" style="margin-top:0">Logo</div>
+      <div style="background:var(--navy);padding:16px;border-radius:10px;margin-bottom:10px">${logoHTML(s)}</div>
+      <div class="row"><label class="btn sm">Ander logo uploaden<input type="file" id="logoF" accept="image/png,image/svg+xml,image/webp,image/jpeg" hidden></label>
+        ${s.logo ? '<button type="button" class="btn sm" id="logoX">Terug naar standaard Hirely-logo</button>' : ''}</div>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Gebruik een lichte/witte versie met transparante achtergrond (PNG of SVG) — het logo staat op de donkere kop van offertes en facturen.</p>
+      ${COMPANY_FIELDS.map(([t, fs]) => `<div class="sect">${t}</div><div class="form">${fs.map(f => fieldHTML(f, s)).join('')}</div>`).join('')}
+    </form></div>
+    <div class="preview-wrap" id="pw"><div class="preview-scale" id="print-root"></div></div>
+  </div>`;
+  const form = $('#cf2');
+  const sample = { type: 'factuur', number: 'INV-VOORBEELD', date: today(), due_date: addDays(today(), s.payment_days), client: { name: 'Voorbeeld Klant B.V.', contact: 'Dhr. J. Jansen', address: 'Voorbeeldstraat 1', postal_city: '1000 AA Amsterdam' },
+    subject: 'Voorbeeldfactuur', reference: '', items: [{ desc: 'Dienstverlening', sub: 'Voorbeeldregel', qty: 1, rate: 1000 }], vat_rate: vatDefault(s), terms: s.invoice_closing };
+  const preview = () => { const live = { ...S.settings, ...Object.fromEntries(new FormData(form)) }; $('#print-root').innerHTML = sheetHTML(sample, live); fitPreview(); };
+  preview(); form.addEventListener('input', preview);
+  $('#toTpl').onclick = () => { S.tpl = null; go('sjabloon'); };
+  $('#saveC').onclick = async () => { try { S.settings = await api('settings', { method: 'POST', body: Object.fromEntries(new FormData(form)) }); toast('Bedrijfsgegevens opgeslagen'); } catch (e) { toast(e.message, 1); } };
+  $('#logoF').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (f.size > 1.5e6) return toast('Logo is te groot (max 1,5 MB)', 1);
+    const r = new FileReader(); r.onload = async () => { S.settings = await api('settings', { method: 'POST', body: { ...Object.fromEntries(new FormData(form)), logo: r.result } }); setSideLogo(); toast('Logo opgeslagen'); renderCompany(m); }; r.readAsDataURL(f);
+  };
+  if (s.logo) $('#logoX').onclick = async () => { S.settings = await api('settings', { method: 'POST', body: { logo: '' } }); setSideLogo(); renderCompany(m); };
+}
+// ================= sjablooneditor (documentindeling) =================
+function sampleDoc(type) {
+  const s = S.settings, isQ = type === 'offerte';
+  return { type, number: isQ ? 'Q-VOORBEELD' : 'INV-VOORBEELD', date: today(), due_date: addDays(today(), isQ ? s.quote_valid_days : s.payment_days),
+    client: { name: 'Voorbeeld Klant B.V.', contact: 'Dhr. J. Jansen', address: 'Voorbeeldstraat 1', postal_city: '1000 AA Amsterdam', country: 'Nederland' },
+    subject: 'Werving en selectie', subject_detail: '', reference: isQ ? '' : 'Q-VOORBEELD',
+    items: [{ desc: 'Dienstverlening conform overeenkomst', sub: 'Voorbeeldregel met toelichting', qty: 3, rate: 1000 }, { desc: 'Extra werkzaamheden', sub: '', qty: 1, rate: 750 }],
+    vat_rate: vatDefault(s), discount: isQ ? 0 : 250, terms: isQ ? s.quote_terms : s.invoice_closing };
+}
+const TPL_TEXTS = ['tagline', 'quote_terms', 'quote_closing', 'invoice_closing', 'footer_services'];
+function renderTemplate(m) {
+  const s = S.settings;
+  if (!S.tpl) {
+    const P = mainLang(s), byLang = {};
+    for (const lg of Object.keys(LANGS)) { const ls = langSettings(s, lg); byLang[lg] = { labels: parseJSON(lg === P ? s.doc_labels : s['doc_labels_' + lg], {}), texts: Object.fromEntries(TPL_TEXTS.map(k => [k, ls[k] || ''])) }; }
+    S.tpl = { layout: JSON.parse(JSON.stringify(getLayout(s))), byLang, lang: P, theme: s.doc_theme || 'hirely', type: 'factuur', dirty: false };
+  }
+  const T = S.tpl; T.labels = T.byLang[T.lang].labels; T.texts = T.byLang[T.lang].texts;
+  m.innerHTML = `<div class="top"><div class="row" style="flex-wrap:nowrap"><button class="btn sm" id="tplBack">← Bedrijf</button><h1>Documentindeling</h1></div>
+    <div class="row"><div class="row" style="gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden">
+      <button class="btn sm" data-tt="offerte" style="border:0;border-radius:0;${T.type === 'offerte' ? 'background:var(--navy);color:#fff' : ''}">Offerte</button>
+      <button class="btn sm" data-tt="factuur" style="border:0;border-radius:0;${T.type === 'factuur' ? 'background:var(--navy);color:#fff' : ''}">Factuur</button></div>
+      <select id="tplTheme" title="Documentstijl" style="padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff"><option value="hirely" ${T.theme === 'hirely' ? 'selected' : ''}>Stijl: Klassiek (donkere kop)</option><option value="modern" ${T.theme === 'modern' ? 'selected' : ''}>Stijl: Modern (lichte kop)</option></select>
+      <select id="tplLang" title="Taal van het document" style="padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${T.lang === k ? 'selected' : ''}>Taal: ${v}${k === mainLang() ? ' (standaard)' : ''}</option>`).join('')}</select>
+      <button class="btn" id="tplReset">Standaard herstellen</button><button class="btn pri" id="tplSave">Opslaan</button></div></div>
+  <div class="editor" style="grid-template-columns:minmax(260px,320px) 1fr">
+    <div class="card">
+      <h2>Zo werkt het</h2>
+      <ul class="muted" style="margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.6">
+        <li><b>Verplaatsen:</b> beweeg over een blok en sleep het donkere label <b>⠿</b>.</li>
+        <li>Loslaten <b>links/rechts</b> van een blok = naast elkaar, <b>boven/onder</b> = eronder of erboven.</li>
+        <li><b>Tekst wijzigen:</b> klik op een tekst in het document (geel omrand) en typ.</li>
+        <li>Klantgegevens, bedragen en je bedrijfsgegevens komen automatisch uit de app.</li>
+        <li>Codes zoals <code>{verval}</code>, <code>{geldig}</code>, <code>{btw}</code> en <code>{email}</code> worden op het echte document automatisch ingevuld.</li>
+      </ul>
+      <label class="row" style="gap:8px;font-size:13px;margin-bottom:14px;cursor:pointer;flex-wrap:nowrap"><input type="checkbox" id="tplPush" ${T.layout.pushDown !== false ? 'checked' : ''} style="width:16px;height:16px"> Afsluiting en ondertekening onderaan de pagina</label>
+      <label class="row" style="gap:8px;font-size:13px;margin:-6px 0 14px;cursor:pointer;flex-wrap:nowrap"><input type="checkbox" id="tplWm" ${T.layout.watermark !== false ? 'checked' : ''} style="width:16px;height:16px"> Logo als watermerk</label>
+      <button class="btn sm" id="tplSwap" style="width:100%;margin-bottom:14px">⇄ Van en Aan wisselen (links ↔ rechts)</button>
+      <div class="sect" style="margin-top:0">Blokken</div>
+      <div class="lay-list" id="layList"></div>
+    </div>
+    <div class="preview-wrap" id="pw"><div class="preview-scale" id="print-root"></div></div>
+  </div>`;
+  $('#tplBack').onclick = () => go('bedrijf');
+  $('#tplWm').onchange = e => { T.layout.watermark = e.target.checked; T.dirty = true; draw(); };
+  $('#tplPush').onchange = e => { T.layout.pushDown = e.target.checked; T.dirty = true; draw(); };
+  m.querySelectorAll('[data-tt]').forEach(b => b.onclick = () => { T.type = b.dataset.tt; renderTemplate(m); });
+  $('#tplLang').onchange = e => { T.lang = e.target.value; renderTemplate(m); };
+  $('#tplSwap').onclick = () => { const L = T.layout, a = 'from', b = 'to'; const r = L.rows.find(x => x.includes(a) && x.includes(b));
+    if (r) r.reverse(); else { const ia = L.rows.findIndex(x => x.includes(a)), ib = L.rows.findIndex(x => x.includes(b)); if (ia < 0 || ib < 0) return toast('Van of Aan is verborgen', 1);
+      L.rows[ia] = L.rows[ia].map(x => x === a ? b : x); L.rows[ib] = L.rows[ib].map(x => x === b ? a : x); }
+    T.dirty = true; draw(); };
+  $('#tplTheme').onchange = e => { T.theme = e.target.value; if (confirm('Ook de standaardindeling van deze stijl gebruiken?')) T.layout = JSON.parse(JSON.stringify(THEME_LAYOUTS[T.theme])); T.dirty = true; renderTemplate(m); };
+  $('#tplReset').onclick = () => { if (!confirm('Indeling en labels terugzetten naar de standaard?')) return; T.layout = JSON.parse(JSON.stringify(brandLayout() || THEME_LAYOUTS[T.theme] || DEFAULT_LAYOUT)); T.labels = T.byLang[T.lang].labels = T.lang === mainLang() ? brandLabels() : {}; T.dirty = true; $('#tplPush').checked = true; $('#tplWm').checked = true; draw(); };
+  $('#tplSave').onclick = async () => {
+    try {
+      S.settings = await api('settings', { method: 'POST', body: { doc_layout: JSON.stringify(T.layout), doc_theme: T.theme, ...langBody() } });
+      T.dirty = false; toast('Documentindeling opgeslagen');
+    } catch (e) { toast(e.message, 1); }
+  };
+  const root = $('#print-root');
+  function langBody() { const P = mainLang(), o = {};
+    for (const [lg, v] of Object.entries(T.byLang)) { const sfx = lg === P ? '' : '_' + lg; o['doc_labels' + sfx] = JSON.stringify(v.labels); for (const [k, x] of Object.entries(v.texts)) o[k + sfx] = x; }
+    return o; }
+  const draft = () => ({ ...S.settings, ...langBody(), doc_theme: T.theme, doc_layout: JSON.stringify(T.layout) });
+  function draw() {
+    root.innerHTML = sheetHTML({ ...sampleDoc(T.type), lang: T.lang }, draft(), { edit: true });
+    root.querySelectorAll('[data-l],[data-s]').forEach(el => { el.contentEditable = 'true'; el.spellcheck = false; });
+    fitPreview(); drawList();
+  }
+  function drawList() {
+    const order = T.layout.rows.flat();
+    $('#layList').innerHTML = order.map((b, i) => `<div class="lay-item"><span><b>${i + 1}.</b> ${esc(BLOCKS[b])}${T.layout.rows.find(r => r.includes(b)).length > 1 ? ' <span class="muted">(naast elkaar)</span>' : ''}</span>
+        <span class="row" style="gap:6px;flex-wrap:nowrap">${(() => { const r = T.layout.rows.find(x => x.includes(b)); return r.length > 1 && r[0] === b ? `<button data-swap="${b}" title="Links en rechts wisselen">⇄</button>` : ''; })()}<button data-up="${b}" title="Omhoog">↑</button><button data-dn="${b}" title="Omlaag">↓</button><button data-hide="${b}">Verbergen</button></span></div>`).join('')
+      + T.layout.hidden.map(b => `<div class="lay-item off"><span>${esc(BLOCKS[b])} <span class="muted">(verborgen)</span></span><button data-show="${b}">Tonen</button></div>`).join('');
+  }
+  $('#layList').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const L = T.layout;
+    if (b.dataset.swap) { L.rows.find(r => r.includes(b.dataset.swap)).reverse(); }
+    if (b.dataset.hide) { L.rows = L.rows.map(r => r.filter(x => x !== b.dataset.hide)).filter(r => r.length); L.hidden.push(b.dataset.hide); }
+    if (b.dataset.show) { L.hidden = L.hidden.filter(x => x !== b.dataset.show); L.rows.push([b.dataset.show]); }
+    const ri = id => L.rows.findIndex(r => r.includes(id));
+    if (b.dataset.up) { const i = ri(b.dataset.up); if (i > 0) moveBlock(b.dataset.up, L.rows[i - 1][0], 'before'); }
+    if (b.dataset.dn) { const i = ri(b.dataset.dn); if (i < L.rows.length - 1) { const nx = L.rows[i + 1]; moveBlock(b.dataset.dn, nx[nx.length - 1], 'after'); } }
+    T.dirty = true; draw();
+  };
+  function moveBlock(id, target, zone) {
+    const L = T.layout;
+    if (id === target) return;
+    if ((id === 'items' || target === 'items') && (zone === 'left' || zone === 'right')) zone = zone === 'left' ? 'before' : 'after';
+    let rows = L.rows.map(r => r.filter(b => b !== id)).filter(r => r.length);
+    L.hidden = L.hidden.filter(b => b !== id);
+    const i = rows.findIndex(r => r.includes(target));
+    if (i < 0) return;
+    if (zone === 'before') rows.splice(i, 0, [id]);
+    else if (zone === 'after') rows.splice(i + 1, 0, [id]);
+    else {
+      const pair = zone === 'left' ? [id, target] : [target, id];
+      if (rows[i].length === 1) rows[i] = pair;
+      else { const other = rows[i].find(b => b !== target); rows.splice(i, 1, pair, [other]); }
+    }
+    L.rows = rows;
+  }
+  // ---- tekst bewerken ----
+  root.addEventListener('input', e => {
+    const el = e.target.closest('[data-l],[data-s]'); if (!el) return;
+    if (el.dataset.l) T.labels[el.dataset.l] = el.innerText.replace(/\n/g, ' ').trim();
+    else T.texts[el.dataset.s] = el.innerText.replace(/\n{3,}/g, '\n\n').trim();
+    T.dirty = true;
+  });
+  root.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('[data-l]')) { e.preventDefault(); e.target.blur(); } });
+  root.addEventListener('paste', e => { if (!e.target.closest('[data-l],[data-s]')) return; e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain')); });
+  root.addEventListener('focusout', e => { if (e.target.closest('[data-l],[data-s]')) setTimeout(() => { if (!root.contains(document.activeElement) || !document.activeElement.closest('[data-l],[data-s]')) draw(); }, 0); });
+  // ---- slepen (muis + touch) ----
+  let drag = null;
+  document.querySelectorAll('.drop-ind').forEach(x => x.remove());
+  const ind = document.createElement('div'); ind.className = 'drop-ind'; ind.style.position = 'fixed'; ind.style.display = 'none'; document.body.appendChild(ind);
+  root.addEventListener('pointerdown', e => {
+    const h = e.target.closest('[data-drag]'); if (!h) return;
+    e.preventDefault(); h.setPointerCapture(e.pointerId);
+    drag = { id: h.dataset.drag, el: h.closest('.blk'), target: null, zone: null };
+    drag.el.classList.add('dragging');
+  });
+  root.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const under = document.elementFromPoint(e.clientX, e.clientY)?.closest('.blk');
+    if (!under || under === drag.el || !root.contains(under)) { ind.style.display = 'none'; drag.target = null; return; }
+    const r = under.getBoundingClientRect(), rx = (e.clientX - r.left) / r.width, ry = (e.clientY - r.top) / r.height;
+    const side = drag.id !== 'items' && under.dataset.b !== 'items';
+    const zone = side && rx < 0.25 ? 'left' : side && rx > 0.75 ? 'right' : ry < 0.5 ? 'before' : 'after';
+    drag.target = under.dataset.b; drag.zone = zone;
+    Object.assign(ind.style, { display: 'block' }, zone === 'left' || zone === 'right'
+      ? { left: (zone === 'left' ? r.left - 6 : r.right + 2) + 'px', top: r.top + 'px', width: '4px', height: r.height + 'px' }
+      : { left: r.left + 'px', top: (zone === 'before' ? r.top - 6 : r.bottom + 2) + 'px', width: r.width + 'px', height: '4px' });
+  });
+  const end = () => {
+    if (!drag) return;
+    ind.style.display = 'none'; drag.el.classList.remove('dragging');
+    if (drag.target) { moveBlock(drag.id, drag.target, drag.zone); T.dirty = true; draw(); }
+    drag = null;
+  };
+  root.addEventListener('pointerup', end); root.addEventListener('pointercancel', end);
+  draw();
+}
+const setSideLogo = () => { $('#sideLogo').src = $('#mLogo').src = S.settings.logo || '/logo-light.png'; document.title = BRAND.name || document.title; };
+
+function fieldHTML([k, l, opt], s) {
+  if (opt === 'area') return `<label class="f full">${l}<textarea name="${k}" rows="3">${esc(s[k])}</textarea></label>`;
+  if (Array.isArray(opt)) return `<label class="f">${l}<select name="${k}">${opt.map(o => { const [v, t] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}" ${String(s[k]) === v ? 'selected' : ''}>${esc(t)}</option>`; }).join('')}</select></label>`;
+  return `<label class="f">${l}<input name="${k}" value="${esc(s[k])}"></label>`;
+}
 const SETTING_FIELDS = [
   ['Notatie & nummering', [['currency', 'Valuta', ['EUR', 'SRD', 'USD', 'ANG', 'GBP']], ['number_locale', 'Getalnotatie', [['nl-NL', '1.234,56 (NL)'], ['en-US', '1,234.56 (EN)']]], ['date_style', 'Datumnotatie', [['nl', '06 nov 2026'], ['iso', '2026-11-06'], ['en', '06 Nov 2026']]], ['invoice_prefix', 'Factuurnummer begint met'], ['quote_prefix', 'Offertenummer begint met']]],
   ['Standaarden', [['vat_rate', 'BTW %'], ['quote_valid_days', 'Offerte geldig (dagen)'], ['payment_days', 'Betaaltermijn (dagen)'], ['footer_services', 'Footer diensten']]],

@@ -355,6 +355,7 @@ body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catal
     <button class="nav" data-view="offerte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl" data-s="Offerte">Offertes</span></button>
     <button class="nav" data-view="factuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="lbl" data-s="Factuur">Facturen</span></button>
     <button class="nav" data-view="klanten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span class="lbl" data-s="Klanten">Klanten</span></button>
+    <button class="nav d-nav" data-view="afspraken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="lbl" data-s="Afspraken">Afspraken</span></button>
     <button class="nav" data-view="catalogus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Items">Catalogus</span></button>
     <button class="nav" data-view="valuta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span class="lbl" data-s="Valuta">Valuta</span></button>
     <button class="nav" data-view="bedrijf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg><span class="lbl" data-s="Bedrijf">Bedrijf</span></button>
@@ -473,7 +474,7 @@ function render0() {
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('on', b.dataset.view === (S.doc ? S.doc.type : S.view === 'sjabloon' ? 'bedrijf' : S.view)));
   const m = $('#main');
   if (S.doc) return renderEditor(m);
-  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, klanten: renderClients, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings })[S.view](m);
+  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, klanten: renderClients, afspraken: renderAppointments, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings })[S.view](m);
 }
 
 // ================= dashboard =================
@@ -487,7 +488,7 @@ function renderDashboard(m) {
   const yr = String(new Date().getFullYear());
   const recent = (arr) => arr.slice(0, 6).map(d => `<tr class="click" data-open="${d.id}"><td><b>${esc(d.number)}</b><div class="muted">${esc(plain(d.client?.name || '—'))}</div></td><td>${tag(d)}</td><td class="num">${money(d.total, curOf(d))}</td></tr>`).join('') || `<tr><td class="empty" colspan="3">Nog niets</td></tr>`;
   m.innerHTML = `
-  <div class="top"><h1>Finance Dashboard</h1><div class="row"><button class="btn" data-new="offerte">+ Offerte</button><button class="btn pri" data-new="factuur">+ Factuur</button></div></div>
+  <div class="top"><h1>Finance Dashboard</h1><div class="row"><button class="btn" id="goAppt">Afspraken</button><button class="btn" data-new="offerte">+ Offerte</button><button class="btn pri" data-new="factuur">+ Factuur</button></div></div>
   <div class="kpis">
     <div class="card kpi"><div class="l">Offertes (excl. BTW)</div><div class="v">${moneyMulti(sumByCur(offs, 'subtotal'))}</div>${baseLine(offs, 'subtotal')}<div class="muted">${offs.length} offertes · ${pipe.length} lopend</div></div>
     <div class="card kpi"><div class="l">Gefactureerd ${yr} (incl. BTW)</div><div class="v">${moneyMulti(sumByCur(invs.filter(d => (d.date || '').startsWith(yr)), 'total'))}</div>${baseLine(invs.filter(d => (d.date || '').startsWith(yr)), 'total')}<div class="muted">${invs.length} facturen totaal</div></div>
@@ -1080,6 +1081,7 @@ function fieldHTML([k, l, opt], s) {
 const SETTING_FIELDS = [
   ['Notatie & nummering', [['currency', 'Valuta', ['EUR', 'SRD', 'USD', 'ANG', 'GBP']], ['number_locale', 'Getalnotatie', [['nl-NL', '1.234,56 (NL)'], ['en-US', '1,234.56 (EN)']]], ['date_style', 'Datumnotatie', [['nl', '06 nov 2026'], ['iso', '2026-11-06'], ['en', '06 Nov 2026']]], ['invoice_prefix', 'Factuurnummer begint met'], ['quote_prefix', 'Offertenummer begint met']]],
   ['Standaarden', [['vat_rate', 'BTW %'], ['quote_valid_days', 'Offerte geldig (dagen)'], ['payment_days', 'Betaaltermijn (dagen)'], ['footer_services', 'Footer diensten']]],
+  ['Afspraken op de landingspagina', [['appt_enabled', 'Afspraken maken', [['1', 'Aan'], ['0', 'Uit']]], ['appt_days', 'Werkdagen (0=zo, 1=ma … 6=za, met komma)'], ['appt_start', 'Eerste tijd (uu:mm)'], ['appt_end', 'Einde dagdeel (uu:mm)'], ['appt_slot', 'Duur per afspraak (minuten)'], ['appt_ahead', 'Hoeveel dagen vooruit boeken'], ['appt_lead', 'Minimaal aantal uren van tevoren']]],
   ['Ondertekening', [['quote_signer', 'Offerte: naam'], ['quote_signer_role', 'Offerte: functie'], ['quote_signer_phone', 'Offerte: telefoon'], ['quote_signer_email', 'Offerte: e-mail'], ['invoice_signer', 'Factuur: naam'], ['invoice_signer_role', 'Factuur: functie']]],
 ];
 function renderSettings(m) {
@@ -1511,8 +1513,33 @@ function sheetHTML(d, s0, opt = {}) {
 </div>`;
 }
 
+// ================= afspraken (aanvragen via de landingspagina) =================
+async function renderAppointments(m) {
+  m.innerHTML = '<div class="top"><h1>Afspraken</h1></div><div class="card muted">Laden…</div>';
+  let list;
+  try { list = await api('appointments'); } catch (e) { m.innerHTML = `<div class="top"><h1>Afspraken</h1></div><div class="card empty">${esc(e.message)}</div>`; return; }
+  const today = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+  const canEdit = can('clients.write'), canDel = can('clients.delete');
+  const upcoming = list.filter(a => a.date >= today && a.status !== 'geannuleerd'), past = list.filter(a => !(a.date >= today && a.status !== 'geannuleerd'));
+  const cls = s => ({ aangevraagd: 'Open', bevestigd: 'Betaald', geannuleerd: 'Vervallen' })[s] || '';
+  const row = a => `<tr>
+    <td style="white-space:nowrap"><b>${fdate(a.date)}</b><br><span class="muted">${esc(a.time)}</span></td>
+    <td><b>${esc(a.name)}</b><br><span class="muted">${esc(a.subject || '')}</span>${a.message ? `<div style="font-size:12.5px;margin-top:4px;white-space:pre-line">${esc(a.message)}</div>` : ''}</td>
+    <td><a href="mailto:${esc(a.email)}">${esc(a.email)}</a>${a.phone ? `<br><a href="tel:${esc(a.phone.replace(/[^+\d]/g, ''))}">${esc(a.phone)}</a>` : ''}</td>
+    <td><span class="tag ${cls(a.status)}">${esc(a.status)}</span></td>
+    <td class="num" style="white-space:nowrap">${canEdit ? [a.status !== 'bevestigd' ? `<button class="btn sm pri" data-ast="bevestigd" data-id="${a.id}">Bevestigen</button>` : '', a.status !== 'geannuleerd' ? `<button class="btn sm" data-ast="geannuleerd" data-id="${a.id}">Annuleren</button>` : ''].join(' ') : ''}${canDel ? ` <button class="btn sm danger" data-adel="${a.id}">✕</button>` : ''}</td></tr>`;
+  const table = (arr, empty) => arr.length ? `<div class="tablewrap"><table><thead><tr><th>Moment</th><th>Bezoeker</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>${arr.map(row).join('')}</tbody></table></div>` : `<div class="muted" style="padding:6px 0">${empty}</div>`;
+  m.innerHTML = `<div class="top"><h1>Afspraken</h1><a class="btn" href="/" target="_blank" rel="noopener">Landingspagina ↗</a></div>
+    <div class="card"><h2>Aankomend (${upcoming.length})</h2>${table(upcoming, 'Geen aankomende afspraken.')}</div>
+    ${past.length ? `<div class="card" style="margin-top:18px"><h2>Eerder / geannuleerd</h2>${table(past.slice().reverse(), '')}</div>` : ''}
+    <p class="muted" style="font-size:12.5px">Aanvragen komen binnen als <b>aangevraagd</b> en houden het tijdstip bezet. Neem contact op met de bezoeker en klik op <b>Bevestigen</b>. Bij <b>Annuleren</b> komt het tijdstip weer vrij. Beschikbare dagen en tijden stel je in onder Instellingen.</p>`;
+  m.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { await api('appointments', { method: 'POST', body: { id: b.dataset.id, status: b.dataset.ast } }); toast('Bijgewerkt'); renderAppointments(m); } catch (e) { toast(e.message, 1); } });
+  m.querySelectorAll('[data-adel]').forEach(b => b.onclick = async () => { if (!confirm('Deze afspraak definitief verwijderen?')) return; try { await api('appointments/' + b.dataset.adel, { method: 'DELETE' }); renderAppointments(m); } catch (e) { toast(e.message, 1); } });
+}
+
 // ================= shared bindings =================
 function bindCommon(m) {
+  if ($('#goAppt')) $('#goAppt').onclick = () => go('afspraken');
   m.querySelectorAll('[data-open]').forEach(r => r.onclick = () => openDoc(r.dataset.open));
   m.querySelectorAll('[data-new]').forEach(b => b.onclick = () => newDoc(b.dataset.new));
 }

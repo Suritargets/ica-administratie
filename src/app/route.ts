@@ -1,6 +1,7 @@
 import { q } from '@/lib/db';
 import { currentUser } from '@/lib/auth';
 import brand from '@/brand/brand.json';
+import { BOOKING_CSS, BOOKING_JS } from '@/lib/booking-widget';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -8,7 +9,7 @@ export const runtime = 'nodejs';
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 // Alleen openbare bedrijfsgegevens (nooit andere instellingen)
-const PUBLIC_KEYS = ['company_name', 'tagline', 'address', 'postal_city', 'country', 'phone', 'email', 'website', 'footer_services'];
+const PUBLIC_KEYS = ['company_name', 'tagline', 'address', 'postal_city', 'country', 'phone', 'email', 'website', 'footer_services', 'appt_enabled'];
 
 async function publicInfo(): Promise<Record<string, string>> {
   const fallback = Object.fromEntries(PUBLIC_KEYS.map(k => [k, String((brand.defaults as Record<string, string>)[k] ?? '')]));
@@ -36,6 +37,11 @@ export async function GET(req: Request) {
     i.email ? `<div class="row"><span class="ic">✉️</span><div><b>E-mail</b><br><a href="mailto:${esc(i.email)}">${esc(i.email)}</a></div></div>` : '',
     web ? `<div class="row"><span class="ic">🌐</span><div><b>Website</b><br><a href="${esc(web)}" target="_blank" rel="noopener">${esc(i.website)}</a></div></div>` : '',
   ].filter(Boolean).join('');
+
+  const booking = i.appt_enabled !== '0';
+  const bookingHtml = booking ? `<section class="card book" id="book"><h2>Maak een afspraak</h2>
+<p class="sub">Kies een dag en tijd die jou uitkomt. Wij bevestigen je afspraak per e-mail of telefoon.</p>
+<div class="bk"><div id="cal"></div><div id="pick" class="pick"><div class="hint">Kies eerst een dag in de kalender.</div></div></div></section>` : '';
 
   const html = `<!doctype html>
 <html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -67,21 +73,22 @@ header img{height:52px;display:block}
 .empty{color:var(--mut)}
 footer{padding:34px 0 40px;color:var(--mut);font-size:13.5px;text-align:center}
 footer a{color:var(--mut)}
-</style></head><body>
+${BOOKING_CSS}</style></head><body>
 <header><div class="wrap"><img src="/logo-light.png" alt="${esc(brand.short)} — ${esc(i.company_name)}">
 <a class="btn ghost" href="${loggedIn ? '/app' : '/login'}">${loggedIn ? 'Naar de administratie' : 'Inloggen'}</a></div></header>
 <section class="hero"><div class="wrap">
 <h1>${esc(i.company_name)}</h1>
 <p>${esc(i.tagline)}</p>
-<div class="cta"><a class="btn" href="#contact">Contact</a><a class="btn ghost" href="${loggedIn ? '/app' : '/login'}">Administratie</a></div>
+<div class="cta">${booking ? '<a class="btn" href="#book">Afspraak maken</a>' : ''}<a class="btn ghost" href="#contact">Contact</a></div>
 ${services.length ? `<div class="tags">${services.map(s => `<span>${esc(s)}</span>`).join('')}</div>` : ''}
 </div></section>
-<main class="wrap"><section class="card" id="contact"><h2>Contact</h2>
+<main class="wrap">${bookingHtml}<section class="card" id="contact"><h2>Contact</h2>
 ${contactRows ? `<div class="grid">${contactRows}</div>` : '<p class="empty">Contactgegevens volgen.</p>'}
 </section></main>
 <footer><div class="wrap">© ${new Date().getFullYear()} ${esc(i.company_name)}<br>Design by <a href="https://suritargets.com" target="_blank" rel="noopener">suritargets.com</a></div></footer>
+${booking ? '<script>' + BOOKING_JS + '</script>' : ''}
 </body></html>`;
 
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
-    'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'" } });
+    'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; form-action 'self'" } });
 }

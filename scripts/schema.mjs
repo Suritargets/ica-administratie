@@ -47,4 +47,11 @@ export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS audit_log (
      id BIGSERIAL PRIMARY KEY, at TIMESTAMPTZ NOT NULL DEFAULT now(),
      user_id INTEGER, user_name TEXT, action TEXT NOT NULL, detail TEXT)`,
+  `CREATE TABLE IF NOT EXISTS appointments (
+     id SERIAL PRIMARY KEY,
+     date TEXT NOT NULL, time TEXT NOT NULL,
+     name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT, subject TEXT, message TEXT,
+     status TEXT NOT NULL DEFAULT 'aangevraagd' CHECK (status IN ('aangevraagd','bevestigd','geannuleerd')),
+     ip_hash TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS appointments_slot ON appointments (date, time) WHERE status <> 'geannuleerd'`,
 ];

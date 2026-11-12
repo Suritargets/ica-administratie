@@ -256,6 +256,28 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
       }
     }
 
+    if (resource === 'appointments') {
+      if (m === 'GET') {
+        const from = new Date(Date.now() - 3 * 3600 * 1000 - 14 * 86400000).toISOString().slice(0, 10);
+        return json(200, await q('SELECT id, date, time, name, email, phone, subject, message, status, created_at FROM appointments WHERE date >= $1 ORDER BY date, time', [from]));
+      }
+      if (m === 'POST') {
+        if (!need('clients.write')) return FORBIDDEN();
+        const b = await body(req);
+        if (!['aangevraagd', 'bevestigd', 'geannuleerd'].includes(b.status)) return fail(400, 'Ongeldige status');
+        const row = await q1('UPDATE appointments SET status = $1 WHERE id = $2 RETURNING id, date, time, name, status', [b.status, Number(b.id)]);
+        if (!row) return fail(404, 'Afspraak niet gevonden');
+        await audit(me, 'appointment_' + b.status, `${row.name} ${row.date} ${row.time}`);
+        return json(200, row);
+      }
+      if (m === 'DELETE' && id) {
+        if (!need('clients.delete')) return FORBIDDEN();
+        await q('DELETE FROM appointments WHERE id = $1', [Number(id)]);
+        await audit(me, 'appointment_deleted', `#${id}`);
+        return json(200, { ok: true });
+      }
+    }
+
     if (resource === 'next-number') return json(200, { number: await nextNumber(url.searchParams.get('type') === 'factuur' ? 'factuur' : 'offerte') });
 
     if (resource === 'docs') {

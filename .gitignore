@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+.vercel
+*.log
+next-env.d.ts
+*.tsbuildinfo
+scripts/patch-spa.mjs
+scripts/spa-parts/

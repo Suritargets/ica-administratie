@@ -1,0 +1,1349 @@
+<!doctype html>
+<html lang="nl" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#102454"><meta name="robots" content="noindex,nofollow">
+<meta name="google" content="notranslate">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="__APP_SHORT__">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-512.png">
+<title>__APP_NAME__</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0e1c36; --navy-2:#16284a; --yellow:#f6b90b; --yellow-soft:#fff6d9;
+  --bg:#f3f5f9; --card:#fff; --line:#e3e7ef; --text:#1a2233; --muted:#6b7487;
+  --green:#1f9d63; --red:#d64545; --blue:#2f6fde; --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip;margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+/* sidebar */
+.side{background:var(--navy);color:#fff;padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 22px}
+.brand-word{font-weight:800;font-size:22px;letter-spacing:-.5px;line-height:1}
+.brand-word i{color:var(--yellow);font-style:normal}
+.brand-sub{font-size:9px;letter-spacing:3px;color:var(--yellow);font-weight:700;margin-top:3px}
+.nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:#c9d2e3;cursor:pointer;border:0;background:none;text-align:left;width:100%}
+.nav:hover{background:var(--navy-2);color:#fff}
+.nav.on{background:var(--yellow);color:var(--on-accent,var(--navy));font-weight:600}
+.nav svg{width:18px;height:18px;flex:none}
+.side-foot{margin-top:auto;font-size:11px;color:#8b96ad;padding:8px;line-height:1.6}
+.credit a{color:var(--accent-dark,var(--yellow));text-decoration:none;font-weight:600}.credit a:hover{text-decoration:underline}
+.mfoot{display:none}
+/* main */
+.main{padding:26px 30px 60px;min-width:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-size:24px;margin:0;letter-spacing:-.3px}
+h2{font-size:15px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
+.kpi .l{color:var(--muted);font-size:12px;font-weight:500}
+.kpi .v{font-size:22px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi.hl{background:var(--navy);color:#fff;border-color:var(--navy)}
+.kpi.hl .l{color:#aab5cc}.kpi.hl .v{color:var(--accent-dark,var(--yellow))}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.btn{text-decoration:none;border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:#c5ccda}
+.btn.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.pri:hover{background:var(--navy-2)}
+.btn.yel{background:var(--yellow);border-color:var(--yellow);color:var(--on-accent,var(--navy));font-weight:600}
+.btn.danger{color:var(--red)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+table.list{width:100%;border-collapse:collapse}
+.list th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-weight:600}
+.list td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.list tr.click{cursor:pointer}.list tr.click:hover td{background:#f8f9fc}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;background:#eef1f6;color:#4a5468}
+.tag.Verzonden,.tag.Open{background:#e6efff;color:var(--blue)}
+.tag.Geaccepteerd,.tag.Betaald{background:#e3f6ec;color:var(--green)}
+.tag.Afgewezen,.tag.Vervallen,.tag.Verlopen{background:#fde8e8;color:var(--red)}
+.tag.Concept{background:#f1f2f5;color:#666}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filters input,.filters select{padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;min-width:0}
+.filters input{flex:1;min-width:180px}
+.tablewrap{overflow-x:auto}
+/* forms */
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.form .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#4a5468}
+label.f input,label.f select,label.f textarea{padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;font-weight:400;font-size:14px;color:var(--text);width:100%}
+label.f textarea{resize:vertical;min-height:70px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--yellow);outline-offset:0;border-color:var(--yellow)}
+.sect{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+/* editor */
+.editor{display:grid;grid-template-columns:minmax(380px,520px) 1fr;gap:20px;align-items:start}
+.editor>*{min-width:0}
+.items{display:flex;flex-direction:column;gap:8px}
+.item{display:grid;grid-template-columns:1fr 64px 96px 30px;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fbfcfe}
+.item input{padding:7px 9px;border:1px solid var(--line);border-radius:7px;width:100%;background:#fff}
+.item .d{grid-column:1/2;display:flex;flex-direction:column;gap:6px}
+.item .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px}
+.item .x:hover{color:var(--red)}
+.mcur{display:block;white-space:nowrap}.fxline{font-size:12px;font-weight:500;opacity:.7;margin-top:4px}
+.ratebox{display:flex;gap:10px;flex-wrap:wrap}.ratebox .card{padding:12px 14px;min-width:150px}
+.kpi .v .mcur+.mcur{font-size:.62em;opacity:.85;margin-top:2px}
+.ac-wrap{position:relative}
+.ac{position:absolute;left:0;right:0;top:100%;z-index:30;background:#fff;border:1px solid var(--line);border-radius:9px;box-shadow:0 10px 28px rgba(14,28,54,.16);margin-top:3px;max-height:260px;overflow:auto}
+.ac div{padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.ac div.on,.ac div:hover{background:var(--yellow-soft,#fff6d6)}
+.ac small{color:var(--muted)}
+.kind{display:inline-block;font-size:11px;padding:2px 7px;border-radius:20px;background:#eef2f8;color:var(--navy)}
+.kind.product{background:#e8f6ee;color:#1d7a46}
+.pick{display:flex;gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line);cursor:pointer}
+.pick:hover{background:#f7f9fc}.pick .grow{flex:1;min-width:0}
+.cur-badge{font-size:11px;font-weight:600;padding:2px 6px;border-radius:5px;background:#eef2f8;color:var(--navy);margin-left:6px}
+.totline{display:flex;justify-content:space-between;padding:4px 2px;font-variant-numeric:tabular-nums}
+.totline.big{font-weight:700;font-size:16px;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.preview-wrap{position:sticky;top:20px;background:#dfe3ea;border-radius:var(--radius);padding:18px;overflow:hidden}
+.preview-scale{transform-origin:top left}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(14,28,54,.45);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:50;overflow:auto}
+.modal{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:620px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.2);font-weight:500}
+.toast.err{background:var(--red)}
+
+/* ============ A4 document ============ */
+.sheet{width:210mm;min-height:297mm;background:#fff;color:#14203a;position:relative;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.12);font-size:10pt;line-height:1.4;font-family:Inter,system-ui,sans-serif}
+.sh-head{background:var(--navy);color:#fff;padding:10mm 12mm 22mm;display:flex;justify-content:space-between;gap:10mm;position:relative}
+.sh-head .co{font-size:8.5pt;line-height:1.75}
+.sh-head .co b{font-size:10.5pt;display:block;margin-bottom:2mm}
+.sh-head .co div{display:flex;gap:3mm;align-items:center}
+.sh-head .co svg{width:3.4mm;height:3.4mm;flex:none}
+.sh-wave{position:absolute;left:0;right:0;bottom:-1px;height:20mm;display:block}
+.logo{display:flex;align-items:center;gap:3mm}
+.logo svg{width:17mm;height:15mm}
+.logo .w{font-weight:800;font-size:27pt;letter-spacing:-1px;line-height:.9}
+.logo .w i{color:var(--yellow);font-style:normal}
+.logo .s{font-size:7pt;letter-spacing:2.6mm;color:var(--yellow);font-weight:700;margin-top:1.5mm}
+.logo img{height:19mm;max-width:75mm;object-fit:contain;object-position:left center;display:block}
+.sh-body{padding:4mm 12mm 0;flex:1;display:flex;flex-direction:column;position:relative;z-index:1}
+.sh-title{display:flex;justify-content:space-between;align-items:flex-start;gap:6mm}
+.sh-title .t{display:flex;gap:4mm;align-items:flex-start}
+.sh-title .t svg{width:11mm;height:12mm;flex:none;margin-top:1mm}
+.sh-title h3{font-size:22pt;margin:0;font-weight:800;letter-spacing:-.5px;color:var(--navy)}
+.sh-title .tl{font-size:9pt;color:#3c4760}
+.metabox{border:1px solid #dfe3ea;border-radius:2.5mm;overflow:hidden;min-width:62mm;font-size:9pt}
+.metabox div{display:flex;justify-content:space-between;gap:6mm;padding:1.6mm 3.5mm}
+.metabox .h{background:#f4f6fa;font-weight:700;border-bottom:1px solid #dfe3ea}
+.metabox.inv .h{background:var(--yellow);border-color:var(--yellow)}
+.addr{display:grid;grid-template-columns:1fr 1fr;margin:7mm 0 6mm;font-size:9.5pt}
+.addr > div:first-child{padding-right:8mm;border-right:1px solid #dfe3ea}
+.addr > div:last-child{padding-left:8mm}
+.addr b.l{display:block;font-size:10pt}
+.addr .cn{font-weight:700;font-size:11pt}
+.dt{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dfe3ea;border-radius:2.5mm;overflow:hidden;font-size:9pt}
+.dt th{background:var(--navy);color:#fff;text-align:left;padding:2.6mm 3mm;font-weight:700}
+.dt td{padding:3mm;border-top:1px solid #e7eaf0;vertical-align:top}
+.dt tr:first-child td{border-top:0}
+.dt .r{text-align:right;white-space:nowrap}
+.dt .c{text-align:center}
+.dt small{display:block;color:#4b5670;font-size:8.3pt}
+.lower{display:grid;grid-template-columns:1fr 78mm;gap:6mm;margin-top:6mm;align-items:start}
+.infobox{background:#f4f6fa;border-radius:2.5mm;padding:4mm 5mm;font-size:8.6pt}
+.infobox h4{margin:0 0 2mm;font-size:10.5pt;display:flex;gap:2mm;align-items:center}
+.infobox h4 svg{width:5mm;height:5mm}
+.infobox ul{margin:0;padding-left:4mm}
+.infobox li::marker{color:var(--yellow)}
+.infobox p{margin:.6mm 0}
+.tots{border:1px solid #dfe3ea;border-radius:2.5mm;overflow:hidden;font-size:9.5pt}
+.tots div{display:flex;justify-content:space-between;padding:2.6mm 4mm;border-top:1px solid #e7eaf0}
+.tots div:first-child{border-top:0}
+.tots .g{background:var(--yellow);font-weight:800;font-size:11.5pt;border-top:0}
+.closing{font-size:9pt;white-space:pre-line}
+.rw{margin-top:6mm;position:relative}.rw:first-child{margin-top:0}
+.rw.push{margin-top:auto;padding-top:10mm}
+.sh-body{padding-bottom:8mm}
+.rw.two{display:grid;grid-template-columns:1fr 1fr;gap:8mm;align-items:start}.rw.two.tr{grid-template-columns:1fr 78mm}.rw.two.tl{grid-template-columns:78mm 1fr}
+.blk{position:relative;min-width:0}
+.party{font-size:9.5pt;line-height:1.45}.party b.l{display:block;font-size:10pt}.party .cn{font-weight:700;font-size:11pt}.party .sm{font-size:8pt;color:#4b5670;margin-top:1mm}
+.party .ico{display:flex;flex-direction:column;gap:.5mm;margin-top:1mm;font-size:8.8pt}.party .ico span{display:flex;align-items:center;gap:2mm}.party .ico svg{width:3.2mm;height:3.2mm;flex:none}
+.party .ico svg *{stroke:#0e1c36}.party .ico svg path[fill="#fff"]{fill:#0e1c36}
+.rw.two>.blk+.blk>.party{border-left:1px solid #dfe3ea;padding-left:8mm}
+.sh-head{min-height:30mm}
+/* ===== documentstijl: modern (o.a. ICA) ===== */
+.sheet.modern{--dp:var(--navy);--dl:var(--label,#2d5d9f);--box:#eef3f8;color:#1b2333;font-size:9.5pt}
+.sheet.modern .m-top{height:4mm;background:var(--dp)}
+.sheet.modern .m-head{display:flex;justify-content:space-between;align-items:flex-start;padding:6mm 13mm 0 13mm;gap:8mm}
+.sheet.modern .m-logo img{height:30mm;max-width:85mm;object-fit:contain;object-position:left top;display:block}
+.sheet.modern .m-ttl{text-align:right;padding-top:5mm}
+.sheet.modern .m-ttl h1{margin:0;font-size:26pt;font-weight:800;letter-spacing:.5px;color:var(--dp);line-height:1}
+.sheet.modern .m-no{color:var(--dl);font-weight:700;font-size:10pt;margin-top:2.5mm}
+.sheet.modern .m-tag{color:#6b7487;font-size:8.5pt;margin-top:1.5mm}
+.sheet.modern .m-rule{height:1px;background:#dfe4ec;margin:6mm 13mm 0}
+.sheet.modern .sh-body{padding:8mm 13mm 0}
+.sheet.modern .rw{margin-top:8mm}.sheet.modern .rw:first-child{margin-top:0}
+.sheet.modern .rw.two{gap:6mm;align-items:stretch}.sheet.modern .rw.two>.blk>*{height:100%;box-sizing:border-box}
+.sheet.modern .rw.two.tr,.sheet.modern .rw.two.tl{grid-template-columns:1fr 1fr}
+.sheet.modern .ml{color:var(--dl);font-weight:700;font-size:7.5pt;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2.5mm}
+.sheet.modern .m-box{background:var(--box);border-radius:2.5mm;padding:4.5mm 5mm;min-height:22mm}
+.sheet.modern .m-name{font-weight:700;font-size:10pt;color:#141c2c;margin-bottom:1.5mm}
+.sheet.modern .m-sub{color:#5b6475;font-size:8.6pt;line-height:1.6}
+.sheet.modern .m-pay{font-size:9pt;line-height:1.9;color:#1b2333}
+.sheet.modern .m-dates{display:flex;gap:22mm}.sheet.modern .m-dates b{font-size:10pt;color:#141c2c}
+.sheet.modern .ml+b{display:block}
+.sheet.modern .m-table{width:100%;border-collapse:separate;border-spacing:0;font-size:9pt}
+.sheet.modern .m-table th{background:var(--dp);color:#fff;text-align:left;padding:2.8mm 4mm;font-size:7.8pt;letter-spacing:.4px;text-transform:uppercase;font-weight:700}
+.sheet.modern .m-table th:first-child{border-radius:2mm 0 0 2mm}.sheet.modern .m-table th:last-child{border-radius:0 2mm 2mm 0}
+.sheet.modern .m-table td{padding:4.5mm 4mm;vertical-align:top;border-bottom:1px solid #e3e7ee;line-height:1.55}
+.sheet.modern .m-table td small{display:block;color:#6b7487;font-size:8pt}
+.sheet.modern .m-table .r{text-align:right;white-space:nowrap}.sheet.modern .m-table .c{text-align:center}
+.sheet.modern .m-tots{margin-left:auto;width:82mm;font-size:9pt}
+.sheet.modern .rw.two .m-tots{width:auto}
+.sheet.modern .m-tots>div{display:flex;justify-content:space-between;padding:1.8mm 3mm}.sheet.modern .m-tots>div span:first-child{color:#6b7487}
+.sheet.modern .m-tots .g{border-top:1px solid #d5dbe5;margin-top:2mm;padding-top:4mm;align-items:baseline}
+.sheet.modern .m-tots .g span:first-child{color:var(--dp);font-weight:800;font-size:10pt;letter-spacing:.4px}
+.sheet.modern .m-tots .g span:last-child{color:var(--dp);font-weight:800;font-size:15pt}
+.sheet.modern .m-closing{white-space:pre-line;color:#5b6b85;font-size:9.5pt;line-height:1.7;border-top:1px solid #e3e7ee;padding-top:5mm}
+.sheet.modern .m-sign b{display:block;font-size:10pt}.sheet.modern .m-sign span{color:#6b7487;font-size:8.6pt}
+.sheet.modern .m-foot{display:flex;justify-content:space-between;align-items:flex-end;padding:6mm 13mm 8mm;font-size:7.5pt;color:#6b7487;margin-top:6mm}
+.sheet.modern .m-foot>div{display:flex;flex-direction:column;gap:2.5mm;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.sheet.modern .m-foot i{display:block;width:10mm;height:.8mm;background:var(--dl)}
+.sheet.modern .rw.push{padding-top:6mm}
+/* sjablooneditor */
+.sheet.editing .blk{outline:1px dashed transparent;outline-offset:1.5mm;border-radius:1mm;transition:outline-color .12s}
+.sheet.editing .blk:hover{outline-color:#9aa7c0}
+.sheet.editing .blk.dragging{opacity:.35}
+.blk-h{position:absolute;top:-4.6mm;left:-1mm;z-index:5;font:600 7.5pt Inter,sans-serif;background:var(--navy);color:#fff;padding:.6mm 2mm;border-radius:1.2mm;cursor:grab;opacity:0;transition:opacity .12s;touch-action:none;user-select:none;white-space:nowrap}
+.sheet.editing .blk:hover>.blk-h,.sheet.editing .blk.dragging>.blk-h{opacity:1}
+.sheet.editing [data-l],.sheet.editing [data-s]{cursor:text;border-radius:.8mm;outline:1px dotted transparent}
+.sheet.editing [data-l]:hover,.sheet.editing [data-s]:hover{outline-color:var(--yellow);background:rgba(246,185,11,.12)}
+.sheet.editing [data-l]:focus,.sheet.editing [data-s]:focus{outline:1.5px solid var(--yellow);background:#fff}
+.drop-ind{position:absolute;z-index:6;background:var(--yellow);border-radius:2px;pointer-events:none;box-shadow:0 0 0 2px rgba(246,185,11,.3)}
+.lay-list{display:flex;flex-direction:column;gap:6px}
+.lay-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:13px}
+.lay-item.off{opacity:.55;background:#f6f7fa}
+.lay-item button{border:0;background:none;cursor:pointer;font-size:12px;color:var(--navy);text-decoration:underline}
+.sign{display:flex;gap:8mm;margin-top:8mm;align-items:flex-end;font-size:9pt}
+.sign .who{border-top:.6mm solid var(--yellow);padding-top:2mm;min-width:45mm}
+.sign .who b{display:block;font-size:10.5pt}
+.sign .ct{border-left:1px solid #dfe3ea;padding-left:8mm;line-height:1.8}
+.wm{position:absolute;right:12mm;bottom:20mm;width:40mm;height:auto;opacity:.08;z-index:0;pointer-events:none}
+.wm.wm-custom{width:60mm;filter:grayscale(1) brightness(.3);opacity:.06}
+.sh-foot .fmark{height:5.5mm;width:auto;display:block}
+.sh-foot{background:var(--navy);color:#fff;font-size:8pt;padding:4mm 12mm;display:flex;gap:5mm;align-items:center;margin-top:8mm;position:relative}
+.sh-foot b{font-size:9pt}
+.sh-foot .sep{opacity:.5}
+.sh-foot::after{content:"";position:absolute;right:0;top:0;bottom:0;width:22mm;background:var(--yellow);clip-path:polygon(100% 0,100% 100%,0 100%)}
+
+@media (max-width:1100px){.editor{grid-template-columns:1fr}.preview-wrap{position:static}}
+.mtop,.m-only,.m-inline{display:none}
+.help{display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start}
+.help-toc{position:sticky;top:18px;display:flex;flex-direction:column;gap:2px;padding:12px;max-height:calc(100vh - 40px);overflow:auto}
+.help-toc input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+.help-toc a{padding:6px 8px;border-radius:7px;cursor:pointer;font-size:13px;color:inherit;text-decoration:none}.help-toc a:hover{background:#f1f4f9}.help-toc a.dim{opacity:.35}
+.help-body{display:flex;flex-direction:column;gap:14px;min-width:0}
+.help-body section{scroll-margin-top:70px;line-height:1.6;font-size:14px}.help-body h2{margin-top:0}
+.help-body ul{padding-left:20px;margin:6px 0}.help-body li{margin:3px 0}.help-body p{margin:8px 0}
+.help-body a[data-go],.help-body a[data-h]{color:var(--accent-dark,#1f4fa0);font-weight:600;cursor:pointer;text-decoration:underline}
+.help-body code,.help-body kbd{background:#f1f4f9;border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:12.5px}
+.help-body table{margin:6px 0}.help-body td{padding:6px 8px;vertical-align:top}
+.licbar{grid-column:2;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 30px;font-size:14px;position:sticky;top:0;z-index:25}
+.licbar.bad{background:#fde8e8;color:#8a1f1f;border-bottom:1px solid #f5c2c2}.licbar.warn{background:var(--yellow-soft);color:#6b4e00;border-bottom:1px solid #f3dc93}
+.app{grid-template-rows:auto 1fr}.side{grid-row:1/3}.app>.main{grid-column:2}
+.act-bg{position:fixed;inset:0;z-index:80;background:linear-gradient(160deg,#0e1c36 0%,#16284a 60%,#0e1c36 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.act{width:100%;max-width:440px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.act-head{background:var(--navy);padding:22px 26px;border-bottom:5px solid var(--yellow)}.act-head img{height:44px;display:block}.act-head div{color:#8b96ad;font-size:10px;letter-spacing:3px;font-weight:700;margin-top:6px;text-transform:uppercase}
+.act-body{padding:24px 26px}.act-foot{background:#f4f6fa;padding:10px 26px;font-size:12px;color:var(--muted);text-align:center}.act-foot a{color:var(--navy)}
+@media (max-width:760px){
+  /* app-shell: logobalk boven, tabbalk onder */
+  .app{display:block;min-height:100vh}
+  .mtop{display:flex;position:sticky;top:0;z-index:30;background:var(--navy);padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top));align-items:center;justify-content:space-between;height:calc(52px + env(safe-area-inset-top))}
+  .mtop img{height:30px;width:auto}
+  .mtop .v{color:#8b96ad;font-size:11px}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:35;flex-direction:row;justify-content:space-between;padding:6px 4px calc(6px + env(safe-area-inset-bottom));gap:0;box-shadow:0 -6px 24px rgba(14,28,54,.18)}
+  .brand,.side-foot{display:none}
+  .nav{flex:1 1 0;flex-direction:column;gap:3px;padding:6px 0;font-size:10.5px;white-space:nowrap;overflow:hidden;border-radius:10px;text-align:center;justify-content:center;width:auto;min-width:0;color:#aab5cc}
+  .nav svg{width:22px;height:22px}
+  .nav.d-nav{display:none}
+  .help{grid-template-columns:1fr}.help-toc{position:static;max-height:none;flex-direction:row;flex-wrap:wrap}.help-toc input{width:100%}.help-toc a{background:#f1f4f9;font-size:12px}
+  .nav .lbl{font-size:0}.nav .lbl::after{content:attr(data-s);font-size:10px}
+  .nav.on{background:transparent;color:var(--accent-dark,var(--yellow));font-weight:600}
+  .nav:hover{background:transparent}
+  .main{padding:16px 14px 8px}
+  .licbar{top:calc(52px + env(safe-area-inset-top));padding:10px 14px;font-size:13px}
+  .mfoot{display:block;text-align:center;font-size:12px;color:var(--muted);padding:6px 16px calc(92px + env(safe-area-inset-bottom))}
+  .mfoot a{color:var(--navy)}
+  h1{font-size:21px}
+  .top{margin-bottom:14px}
+  .top .row{flex-wrap:wrap}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .kpi{padding:13px}.kpi .v{font-size:18px}.kpi .muted,.kpi div:last-child{font-size:12px}
+  .grid2,.form{grid-template-columns:1fr;gap:12px}
+  .card{padding:14px}
+  input,select,textarea{font-size:16px!important} /* voorkomt inzoomen op iPhone */
+  .btn{padding:10px 14px}
+  .m-only{display:block}.btn.m-only{display:inline-flex}.m-inline{display:inline}
+  .d-only{display:none!important}
+  /* tabellen worden kaarten */
+  table.cards thead{display:none}
+  table.cards,table.cards tbody,table.cards tfoot{display:block}
+  table.cards tr{display:grid;grid-template-columns:1fr auto;grid-template-areas:"num tot" "cli st" "meta meta";gap:3px 10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff}
+  table.cards td{display:block;border:0;padding:0;min-width:0}
+  table.cards .c-num{grid-area:num;font-size:15px}
+  table.cards .c-tot{grid-area:tot;text-align:right}
+  table.cards .c-cli{grid-area:cli;overflow:hidden;text-overflow:ellipsis}
+  table.cards .c-st{grid-area:st;text-align:right}
+  table.cards .c-meta{grid-area:meta;color:var(--muted);font-size:12.5px}
+  table.cards .m-hide{display:none}
+  table.cards tr.click:hover td{background:none}
+  table.cards tr.click:active{background:#f4f6fa}
+  table.cards tfoot tr{display:flex;justify-content:space-between;border:0;background:none;padding:4px 2px}
+  table.cards tfoot td{padding:0!important}
+  .filters input{min-width:0;flex:1 1 100%}
+  .filters select{flex:1}
+  /* editor */
+  .ed-top{position:sticky;top:calc(52px + env(safe-area-inset-top));z-index:20;background:var(--bg);padding:10px 0 8px;margin:-16px 0 10px;flex-direction:column;align-items:stretch;gap:8px}
+  .ed-top h1{font-size:18px}
+  .ed-top .acts{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+  .ed-top .acts::-webkit-scrollbar{display:none}
+  .ed-top .acts #save{order:-1}
+  .item{grid-template-columns:1fr 1fr 34px;padding:10px}.item .d{grid-column:1/-1}
+  .item input{padding:9px 10px}
+  .preview-wrap{padding:10px;border-radius:12px}
+  .preview-wrap::before{content:"Voorbeeld";display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5468;margin:0 0 8px 2px}
+  /* meldingen boven de tabbalk */
+  .toast{bottom:calc(86px + env(safe-area-inset-bottom));max-width:calc(100vw - 32px)}
+  #updBanner{left:12px!important;right:12px!important;bottom:calc(84px + env(safe-area-inset-bottom))!important}
+  /* modals als bottom sheet */
+  .modal-bg{padding:0;align-items:flex-end}
+  .modal{border-radius:18px 18px 0 0;max-height:92vh;overflow:auto;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}
+}
+@page{size:A4;margin:0}
+@media print{
+  html,body{background:#fff;height:297mm;overflow:hidden}
+  .side,.top,.mtop,#updBanner,.editor>.card,.modal-bg,.toast{display:none!important}
+  .preview-wrap::before{display:none!important}
+  .app{display:block}.main{padding:0}.editor{display:block}
+  .preview-wrap{position:static;padding:0;background:none;border-radius:0}
+  body *{visibility:hidden}
+  #print-root,#print-root *{visibility:visible}
+  #print-root{position:absolute;left:0;top:0}
+  #print-root{transform:none!important;width:210mm!important;height:297mm!important}
+  .sheet{box-shadow:none;width:210mm;height:297mm;min-height:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+<style>/*__BRAND_CSS__*/ :root{--yellow-soft:color-mix(in srgb,var(--yellow) 14%,#fff)}
+.ro-docs [data-new],.ro-docs .editor #save,.ro-docs .editor #dup,.ro-docs .editor #addi,.ro-docs .editor #addcat,.ro-docs .editor #newc{display:none!important}
+.ro-del #del{display:none!important}
+.ro-clients #addc,body[data-view=klanten].ro-clients .modal-bg #save{display:none!important}
+body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catalog label:has(#cimp),.ro-catalog #cadd,.ro-catalog #addcat2{display:none!important}
+.ro-rates #rf,.ro-rates [data-rdel]{display:none!important}
+.ro-settings #saveC,.ro-settings #toTpl,.ro-settings #saveS,body[data-view=sjabloon].ro-settings .top .btn.pri{display:none!important}</style>
+</head>
+<body>
+<div class="app">
+  <div class="mtop"><img id="mLogo" src="/logo-light.png" alt="Logo"><span class="row" style="gap:10px;flex-wrap:nowrap"><span class="v" id="mVer"></span><button id="mHelp" aria-label="Handleiding" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #8b96ad;background:none;color:#fff;font-weight:700;cursor:pointer">?</button></span></div>
+  <aside class="side">
+    <div class="brand" style="flex-direction:column;align-items:flex-start;gap:6px">
+      <img id="sideLogo" src="/logo-light.png" alt="Logo" style="width:170px;max-height:60px;object-fit:contain;object-position:left">
+      <div class="brand-sub" style="color:#8b96ad">ADMINISTRATIE</div>
+    </div>
+    <button class="nav" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="lbl" data-s="Home">Dashboard</span></button>
+    <button class="nav" data-view="offerte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl" data-s="Offerte">Offertes</span></button>
+    <button class="nav" data-view="factuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="lbl" data-s="Factuur">Facturen</span></button>
+    <button class="nav" data-view="klanten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span class="lbl" data-s="Klanten">Klanten</span></button>
+    <button class="nav" data-view="catalogus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Items">Catalogus</span></button>
+    <button class="nav" data-view="valuta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span class="lbl" data-s="Valuta">Valuta</span></button>
+    <button class="nav" data-view="bedrijf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg><span class="lbl" data-s="Bedrijf">Bedrijf</span></button>
+    <button class="nav" data-view="instellingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="lbl" data-s="Instel.">Instellingen</span></button>
+    <button class="nav d-nav" data-view="handleiding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg><span class="lbl" data-s="Help">Handleiding</span></button>
+    <div class="side-foot"><b id="whoName"></b><br><span id="whoRole" style="opacity:.8"></span> · <a href="#" id="sideOut" style="color:#9cc0f0">Uitloggen</a><br>Versie <span id="ver"></span><div class="credit" style="margin-top:8px;padding-top:8px;border-top:1px solid #23355a">Design by <a href="https://suritargets.com" target="_blank" rel="noopener">suritargets.com</a></div></div>
+  </aside>
+  <main class="main" id="main"></main>
+  <footer class="mfoot credit">Design by <a href="https://suritargets.com" target="_blank" rel="noopener">suritargets.com</a></footer>
+</div>
+
+<script>
+// ================= utils =================
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ESC = esc;
+// op documenten: alleen <br>, <b>, <i>, <u> (en <strong>/<em>) toegestaan, de rest blijft gewone tekst
+const rich = s => esc(s).replace(/&lt;br\s*\/?&gt;/gi, '<br>').replace(/&lt;(\/?)(b|i|u|strong|em)&gt;/gi, (m, sl, tg) => `<${sl}${tg.toLowerCase()}>`);
+const plain = s => String(s ?? '').replace(/<br\s*\/?>/gi, ' ').replace(/<\/?(b|i|u|strong|em)>/gi, '');
+const _fmt = {};
+// bedragen in de valuta/notatie van de instellingen (EUR → € 1.234,56 · SRD + en-US → SRD 1,234.56)
+const CURRENCIES = ['SRD', 'USD', 'EUR', 'ANG', 'GBP'];
+const defCur = () => String(((typeof S !== 'undefined' && S.settings) || {}).currency || 'EUR').toUpperCase().trim() || 'EUR';
+const curOf = d => (d && d.currency) || defCur();
+const eur = n => money(n, defCur());
+// meerdere valuta's: per valuta optellen, nooit omrekenen
+function sumByCur(arr, key) { const m = {}; for (const d of arr) { const c = curOf(d); m[c] = (m[c] || 0) + (Number(d[key]) || 0); } return m; }
+function moneyMulti(map) {
+  const e = Object.entries(map).filter(([, v]) => v);
+  if (!e.length) return money(0, defCur());
+  const ix = c => { const i = CURRENCIES.indexOf(c); return i < 0 ? 99 : i; };
+  return e.sort((a, b) => ix(a[0]) - ix(b[0])).map(([c, v]) => `<span class="mcur">${money(v, c)}</span>`).join('');
+}
+// ---- wisselkoersen: 1 [valuta] = koers × [hoofdvaluta] ----
+const baseCur = () => String((S.settings || {}).base_currency || defCur()).toUpperCase();
+function rateFor(cur, date) {
+  const base = baseCur(); if (!cur || cur === base) return 1;
+  const list = (S.rates || []).filter(r => r.currency === cur && r.base === base);
+  const before = list.filter(r => r.date <= (date || '9999')).sort((a, b) => b.date.localeCompare(a.date))[0];
+  return (before || list.sort((a, b) => a.date.localeCompare(b.date))[0])?.rate ?? null;
+}
+const fxOf = d => { const c = curOf(d); if (c === baseCur()) return 1; return d.fx_rate && d.fx_base === baseCur() ? d.fx_rate : rateFor(c, d.date); };
+// omgerekend totaal in hoofdvaluta; missing = aantal documenten zonder koers
+function toBase(arr, key) { let sum = 0, missing = 0; for (const d of arr) { const r = fxOf(d); if (r == null) missing++; else sum += (Number(d[key]) || 0) * r; } return { sum, missing }; }
+function baseLine(arr, key) {
+  if (new Set(arr.map(curOf)).size < 2) return '';
+  const { sum, missing } = toBase(arr, key);
+  return `<div class="fxline">≈ ${money(sum, baseCur())}${missing ? ` <span title="${missing} document(en) zonder koers">· ${missing} zonder koers</span>` : ''}</div>`;
+}
+const fmtRate = r => new Intl.NumberFormat((S.settings || {}).number_locale || 'nl-NL', { maximumFractionDigits: 6 }).format(r);
+const money = (n, curIn) => {
+  const st = (typeof S !== 'undefined' && S.settings) || {};
+  const cur = String(curIn || st.currency || 'EUR').toUpperCase().trim() || 'EUR', loc = st.number_locale || 'nl-NL', k = cur + '|' + loc;
+  if (!_fmt[k]) { try { _fmt[k] = new Intl.NumberFormat(loc, { style: 'currency', currency: cur, currencyDisplay: ['EUR', 'USD', 'GBP'].includes(cur) ? 'symbol' : 'code' }); } catch { const nf = new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); _fmt[k] = { format: v => `${cur} ${nf.format(v)}` }; } }
+  return _fmt[k].format(Number(n) || 0).replace(/\u00a0/g, ' ');
+};
+const today = () => new Date().toISOString().slice(0, 10);
+const addDays = (iso, d) => { const x = new Date(iso + 'T12:00:00'); x.setDate(x.getDate() + Number(d || 0)); return x.toISOString().slice(0, 10); };
+const fdate = (iso, st) => {
+  if (!iso) return '—';
+  const style = st || (typeof S !== 'undefined' && S.settings?.date_style) || 'nl', d = new Date(String(iso).slice(0, 10) + 'T12:00:00');
+  if (style === 'iso') return String(iso).slice(0, 10);
+  if (style === 'en') return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '');
+};
+const round2 = n => Math.round((Number(n) || 0) * 100) / 100;
+function calc(items, vat, discount = 0) {
+  const subtotal = round2(items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.rate) || 0), 0));
+  const disc = round2(Math.min(Math.max(Number(discount) || 0, 0), subtotal));
+  const vat_amount = round2((subtotal - disc) * (Number(vat) || 0) / 100);
+  return { subtotal, discount: disc, vat_amount, total: round2(subtotal - disc + vat_amount) };
+}
+const vatDefault = s => s.vat_rate === '' || s.vat_rate == null || isNaN(Number(s.vat_rate)) ? 21 : Number(s.vat_rate);
+const BRAND = __BRAND_JSON__;
+const ME = __ME_JSON__, APP_VERSION = '__APP_VERSION__';
+const can = p => (ME.perms || []).includes(p);
+const ROLE_LABEL = { admin: 'Admin', boekhouder: 'Boekhouder', medewerker: 'Medewerker', 'alleen-lezen': 'Alleen-lezen' };
+async function api(path, opts = {}) {
+  let r;
+  try { r = await fetch('/api/' + path, { ...opts, headers: { 'Content-Type': 'application/json' }, body: opts.body ? JSON.stringify(opts.body) : undefined }); }
+  catch (e) { throw new Error('Geen verbinding met de server. Controleer je internet en probeer opnieuw.'); }
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { location.href = '/login'; throw new Error('Sessie verlopen — opnieuw inloggen…'); }
+  if (!r.ok) throw new Error(j.error || 'Fout bij opslaan');
+  return j;
+}
+function toast(msg, err, ms = 2600) {
+  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), ms);
+}
+const STATUS = { offerte: ['Concept', 'Verzonden', 'Geaccepteerd', 'Afgewezen', 'Verlopen'], factuur: ['Concept', 'Open', 'Betaald', 'Vervallen'] };
+const effStatus = d => (d.type === 'factuur' && d.status === 'Open' && d.due_date && d.due_date < today()) ? 'Vervallen'
+  : (d.type === 'offerte' && ['Concept', 'Verzonden'].includes(d.status) && d.due_date && d.due_date < today()) ? 'Verlopen' : d.status;
+const tag = d => { const s = effStatus(d) || '—'; return `<span class="tag ${esc(s)}">${esc(s)}</span>`; };
+
+// ================= state =================
+const S = { settings: {}, clients: [], docs: [], catalog: [], rates: [], view: 'dashboard', doc: null, filter: { q: '', status: '' } };
+async function loadAll() {
+  [S.settings, S.clients, S.docs, S.catalog] = await Promise.all([api('settings'), api('clients'), api('docs'), api('catalog').catch(() => [])]);
+  S.rates = (await api('rates').catch(() => ({ rates: [] }))).rates;
+}
+function go(view) {
+  if (S.view === 'sjabloon' && S.tpl?.dirty && !confirm('Je wijzigingen aan de documentindeling zijn nog niet opgeslagen. Toch weggaan?')) return;
+  S.view = view; S.doc = null; S.filter = { q: '', status: '', kind: '', cat: '', cur: '' }; render(); window.scrollTo(0, 0); }
+document.querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.view));
+
+function roPostRender(m) {
+  const off = el => { el.disabled = true; };
+  if (S.doc && !can('docs.write')) m.querySelectorAll('input, select, textarea').forEach(off);
+  if (S.view === 'bedrijf' && !can('settings.write')) m.querySelectorAll('input, select, textarea').forEach(off);
+  if (S.view === 'instellingen' && !can('settings.write')) m.querySelectorAll('#sf input, #sf select, #sf textarea').forEach(off);
+  if (S.view === 'valuta' && !can('rates.write')) m.querySelectorAll('input, select').forEach(off);
+}
+function render() { document.body.dataset.view = S.doc ? 'doc' : S.view; render0(); roPostRender($('#main')); }
+function render0() {
+  document.querySelectorAll('.nav').forEach(b => b.classList.toggle('on', b.dataset.view === (S.doc ? S.doc.type : S.view === 'sjabloon' ? 'bedrijf' : S.view)));
+  const m = $('#main');
+  if (S.doc) return renderEditor(m);
+  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, klanten: renderClients, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings })[S.view](m);
+}
+
+// ================= dashboard =================
+function renderDashboard(m) {
+  const offs = S.docs.filter(d => d.type === 'offerte'), invs = S.docs.filter(d => d.type === 'factuur' && d.status !== 'Concept');
+  const sum = (a, k) => a.reduce((s, d) => s + (d[k] || 0), 0);
+  const openInv = invs.filter(d => d.status === 'Open');
+  const late = openInv.filter(d => effStatus(d) === 'Vervallen');
+  const paid = invs.filter(d => d.status === 'Betaald');
+  const pipe = offs.filter(d => ['Concept', 'Verzonden'].includes(effStatus(d)));
+  const yr = String(new Date().getFullYear());
+  const recent = (arr) => arr.slice(0, 6).map(d => `<tr class="click" data-open="${d.id}"><td><b>${esc(d.number)}</b><div class="muted">${esc(plain(d.client?.name || '—'))}</div></td><td>${tag(d)}</td><td class="num">${money(d.total, curOf(d))}</td></tr>`).join('') || `<tr><td class="empty" colspan="3">Nog niets</td></tr>`;
+  m.innerHTML = `
+  <div class="top"><h1>Finance Dashboard</h1><div class="row"><button class="btn" data-new="offerte">+ Offerte</button><button class="btn pri" data-new="factuur">+ Factuur</button></div></div>
+  <div class="kpis">
+    <div class="card kpi"><div class="l">Offertes (excl. BTW)</div><div class="v">${moneyMulti(sumByCur(offs, 'subtotal'))}</div>${baseLine(offs, 'subtotal')}<div class="muted">${offs.length} offertes · ${pipe.length} lopend</div></div>
+    <div class="card kpi"><div class="l">Gefactureerd ${yr} (incl. BTW)</div><div class="v">${moneyMulti(sumByCur(invs.filter(d => (d.date || '').startsWith(yr)), 'total'))}</div>${baseLine(invs.filter(d => (d.date || '').startsWith(yr)), 'total')}<div class="muted">${invs.length} facturen totaal</div></div>
+    <div class="card kpi hl"><div class="l">Openstaand</div><div class="v">${moneyMulti(sumByCur(openInv, 'total'))}</div>${baseLine(openInv, 'total')}<div style="color:#aab5cc">${openInv.length} open · ${late.length} vervallen</div></div>
+    <div class="card kpi"><div class="l">Ontvangen</div><div class="v" style="color:var(--green)">${moneyMulti(sumByCur(paid, 'total'))}</div>${baseLine(paid, 'total')}<div class="muted">${paid.length} betaald</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2>Recente offertes</h2><table class="list"><tbody>${recent(offs)}</tbody></table></div>
+    <div class="card"><h2>Recente facturen</h2><table class="list"><tbody>${recent(S.docs.filter(d => d.type === 'factuur'))}</tbody></table></div>
+  </div>
+  ${late.length ? `<div class="card" style="margin-top:18px;border-color:#f5c2c2"><h2 style="color:var(--red)">Vervallen facturen</h2><table class="list"><tbody>${late.map(d => `<tr class="click" data-open="${d.id}"><td><b>${esc(d.number)}</b> · ${esc(plain(d.client?.name || ''))}</td><td>Verviel ${fdate(d.due_date)}</td><td class="num">${money(d.total, curOf(d))}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+  bindCommon(m);
+}
+
+// ================= lists =================
+function renderList(m) {
+  const type = S.view, isQ = type === 'offerte';
+  const f = S.filter, q = f.q.toLowerCase();
+  const rows = S.docs.filter(d => d.type === type)
+    .filter(d => !f.status || effStatus(d) === f.status)
+    .filter(d => !q || [d.number, d.client?.name, d.client?.contact, d.subject, d.reference].join(' ').toLowerCase().includes(q))
+    .filter(d => !f.cur || curOf(d) === f.cur);
+  const usedCur = [...new Set(S.docs.filter(d => d.type === type).map(curOf))];
+  m.innerHTML = `
+  <div class="top"><h1>${isQ ? 'Offerte register' : 'Factuur register'}</h1>
+    <div class="row"><button class="btn sm" id="csv">Export CSV</button><button class="btn pri" data-new="${type}">+ Nieuwe ${type}</button></div></div>
+  <div class="card">
+    <div class="filters"><input id="fq" placeholder="Zoek op nummer, klant, omschrijving…" value="${esc(f.q)}">
+      <select id="fs"><option value="">Alle statussen</option>${STATUS[type].concat(isQ ? [] : []).map(s => `<option ${f.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      ${usedCur.length > 1 || f.cur ? `<select id="fc"><option value="">Alle valuta's</option>${usedCur.map(c => `<option ${f.cur === c ? 'selected' : ''}>${c}</option>`).join('')}</select>` : ''}</div>
+    <div class="tablewrap"><table class="list cards"><thead><tr>
+      <th>${isQ ? 'Offertenr.' : 'Factuurnr.'}</th><th>Datum</th><th>Klant</th><th>Omschrijving</th><th>${isQ ? 'Geldig tot' : 'Vervaldatum'}</th>${isQ ? '' : '<th>Offertenr.</th>'}<th>Status</th><th class="num">Excl. BTW</th><th class="num">Incl. BTW</th></tr></thead>
+    <tbody>${rows.map(d => `<tr class="click" data-open="${d.id}"><td class="c-num"><b>${esc(d.number)}</b></td><td class="m-hide">${fdate(d.date)}</td><td class="c-cli">${esc(plain(d.client?.name || '—'))}<div class="muted d-only">${esc(d.client?.contact || '')}</div></td><td class="m-hide">${esc(d.subject || '')}</td><td class="m-hide">${fdate(d.due_date)}</td>${isQ ? '' : `<td class="m-hide">${esc(d.reference || '')}</td>`}<td class="c-st">${tag(d)}</td><td class="num m-hide">${money(d.subtotal, curOf(d))}</td><td class="num c-tot"><b>${money(d.total, curOf(d))}</b></td><td class="c-meta m-only">${fdate(d.date)} · ${isQ ? 'geldig tot' : 'vervalt'} ${fdate(d.due_date)}${d.subject ? ' · ' + esc(d.subject) : ''}</td></tr>`).join('')
+      || `<tr><td colspan="9" class="empty">Nog geen ${isQ ? 'offertes' : 'facturen'}. Klik op “+ Nieuwe ${type}”.</td></tr>`}</tbody>
+    ${rows.length ? `<tfoot><tr><td colspan="${isQ ? 7 : 8}" class="muted" style="padding:10px">${rows.length} regels</td><td class="num" style="padding:10px"><b>${moneyMulti(sumByCur(rows, 'total'))}</b></td></tr></tfoot>` : ''}
+    </table></div>
+  </div>`;
+  $('#fq').oninput = e => { S.filter.q = e.target.value; const pos = e.target.selectionStart; renderList(m); const i = $('#fq'); i.focus(); i.setSelectionRange(pos, pos); };
+  $('#fs').onchange = e => { S.filter.status = e.target.value; renderList(m); };
+  if ($('#fc')) $('#fc').onchange = e => { S.filter.cur = e.target.value; renderList(m); };
+  $('#csv').onclick = () => { exportCSV(type, rows); track('csv_export_' + type); };
+  bindCommon(m);
+}
+function exportCSV(type, rows) {
+  const isQ = type === 'offerte';
+  const head = isQ ? ['Offertenr.', 'Datum', 'Klant', 'Contact', 'Omschrijving', 'Status', 'Valuta', 'Excl. BTW', 'BTW %', 'BTW bedrag', 'Incl. BTW', 'Geldig tot', 'Notities']
+    : ['Factuurnr.', 'Datum', 'Klant', 'Contact', 'Omschrijving', 'Vervaldatum', 'Valuta', 'Excl. BTW', 'BTW %', 'BTW bedrag', 'Incl. BTW', 'Status', 'Betaald op', 'Openstaand', 'Offertenr.', 'Notities'];
+  const n = v => String(v ?? '').replace('.', ',');
+  const lines = rows.map(d => isQ
+    ? [d.number, d.date, d.client?.name, d.client?.contact, d.subject, effStatus(d), curOf(d), n(d.subtotal), d.vat_rate, n(d.vat_amount), n(d.total), d.due_date, d.notes]
+    : [d.number, d.date, d.client?.name, d.client?.contact, d.subject, d.due_date, curOf(d), n(d.subtotal), d.vat_rate, n(d.vat_amount), n(d.total), effStatus(d), d.paid_on, n(d.status === 'Betaald' ? 0 : d.total), d.reference, d.notes]);
+  const csv = '﻿' + [head, ...lines].map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `${type}-register-${today()}.csv`; a.click();
+}
+
+// ================= clients =================
+function renderClients(m) {
+  const q = S.filter.q.toLowerCase();
+  const rows = S.clients.filter(c => !q || [c.name, c.contact, c.email, c.postal_city].join(' ').toLowerCase().includes(q));
+  m.innerHTML = `
+  <div class="top"><h1>Klanten</h1><button class="btn pri" id="addc">+ Nieuwe klant</button></div>
+  <div class="card"><div class="filters"><input id="fq" placeholder="Zoek klant…" value="${esc(S.filter.q)}"></div>
+  <div class="tablewrap"><table class="list cards"><thead><tr><th>Bedrijf</th><th>Contact</th><th>Plaats</th><th>E-mail</th><th class="num">Gefactureerd</th></tr></thead><tbody>
+  ${rows.map(c => { const t = moneyMulti(sumByCur(S.docs.filter(d => d.type === 'factuur' && d.client_id === c.id && d.status !== 'Concept'), 'total'));
+    return `<tr class="click" data-client="${c.id}"><td class="c-num"><b>${esc(plain(c.name))}</b></td><td class="c-cli">${esc(c.contact)}</td><td class="c-meta">${esc(c.postal_city)}<span class="m-inline">${c.email ? (c.postal_city ? ' · ' : '') + esc(c.email) : ''}</span></td><td class="m-hide">${esc(c.email)}</td><td class="num c-tot">${t}</td></tr>`; }).join('')
+    || `<tr><td colspan="5" class="empty">Nog geen klanten.</td></tr>`}
+  </tbody></table></div></div>`;
+  $('#fq').oninput = e => { S.filter.q = e.target.value; const p = e.target.selectionStart; renderClients(m); const i = $('#fq'); i.focus(); i.setSelectionRange(p, p); };
+  $('#addc').onclick = () => clientModal({});
+  m.querySelectorAll('[data-client]').forEach(r => r.onclick = () => clientModal(S.clients.find(c => c.id == r.dataset.client)));
+}
+function clientModal(c, onSaved) {
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  const F = (k, l, full) => `<label class="f ${full ? 'full' : ''}">${l}<input name="${k}" value="${esc(c[k])}"></label>`;
+  bg.innerHTML = `<div class="modal"><h2>${c.id ? 'Klant bewerken' : 'Nieuwe klant'}</h2><form class="form" id="cf">
+    ${F('name', 'Bedrijfsnaam *', 1)}${F('contact', 'T.a.v. / Contactpersoon')}${F('email', 'E-mail')}${F('address', 'Adres')}${F('postal_city', 'Postcode + plaats')}
+    ${F('country', 'Land')}${F('vat_number', 'BTW-nummer')}${F('phone', 'Telefoon')}
+    <label class="f">Taal documenten<select name="lang"><option value="">Standaard (${LANGS[mainLang()]})</option>${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${c.lang === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+    <label class="f full">Notities<textarea name="notes">${esc(c.notes)}</textarea></label></form>
+    <div class="row" style="margin-top:16px;justify-content:space-between">
+      <div>${c.id ? '<button class="btn danger" id="del">Verwijderen</button>' : ''}</div>
+      <div class="row"><button class="btn" id="cancel">Annuleren</button><button class="btn pri" id="save">Opslaan</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $('#cancel', bg).onclick = close;
+  $('#save', bg).onclick = async () => {
+    const data = Object.fromEntries(new FormData($('#cf', bg)));
+    try { const saved = await api('clients', { method: 'POST', body: { ...data, id: c.id } }); S.clients = await api('clients'); close(); toast('Klant opgeslagen'); onSaved ? onSaved(saved) : render(); }
+    catch (e) { toast(e.message, 1); }
+  };
+  if (c.id) $('#del', bg).onclick = async () => { if (!confirm(`Klant “${c.name}” verwijderen? Bestaande documenten blijven bewaard.`)) return; await api('clients/' + c.id, { method: 'DELETE' }); S.clients = await api('clients'); close(); render(); };
+  $('input', bg).focus();
+}
+
+// ================= catalogus =================
+const UNITS = ['', 'uur', 'dag', 'stuk', 'maand', 'jaar', 'project', 'km'];
+function renderCatalog(m) {
+  const f = S.filter, q = f.q.toLowerCase();
+  const cats = [...new Set(S.catalog.map(c => c.category).filter(Boolean))].sort();
+  const rows = S.catalog.filter(c => (!f.kind || c.kind === f.kind) && (!f.cat || c.category === f.cat) && (!f.cur || curOf(c) === f.cur)
+    && (!q || [c.name, c.description, c.category, c.sku].join(' ').toLowerCase().includes(q)));
+  const curs = [...new Set(S.catalog.map(curOf))];
+  m.innerHTML = `
+  <div class="top"><h1>Catalogus</h1><div class="row"><button class="btn sm" id="cexp">Export CSV</button><label class="btn sm" style="cursor:pointer">Import CSV<input type="file" id="cimp" accept=".csv,text/csv" hidden></label><button class="btn pri" id="addp">+ Nieuw item</button></div></div>
+  <div class="card">
+    <p class="muted" style="margin-top:0">Vaste diensten en producten met prijs. In een offerte of factuur typ je de naam in de omschrijving en kies je hem meteen, of gebruik je “+ Uit catalogus”.</p>
+    <div class="filters"><input id="fq" placeholder="Zoek op naam, categorie, code…" value="${esc(f.q)}">
+      <select id="fk"><option value="">Diensten & producten</option><option value="dienst" ${f.kind === 'dienst' ? 'selected' : ''}>Diensten</option><option value="product" ${f.kind === 'product' ? 'selected' : ''}>Producten</option></select>
+      ${cats.length ? `<select id="fcat"><option value="">Alle categorieën</option>${cats.map(c => `<option ${f.cat === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>` : ''}
+      ${curs.length > 1 ? `<select id="fc"><option value="">Alle valuta's</option>${curs.map(c => `<option ${f.cur === c ? 'selected' : ''}>${c}</option>`).join('')}</select>` : ''}</div>
+    <div class="tablewrap"><table class="list cards"><thead><tr><th>Naam</th><th>Soort</th><th>Categorie</th><th>Eenheid</th><th class="num">Prijs</th></tr></thead><tbody>
+    ${rows.map(c => `<tr class="click" data-cat="${c.id}" style="${c.active ? '' : 'opacity:.5'}"><td class="c-num"><b>${esc(plain(c.name))}</b>${c.sku ? ` <span class="muted">${esc(c.sku)}</span>` : ''}${c.description ? `<div class="muted">${esc(c.description)}</div>` : ''}</td>
+      <td class="c-st"><span class="kind ${c.kind}">${c.kind === 'product' ? 'Product' : 'Dienst'}</span>${c.active ? '' : ' <span class="muted">inactief</span>'}</td><td class="c-cli">${esc(c.category || '')}</td><td class="m-hide">${esc(c.unit || '')}</td><td class="num c-tot"><b>${money(c.price, curOf(c))}</b></td></tr>`).join('')
+      || `<tr><td colspan="5" class="empty">${S.catalog.length ? 'Niets gevonden.' : 'Nog geen items. Klik op “+ Nieuw item” om je diensten en producten met prijzen toe te voegen.'}</td></tr>`}
+    </tbody></table></div></div>`;
+  $('#fq').oninput = e => { S.filter.q = e.target.value; const pos = e.target.selectionStart; renderCatalog(m); const i = $('#fq'); i.focus(); i.setSelectionRange(pos, pos); };
+  $('#fk').onchange = e => { S.filter.kind = e.target.value; renderCatalog(m); };
+  if ($('#fcat')) $('#fcat').onchange = e => { S.filter.cat = e.target.value; renderCatalog(m); };
+  if ($('#fc')) $('#fc').onchange = e => { S.filter.cur = e.target.value; renderCatalog(m); };
+  $('#addp').onclick = () => catalogModal({ kind: 'dienst', active: 1, currency: defCur() });
+  m.querySelectorAll('[data-cat]').forEach(r => r.onclick = () => catalogModal(S.catalog.find(c => c.id == r.dataset.cat)));
+  $('#cexp').onclick = () => {
+    const head = ['Soort', 'Naam', 'Omschrijving', 'Categorie', 'Eenheid', 'Code', 'Valuta', 'Prijs', 'Actief'];
+    const lines = S.catalog.map(c => [c.kind, c.name, c.description, c.category, c.unit, c.sku, curOf(c), String(c.price).replace('.', ','), c.active ? 'ja' : 'nee']);
+    const csv = '\ufeff' + [head, ...lines].map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `catalogus-${today()}.csv`; a.click();
+  };
+  $('#cimp').onchange = async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const txt = (await file.text()).replace(/^\ufeff/, ''), sep = (txt.split('\n')[0].match(/;/g) || []).length >= (txt.split('\n')[0].match(/,/g) || []).length ? ';' : ',';
+    const parse = line => { const out = []; let cur = '', qq = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (qq) { if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') qq = false; else cur += ch; } else if (ch === '"') qq = true; else if (ch === sep) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out.map(s => s.trim()); };
+    const lines = txt.split(/\r?\n/).filter(l => l.trim()); const head = parse(lines.shift() || '').map(h => h.toLowerCase());
+    const col = (...names) => head.findIndex(h => names.includes(h));
+    const ix = { kind: col('soort', 'kind', 'type'), name: col('naam', 'name', 'omschrijving dienst'), desc: col('omschrijving', 'description'), cat: col('categorie', 'category'), unit: col('eenheid', 'unit'), sku: col('code', 'sku'), cur: col('valuta', 'currency'), price: col('prijs', 'price', 'tarief'), act: col('actief', 'active') };
+    if (ix.name < 0 || ix.price < 0) return toast('CSV heeft minstens de kolommen “Naam” en “Prijs” nodig.', 1);
+    let n = 0;
+    for (const l of lines) { const r = parse(l), g = k => ix[k] > -1 ? r[ix[k]] : ''; if (!g('name')) continue;
+      const price = Number(String(g('price')).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')) || 0;
+      const existing = S.catalog.find(c => c.name.toLowerCase() === g('name').toLowerCase() && (!g('cur') || curOf(c) === g('cur').toUpperCase()));
+      await api('catalog', { method: 'POST', body: { id: existing?.id, kind: /prod/i.test(g('kind')) ? 'product' : 'dienst', name: g('name'), description: g('desc'), category: g('cat'), unit: g('unit'), sku: g('sku'), currency: g('cur') || defCur(), price, active: !/^(nee|no|0|false)$/i.test(g('act')) } }); n++; }
+    S.catalog = await api('catalog'); renderCatalog(m); toast(`${n} items geïmporteerd`); track('catalog_import');
+  };
+  bindCommon(m);
+}
+function catalogModal(c, onSaved) {
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  const cats = [...new Set(S.catalog.map(x => x.category).filter(Boolean))];
+  bg.innerHTML = `<div class="modal"><h2>${c.id ? 'Item bewerken' : 'Nieuw catalogusitem'}</h2><form class="form" id="pf">
+    <label class="f">Soort<select name="kind"><option value="dienst" ${c.kind !== 'product' ? 'selected' : ''}>Dienst</option><option value="product" ${c.kind === 'product' ? 'selected' : ''}>Product</option></select></label>
+    <label class="f">Categorie<input name="category" value="${esc(c.category)}" list="catlist" placeholder="Bijv. Werving, Advies"><datalist id="catlist">${cats.map(x => `<option value="${esc(x)}">`).join('')}</datalist></label>
+    <label class="f full">Naam *<input name="name" value="${esc(plain(c.name))}" placeholder="Zoals het op de offerte/factuur komt"></label>
+    <label class="f full">Omschrijving (detailregel)<input name="description" value="${esc(c.description)}" placeholder="Optioneel"></label>
+    <label class="f">Prijs (excl. BTW)<input name="price" type="number" step="0.01" inputmode="decimal" value="${esc(c.price ?? '')}"></label>
+    <label class="f">Valuta<select name="currency">${[...new Set([...CURRENCIES, curOf(c)])].map(x => `<option ${curOf(c) === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+    <label class="f">Eenheid<input name="unit" value="${esc(c.unit)}" list="unitlist" placeholder="uur, stuk, maand…"><datalist id="unitlist">${UNITS.filter(Boolean).map(u => `<option value="${u}">`).join('')}</datalist></label>
+    <label class="f">Code / SKU<input name="sku" value="${esc(c.sku)}" placeholder="Optioneel"></label>
+    <label class="f full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="active" ${c.active !== 0 ? 'checked' : ''} style="width:auto"> Actief (zichtbaar bij kiezen)</label></form>
+    <div class="row" style="margin-top:16px;justify-content:space-between">
+      <div>${c.id ? '<button class="btn danger" id="del">Verwijderen</button>' : ''}</div>
+      <div class="row"><button class="btn" id="cancel">Annuleren</button><button class="btn pri" id="save">Opslaan</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $('#cancel', bg).onclick = close;
+  $('#save', bg).onclick = async () => {
+    const fd = Object.fromEntries(new FormData($('#pf', bg)));
+    if (!fd.name?.trim()) return toast('Vul een naam in', 1);
+    try { const saved = await api('catalog', { method: 'POST', body: { ...fd, id: c.id, price: Number(fd.price) || 0, active: !!fd.active } }); S.catalog = await api('catalog'); close(); toast('Opgeslagen'); track('catalog_save'); onSaved ? onSaved(saved) : render(); }
+    catch (e) { toast(e.message, 1); }
+  };
+  if (c.id) $('#del', bg).onclick = async () => { if (!confirm(`“${c.name}” uit de catalogus verwijderen? Bestaande documenten blijven ongewijzigd.`)) return; await api('catalog/' + c.id, { method: 'DELETE' }); S.catalog = await api('catalog'); close(); render(); };
+  $('[name=name]', bg).focus();
+}
+function catalogPicker(docCur, onPick) {
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  const sel = new Map(); let q = '';
+  bg.innerHTML = `<div class="modal"><h2>Uit catalogus kiezen</h2>
+    <input id="pq" placeholder="Zoeken…" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px">
+    <div id="pl" style="max-height:52vh;overflow:auto"></div>
+    <div class="row" style="margin-top:14px;justify-content:space-between"><button class="btn sm" id="pnew">+ Nieuw item</button>
+      <div class="row"><button class="btn" id="cancel">Annuleren</button><button class="btn pri" id="ok">Toevoegen</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const draw = () => {
+    const list = S.catalog.filter(c => c.active && (!q || [c.name, c.description, c.category, c.sku].join(' ').toLowerCase().includes(q)))
+      .sort((a, b) => (curOf(b) === docCur) - (curOf(a) === docCur) || b.used - a.used || a.name.localeCompare(b.name));
+    $('#pl', bg).innerHTML = list.map(c => `<div class="pick" data-id="${c.id}"><input type="checkbox" ${sel.has(c.id) ? 'checked' : ''} style="width:auto">
+      <div class="grow"><b>${esc(plain(c.name))}</b>${curOf(c) !== docCur ? `<span class="cur-badge">${curOf(c)}</span>` : ''}<div class="muted" style="font-size:12px">${esc([c.category, c.description].filter(Boolean).join(' · '))}</div></div>
+      <input type="number" class="pqty" min="0" step="any" value="${sel.get(c.id) ?? 1}" title="Aantal" style="width:64px;padding:5px 7px;border:1px solid var(--line);border-radius:7px">
+      <b style="white-space:nowrap">${money(c.price, curOf(c))}</b></div>`).join('') || `<p class="muted">${S.catalog.length ? 'Niets gevonden.' : 'De catalogus is nog leeg.'}</p>`;
+    $('#ok', bg).textContent = sel.size ? `Toevoegen (${sel.size})` : 'Toevoegen';
+  };
+  draw();
+  $('#pq', bg).oninput = e => { q = e.target.value.toLowerCase(); draw(); };
+  $('#pl', bg).onclick = e => { const row = e.target.closest('.pick'); if (!row || e.target.classList.contains('pqty')) return; const id = Number(row.dataset.id);
+    if (sel.has(id)) sel.delete(id); else sel.set(id, Number(row.querySelector('.pqty').value) || 1); draw(); };
+  $('#pl', bg).oninput = e => { if (!e.target.classList.contains('pqty')) return; const id = Number(e.target.closest('.pick').dataset.id); sel.set(id, Number(e.target.value) || 0); $('#ok', bg).textContent = `Toevoegen (${sel.size})`; e.target.closest('.pick').querySelector('[type=checkbox]').checked = true; };
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $('#cancel', bg).onclick = close;
+  $('#pnew', bg).onclick = () => catalogModal({ kind: 'dienst', active: 1, currency: docCur }, saved => { sel.set(saved.id, 1); draw(); });
+  $('#ok', bg).onclick = () => { const picked = [...sel].map(([id, qty]) => ({ c: S.catalog.find(c => c.id === id), qty })).filter(p => p.c); close(); if (picked.length) onPick(picked); };
+  $('#pq', bg).focus();
+}
+
+// ================= valuta & koersen =================
+const MONTHS = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+function renderFx(m) {
+  const base = baseCur(), f = S.filter;
+  const invs = S.docs.filter(d => d.type === 'factuur' && d.status !== 'Concept');
+  const years = [...new Set([String(new Date().getFullYear()), ...S.docs.map(d => (d.date || '').slice(0, 4)).filter(Boolean)])].sort().reverse();
+  const yr = f.yr || years[0];
+  const inYr = invs.filter(d => (d.date || '').startsWith(yr)), offsYr = S.docs.filter(d => d.type === 'offerte' && (d.date || '').startsWith(yr));
+  const used = [...new Set([...S.docs.map(curOf), ...S.rates.map(r => r.currency), 'SRD', 'USD', 'EUR'])];
+  const curs = [...new Set([...inYr, ...offsYr].map(curOf))].sort((a, b) => CURRENCIES.indexOf(a) - CURRENCIES.indexOf(b));
+  const foreign = used.filter(c => c !== base);
+  const latest = c => S.rates.filter(r => r.currency === c && r.base === base).sort((a, b) => b.date.localeCompare(a.date))[0];
+  const stat = (arr, c) => { const a = arr.filter(d => curOf(d) === c), s = k => a.reduce((x, d) => x + (Number(d[k]) || 0), 0);
+    const paid = a.filter(d => d.status === 'Betaald'); return { n: a.length, tot: s('total'), paid: paid.reduce((x, d) => x + d.total, 0), open: a.filter(d => d.status === 'Open').reduce((x, d) => x + d.total, 0) }; };
+  const all = toBase(inYr, 'total'), allPaid = toBase(inYr.filter(d => d.status === 'Betaald'), 'total'), allOpen = toBase(inYr.filter(d => d.status === 'Open'), 'total');
+  const missing = invs.filter(d => fxOf(d) == null).length;
+  const hist = S.rates.filter(r => r.base === base).sort((a, b) => b.date.localeCompare(a.date) || a.currency.localeCompare(b.currency));
+  m.innerHTML = `
+  <div class="top"><h1>Valuta & koersen</h1><div class="row"><select id="fy">${years.map(y => `<option ${y === yr ? 'selected' : ''}>${y}</option>`).join('')}</select><button class="btn sm" id="fxcsv">Export CSV</button></div></div>
+  <p class="muted" style="margin-top:-6px">Elke valuta wordt apart bijgehouden. Met de koersen hieronder zie je ook het totaal omgerekend naar je hoofdvaluta <b>${base}</b>. Elk document bewaart de koers van zijn datum.</p>
+  ${missing ? `<div class="card" style="border-color:#f5d48a;background:#fffaf0;margin-bottom:14px">⚠ ${missing} factu${missing > 1 ? 'ren hebben' : 'ur heeft'} nog geen koers. Voeg hieronder een koers toe voor ${[...new Set(invs.filter(d => fxOf(d) == null).map(curOf))].join(', ')}.</div>` : ''}
+  <div class="kpis">
+    ${curs.map(c => { const s = stat(inYr, c), o = stat(offsYr, c); return `<div class="card kpi"><div class="l">${c}${c === base ? ' · hoofdvaluta' : ''}</div>
+      <div class="v">${money(s.tot, c)}</div><div class="muted">${s.n} facturen ${yr}</div>
+      <div style="margin-top:8px;font-size:13px;line-height:1.6"><div>Ontvangen <b style="color:var(--green)">${money(s.paid, c)}</b></div><div>Openstaand <b>${money(s.open, c)}</b></div><div class="muted">Offertes ${money(o.tot, c)}</div></div></div>`; }).join('')
+      || `<div class="card kpi"><div class="l">${yr}</div><div class="v">${money(0, base)}</div><div class="muted">Nog geen facturen</div></div>`}
+    ${curs.length > 1 || (curs[0] && curs[0] !== base) ? `<div class="card kpi hl"><div class="l">Totaal omgerekend</div><div class="v">≈ ${money(all.sum, base)}</div>
+      <div style="margin-top:8px;font-size:13px;line-height:1.6;color:#d5dcea"><div>Ontvangen ≈ ${money(allPaid.sum, base)}</div><div>Openstaand ≈ ${money(allOpen.sum, base)}</div>${all.missing ? `<div>${all.missing} zonder koers niet meegeteld</div>` : ''}</div></div>` : ''}
+  </div>
+  <div class="card" style="margin-bottom:18px"><h2>Per maand ${yr} (gefactureerd incl. BTW)</h2>
+    <div class="tablewrap"><table class="list"><thead><tr><th>Maand</th>${curs.map(c => `<th class="num">${c}</th>`).join('')}${curs.length ? `<th class="num">≈ ${base}</th>` : ''}</tr></thead><tbody>
+    ${MONTHS.map((mn, i) => { const mm = `${yr}-${String(i + 1).padStart(2, '0')}`, a = inYr.filter(d => d.date.startsWith(mm)); if (!a.length) return '';
+      return `<tr><td>${mn}</td>${curs.map(c => { const v = a.filter(d => curOf(d) === c).reduce((x, d) => x + d.total, 0); return `<td class="num">${v ? money(v, c) : '<span class="muted">—</span>'}</td>`; }).join('')}<td class="num"><b>${money(toBase(a, 'total').sum, base)}</b></td></tr>`; }).join('')
+      || `<tr><td class="empty" colspan="${curs.length + 2}">Geen facturen in ${yr}</td></tr>`}
+    </tbody></table></div></div>
+  <div class="grid2">
+    <div class="card"><h2>Koers toevoegen</h2>
+      <div class="ratebox" style="margin-bottom:12px">${foreign.map(c => { const r = latest(c); return `<div class="card"><div class="muted" style="font-size:12px">1 ${c} =</div><b>${r ? `${fmtRate(r.rate)} ${base}` : '—'}</b><div class="muted" style="font-size:11px">${r ? fdate(r.date) : 'nog geen koers'}</div></div>`; }).join('')}</div>
+      <form class="form" id="rf">
+        <label class="f">Datum<input type="date" name="date" value="${today()}"></label>
+        <label class="f">Valuta<select name="currency" id="rfcur">${foreign.map(c => `<option>${c}</option>`).join('')}</select></label>
+        <label class="f">Koers (1 valuta = … ${base})<input name="rate" type="number" step="any" inputmode="decimal" placeholder="bijv. 36,50" required></label>
+        <label class="f" style="justify-content:flex-end"><button class="btn pri" type="submit">Koers opslaan</button></label></form>
+      <div class="sect">Hoofdvaluta</div>
+      <div class="row"><select id="basesel">${[...new Set([...CURRENCIES, base])].map(c => `<option ${c === base ? 'selected' : ''}>${c}</option>`).join('')}</select><span class="muted" style="font-size:12px">Alles wordt hiernaar omgerekend. Koersen gelden per hoofdvaluta.</span></div></div>
+    <div class="card"><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="margin:0">Koershistorie</h2>
+      <div class="row">${[...new Set(hist.map(r => r.currency))].map(c => `<button class="btn sm" data-rexp="${c}">Export ${c}</button>`).join('')}</div></div>
+      <div class="tablewrap" style="max-height:420px;overflow:auto"><table class="list"><thead><tr><th>Datum</th><th>Valuta</th><th class="num" style="text-align:right">Koers</th><th></th></tr></thead><tbody>
+      ${hist.map(r => `<tr><td>${fdate(r.date)}</td><td>1 ${r.currency}</td><td class="num">${fmtRate(r.rate)} ${base}</td><td class="num"><button class="btn sm" data-rdel="${r.id}" title="Verwijderen">×</button></td></tr>`).join('') || '<tr><td class="empty" colspan="4">Nog geen koersen</td></tr>'}
+    </tbody></table></div></div>
+  </div>`;
+  const reload = async () => { S.rates = (await api('rates')).rates; S.docs = await api('docs'); renderFx(m); };
+  $('#fy').onchange = e => { S.filter.yr = e.target.value; renderFx(m); };
+  $('#rf').onsubmit = async e => { e.preventDefault(); try { await api('rates', { method: 'POST', body: Object.fromEntries(new FormData(e.target)) }); toast('Koers opgeslagen'); await reload(); } catch (er) { toast(er.message, 1); } };
+  m.querySelectorAll('[data-rexp]').forEach(b => b.onclick = () => {
+    const c = b.dataset.rexp, rows = hist.filter(r => r.currency === c).sort((a, z) => a.date.localeCompare(z.date));
+    const head = ['Datum', 'Valuta', `Koers (1 ${c} = … ${base})`, 'Hoofdvaluta', `Omgekeerd (1 ${base} = … ${c})`];
+    const lines = rows.map(r => [r.date, c, String(r.rate).replace('.', ','), base, String(Math.round(1e6 / r.rate) / 1e6).replace('.', ',')]);
+    const csv = '\ufeff' + [head, ...lines].map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `koersen-${c}-${base}-${today()}.csv`; a.click();
+    track('rates_export');
+  });
+  m.querySelectorAll('[data-rdel]').forEach(b => b.onclick = async () => { if (!confirm('Deze koers verwijderen?')) return; await api('rates/' + b.dataset.rdel, { method: 'DELETE' }); await reload(); });
+  $('#basesel').onchange = async e => { if (!confirm(`Hoofdvaluta wijzigen naar ${e.target.value}? Je hebt dan koersen nodig ten opzichte van ${e.target.value}.`)) { e.target.value = base; return; }
+    S.settings = await api('settings', { method: 'POST', body: { base_currency: e.target.value } }); await reload(); };
+  $('#fxcsv').onclick = () => {
+    const head = ['Factuurnr.', 'Datum', 'Klant', 'Status', 'Valuta', 'Incl. BTW', 'Koers', `Incl. BTW in ${base}`];
+    const n = v => v == null ? '' : String(Math.round(v * 100) / 100).replace('.', ',');
+    const lines = inYr.map(d => { const r = fxOf(d); return [d.number, d.date, d.client?.name, effStatus(d), curOf(d), n(d.total), r == null ? '' : String(r).replace('.', ','), r == null ? '' : n(d.total * r)]; });
+    const csv = '﻿' + [head, ...lines].map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `valuta-overzicht-${yr}.csv`; a.click();
+  };
+  bindCommon(m);
+}
+
+// ================= handleiding =================
+const HELP = () => { const N = esc(BRAND.name || 'de app'), K = '<kbd>', k = '</kbd>'; return [
+  ['start', 'Aan de slag', `
+    <p><b>Installeren:</b> dubbelklik op het setup-bestand (bijv. <i>${N} Setup 1.0.x.exe</i>) en kies <b>Ja</b>. De app installeert zich voor jouw Windows-gebruiker (geen beheerdersrechten nodig), maakt een snelkoppeling op het bureaublad en in het Startmenu en opent meteen.</p>
+    <p><b>Melding "Windows heeft uw pc beschermd"?</b> Klik op <b>Meer info</b> → <b>Toch uitvoeren</b>. Dat komt omdat de installer (nog) niet digitaal ondertekend is.</p>
+    <p><b>Openen:</b> via de snelkoppeling. De app opent in een eigen venster, net als een gewoon programma. Alles draait lokaal op je eigen computer.</p>
+    <p><b>Licentie:</b> bij de eerste start vul je je e-mailadres en licentiesleutel in (die heb je per e-mail ontvangen). De licentie wordt online gecontroleerd; zonder internet blijft de app 14 dagen gewoon werken.</p>
+    <p><b>Eerste stappen:</b> 1) vul je gegevens in bij <a data-go="bedrijf">Bedrijf</a>, 2) controleer <a data-go="instellingen">Instellingen</a> (valuta, BTW, nummering), 3) zet je vaste diensten in de <a data-go="catalogus">Catalogus</a>, 4) maak je eerste offerte of factuur.</p>`],
+  ['dash', 'Dashboard', `
+    <p>Het overzicht van je administratie: totaal aan offertes, gefactureerd dit jaar, <b>openstaand</b> en <b>ontvangen</b>. Werk je met meerdere valuta's, dan zie je elk bedrag per valuta apart (bijv. SRD en US$) en eronder het totaal omgerekend naar je hoofdvaluta (≈).</p>
+    <p>Onderaan staan de recente offertes en facturen en, als die er zijn, de <b>vervallen facturen</b> (open en over de vervaldatum). Klik op een regel om hem te openen.</p>`],
+  ['offerte', 'Offertes', `
+    <p>Ga naar <a data-go="offerte">Offertes</a> → <b>+ Nieuwe offerte</b>. Het nummer wordt automatisch gegeven (aanpasbaar).</p>
+    <ul><li><b>Klant:</b> kies een klant of maak er direct een met <b>+ Nieuw</b>.</li>
+    <li><b>Regels:</b> omschrijving, aantal en tarief — zie <a data-h="regels">Regels &amp; catalogus</a>.</li>
+    <li><b>Geldig tot:</b> wordt ingevuld met het aantal dagen uit Instellingen.</li>
+    <li><b>Status:</b> Concept → Verzonden → Geaccepteerd of Afgewezen. Een verzonden offerte na de geldigheidsdatum toont als <i>Verlopen</i>.</li>
+    <li><b>Voorwaarden:</b> standaardtekst uit Instellingen, per offerte aan te passen.</li></ul>
+    <p><b>→ Factuur maken:</b> zet een geaccepteerde offerte met één klik om in een factuur (regels, klant, valuta en taal gaan mee; de offerte wordt als referentie vermeld).</p>
+    <p><b>Dupliceren</b> maakt een kopie met een nieuw nummer — handig voor terugkerend werk.</p>`],
+  ['factuur', 'Facturen', `
+    <p>Ga naar <a data-go="factuur">Facturen</a> → <b>+ Nieuwe factuur</b>, of maak hem vanuit een offerte.</p>
+    <ul><li><b>Vervaldatum:</b> factuurdatum + betalingstermijn uit Instellingen.</li>
+    <li><b>Status:</b> Concept, Open of Betaald. Een open factuur na de vervaldatum toont als <i>Vervallen</i> (rood).</li>
+    <li><b>✓ Markeer betaald</b> zet de status op Betaald met de datum van vandaag.</li>
+    <li>Concept-facturen tellen <b>niet</b> mee in de totalen.</li></ul>
+    <p><b>Lijsten:</b> zoek op nummer, klant of omschrijving en filter op status of valuta. Onderaan staat het totaal (per valuta). <b>Export CSV</b> geeft het register voor Excel.</p>`],
+  ['print', 'Printen &amp; PDF', `
+    <p>Klik in een offerte of factuur op <b>Print / PDF</b>. Kies in het printvenster als printer <b>Opslaan als PDF</b> (of <i>Microsoft Print to PDF</i>) om een PDF te maken die je kunt mailen. Zet bij "Meer instellingen" de marges op <b>Geen</b> en vink <b>Achtergrondafbeeldingen</b> aan voor het mooiste resultaat.</p>
+    <p>Rechts in de editor zie je altijd een live voorbeeld van het document. Op de telefoon tik je op <b>Voorbeeld ↓</b>.</p>`],
+  ['regels', 'Regels &amp; catalogus kiezen', `
+    <p>Elke regel heeft een omschrijving, een optionele detailregel, aantal en tarief (excl. BTW).</p>
+    <ul><li><b>Uit de catalogus kiezen:</b> typ een paar letters in de omschrijving — er verschijnt een lijst. Kies met ${K}↑${k} ${K}↓${k} en ${K}Enter${k} of klik. Prijs en detailregel worden ingevuld.</li>
+    <li><b>+ Uit catalogus:</b> vink meerdere items tegelijk aan, met aantal per item, en klik <b>Toevoegen</b>.</li>
+    <li><b>Korting:</b> een vast bedrag dat van het subtotaal afgaat (vóór BTW).</li>
+    <li><b>BTW %:</b> per document aan te passen; de standaard staat in Instellingen (0 mag ook).</li>
+    <li><b>×</b> verwijdert een regel; <b>+ Regel toevoegen</b> voegt een lege regel toe.</li></ul>`],
+  ['klanten', 'Klanten', `
+    <p>In <a data-go="klanten">Klanten</a> beheer je je klanten: bedrijfsnaam, contactpersoon (T.a.v.), adres, land, BTW-nummer, e-mail en telefoon. De kolom <b>Gefactureerd</b> toont per klant het totaal (per valuta).</p>
+    <p><b>Taal documenten:</b> kies per klant Nederlands of English. Kies je die klant in een offerte of factuur, dan wordt het document automatisch in die taal gemaakt.</p>
+    <p>Een klant verwijderen laat bestaande documenten staan — de klantgegevens blijven op die documenten bewaard.</p>`],
+  ['catalogus', 'Catalogus', `
+    <p>In <a data-go="catalogus">Catalogus</a> zet je je vaste <b>diensten</b> en <b>producten</b> met prijs: naam (zoals op het document), omschrijving (detailregel), categorie, eenheid (uur, stuk, maand…), code/SKU, prijs excl. BTW, valuta en actief.</p>
+    <ul><li>Alleen <b>actieve</b> items verschijnen bij het kiezen in een document.</li>
+    <li>Items die je vaak gebruikt komen vanzelf bovenaan.</li>
+    <li>Wijzigen van een prijs verandert <b>geen</b> bestaande documenten.</li>
+    <li><b>Import CSV:</b> een bestand met minstens de kolommen <code>Naam</code> en <code>Prijs</code>; optioneel <code>Soort</code>, <code>Omschrijving</code>, <code>Categorie</code>, <code>Eenheid</code>, <code>Code</code>, <code>Valuta</code>, <code>Actief</code>. Scheidingsteken ; of , mag allebei. Bestaande items met dezelfde naam worden bijgewerkt. Tip: doe eerst <b>Export CSV</b> en gebruik dat als voorbeeld.</li></ul>`],
+  ['valuta', 'Valuta &amp; wisselkoersen', `
+    <p><b>Valuta per document:</b> kies in elke offerte of factuur de valuta (SRD, USD, EUR, ANG, GBP). De standaard voor nieuwe documenten staat in Instellingen. Elke valuta wordt <b>apart</b> bijgehouden — bedragen worden nooit stiekem omgerekend.</p>
+    <p><b>Hoofdvaluta &amp; koersen</b> (tab <a data-go="valuta">Valuta</a>):</p>
+    <ul><li>Kies je <b>hoofdvaluta</b> — daarnaar wordt alles omgerekend in de overzichten.</li>
+    <li><b>Koers toevoegen:</b> datum, valuta en koers, bijv. <i>1 USD = 36,50 SRD</i>. Voeg regelmatig een nieuwe koers toe; de oude blijven bewaard in de koershistorie.</li>
+    <li>Elk document krijgt automatisch de koers van zijn <b>datum</b> (de laatst bekende koers op of vóór die dag) en houdt die vast. In de editor zie je de koers en het omgerekende totaal en kun je de koers handmatig aanpassen.</li>
+    <li>Facturen zonder koers krijgen een melding; zodra je een koers toevoegt, krijgen ze er automatisch een.</li></ul>
+    <p><b>Overzicht:</b> per jaar per valuta gefactureerd, ontvangen, openstaand en offertes, het totaal omgerekend, en een tabel per maand. <b>Export CSV</b> geeft alle facturen met koers en omgerekend bedrag. In de koershistorie exporteer je de koersen <b>per valuta apart</b> (Export USD, Export EUR).</p>`],
+  ['taal', 'Taal NL / EN', `
+    <p>Documenten kunnen in het <b>Nederlands</b> of <b>Engels</b>. De taal bepaalt de titel, alle labels en kolomkoppen, de datumnotatie en de voorwaarden/afsluittekst.</p>
+    <ul><li><b>Per klant:</b> stel bij de klant "Taal documenten" in.</li>
+    <li><b>Per document:</b> kies "Taal document" in de editor. Heb je de afsluittekst niet zelf aangepast, dan wisselt die automatisch mee.</li>
+    <li><b>Teksten per taal aanpassen:</b> <a data-go="sjabloon">Documentindeling</a> → kies bovenaan <i>Taal: English</i> of <i>Taal: Nederlands</i> en klik op de teksten in het voorbeeld.</li></ul>`],
+  ['bedrijf', 'Bedrijfsgegevens &amp; logo', `
+    <p>In <a data-go="bedrijf">Bedrijf</a> vul je je bedrijfsnaam, tagline, adres, contactgegevens, KvK/BTW-nummer en bankgegevens in. Rechts zie je meteen het resultaat op een voorbeeldfactuur.</p>
+    <ul><li><b>Logo:</b> upload een PNG of SVG met transparante achtergrond.</li>
+    <li><b>Betaalgegevens (vrije tekst):</b> vul je dit veld, dan verschijnt deze tekst op facturen in plaats van IBAN/BIC. Elke regel wordt een regel; zet tekst tussen <code>**dubbele sterretjes**</code> voor vet.</li>
+    <li><b>Ondertekening:</b> naam en functie van wie offertes en facturen ondertekent.</li></ul>`],
+  ['indeling', 'Documentindeling (sjabloon)', `
+    <p>Via <a data-go="sjabloon">Bedrijf → Documentindeling bewerken</a> bepaal je hoe je offertes en facturen eruitzien. Wissel bovenaan tussen het voorbeeld van een offerte en een factuur.</p>
+    <ul><li><b>Blokken verplaatsen:</b> beweeg over een blok en sleep het label <b>⠿</b>. Loslaten links of rechts van een blok = naast elkaar; boven of onder = erboven of eronder. Of gebruik de pijltjes ↑ ↓ in de lijst.</li>
+    <li><b>⇄ Van en Aan wisselen:</b> zet je bedrijfsgegevens en de klant in één klik van links naar rechts (en terug). Het ⇄-knopje in de lijst wisselt elke rij met twee blokken.</li>
+    <li><b>Verbergen / Tonen:</b> haal een blok weg (bijv. Ondertekening) of zet het terug.</li>
+    <li><b>Teksten wijzigen:</b> klik op een geel omrande tekst in het voorbeeld en typ — titel, labels, voorwaarden, afsluittekst, tagline en voettekst.</li>
+    <li><b>Stijl:</b> Klassiek (donkere kop) of Modern (lichte kop).</li>
+    <li><b>Afsluiting onderaan de pagina</b> en <b>logo als watermerk</b> zet je aan of uit met de vinkjes.</li>
+    <li><b>Taal:</b> kies welke taalversie je bewerkt (zie <a data-h="taal">Taal NL / EN</a>).</li>
+    <li>Vergeet niet op <b>Opslaan</b> te klikken. <b>Standaard herstellen</b> zet indeling en labels terug.</li></ul>
+    <p><b>Codes in teksten</b> — worden op het echte document automatisch ingevuld:</p>
+    <table class="list"><tbody>
+      <tr><td><code>{verval}</code></td><td>vervaldatum van de factuur</td></tr><tr><td><code>{geldig}</code></td><td>geldig-tot-datum van de offerte</td></tr>
+      <tr><td><code>{btw}</code></td><td>BTW-percentage</td></tr><tr><td><code>{email}</code></td><td>je factuur-e-mailadres</td></tr>
+      <tr><td><code>{valuta}</code></td><td>valuta van het document</td></tr><tr><td><code>{bedrijf}</code></td><td>je bedrijfsnaam</td></tr></tbody></table>`],
+  ['opmaak', 'Opmaak in teksten (&lt;br&gt;, vet, schuin)', `
+    <p>In alle velden die op een offerte of factuur komen (bedrijfs- en klantgegevens, regels, voorwaarden, afsluittekst, labels) kun je een paar eenvoudige codes gebruiken:</p>
+    <table class="list"><tbody>
+      <tr><td><code>&lt;br&gt;</code></td><td>nieuwe regel — ook in een veld van één regel, bijv. <code>ISAACS CONSULTANCY&lt;br&gt;&amp; ADMINISTRATION N.V.</code></td></tr>
+      <tr><td><code>&lt;b&gt;tekst&lt;/b&gt;</code></td><td><b>vet</b></td></tr><tr><td><code>&lt;i&gt;tekst&lt;/i&gt;</code></td><td><i>schuin</i></td></tr><tr><td><code>&lt;u&gt;tekst&lt;/u&gt;</code></td><td><u>onderstreept</u></td></tr>
+      <tr><td><code>**tekst**</code></td><td>vet (alleen in Betaalgegevens)</td></tr></tbody></table>
+    <p>Andere HTML wordt niet uitgevoerd maar als gewone tekst getoond. In grote tekstvakken kun je ook gewoon op ${K}Enter${k} drukken voor een nieuwe regel. In lijsten in de app worden de codes weggelaten.</p>`],
+  ['instellingen', 'Instellingen', `
+    <ul><li><b>Standaard BTW %, geldigheid offerte en betalingstermijn</b> (in dagen) voor nieuwe documenten.</li>
+    <li><b>Notatie &amp; nummering:</b> standaardvaluta, getalnotatie (1.234,56 of 1,234.56), datumnotatie en waar factuur- en offertenummers mee beginnen.</li>
+    <li><b>Teksten:</b> standaard offertevoorwaarden en afsluitteksten.</li>
+    </ul>`],
+  ['accounts', 'Inloggen &amp; rollen', `
+    <p>Je logt in met e-mailadres en wachtwoord. Na 12 uur word je automatisch uitgelogd; na 5 foute pogingen wordt het account 15 minuten geblokkeerd.</p>
+    <ul><li><b>Admin:</b> alles, inclusief gebruikers aanmaken, rollen wijzigen en instellingen.</li>
+    <li><b>Boekhouder:</b> documenten, klanten, catalogus en koersen, ook verwijderen.</li>
+    <li><b>Medewerker:</b> klanten en documenten maken en bewerken, niet verwijderen.</li>
+    <li><b>Alleen-lezen:</b> alles bekijken en printen.</li>
+    <li>Je wachtwoord wijzig je onder Instellingen → Mijn account.</li></ul>`],
+  ['data', 'Gegevens', `
+    <p>Alle gegevens staan veilig online in een beheerde database (Neon) met automatische back-ups. Een admin kan onder Instellingen een extra export (JSON) downloaden.</p>`],
+  ['mobiel', 'Telefoon &amp; tablet', `
+    <p>De app past zich aan kleinere schermen aan: het menu staat dan onderaan (Home, Offerte, Factuur, Klanten, Items, Valuta, Bedrijf, Instel.) en deze handleiding open je met het <b>?</b> rechtsboven. In de editor tik je op <b>Voorbeeld ↓</b> om het document te zien.</p>`],
+  ['faq', 'Problemen oplossen', `
+    <ul><li><b>Ik kan niets opslaan of wijzigen:</b> controleer of je rol dat toelaat (Instellingen → Mijn account) en of je internet hebt.</li>
+    <li><b>Een bedrag of totaal klopt niet in een andere valuta:</b> controleer de koers in het document en in de tab Valuta.</li>
+    <li><b>Mijn tekst staat met &lt;br&gt; op het document:</b> controleer de schrijfwijze (kleine letters, zonder spaties binnen de haakjes).</li>
+    <li><b>Hulp nodig?</b> Neem contact op met Suritargets via <a href="https://suritargets.com" target="_blank" rel="noopener">suritargets.com</a>.</li></ul>`],
+]; };
+function renderHelp(m) {
+  const q = (S.filter.q || '').toLowerCase().trim(), all = HELP();
+  const secs = all.filter(([, t, h]) => !q || (t + ' ' + h.replace(/<[^>]+>/g, ' ')).toLowerCase().includes(q));
+  m.innerHTML = `<div class="top"><h1>Handleiding</h1><span class="muted">${esc(BRAND.name || '')} · v${esc(APP_VERSION)}</span></div>
+  <div class="help">
+    <nav class="card help-toc"><input id="hq" placeholder="Zoek in de handleiding…" value="${esc(S.filter.q || '')}">${all.map(([id, t]) => `<a data-h="${id}" class="${secs.some(s => s[0] === id) ? '' : 'dim'}">${t}</a>`).join('')}</nav>
+    <div class="help-body">${secs.map(([id, t, h]) => `<section class="card" id="h-${id}"><h2>${t}</h2>${h}</section>`).join('') || `<div class="card empty">Niets gevonden voor “${esc(q)}”.</div>`}</div>
+  </div>`;
+  const hq = $('#hq'); hq.oninput = e => { S.filter.q = e.target.value; const pos = e.target.selectionStart; renderHelp(m); const i = $('#hq'); i.focus(); i.setSelectionRange(pos, pos); };
+  m.querySelectorAll('[data-h]').forEach(a => a.onclick = e => { e.preventDefault(); const el = $('#h-' + a.dataset.h); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  m.querySelectorAll('[data-go]').forEach(a => a.onclick = e => { e.preventDefault(); if (a.dataset.go === 'sjabloon') S.tpl = null; go(a.dataset.go); });
+}
+
+const SETTING_FIELDS = [
+  ['Notatie & nummering', [['currency', 'Valuta', ['EUR', 'SRD', 'USD', 'ANG', 'GBP']], ['number_locale', 'Getalnotatie', [['nl-NL', '1.234,56 (NL)'], ['en-US', '1,234.56 (EN)']]], ['date_style', 'Datumnotatie', [['nl', '06 nov 2026'], ['iso', '2026-11-06'], ['en', '06 Nov 2026']]], ['invoice_prefix', 'Factuurnummer begint met'], ['quote_prefix', 'Offertenummer begint met']]],
+  ['Standaarden', [['vat_rate', 'BTW %'], ['quote_valid_days', 'Offerte geldig (dagen)'], ['payment_days', 'Betaaltermijn (dagen)'], ['footer_services', 'Footer diensten']]],
+  ['Ondertekening', [['quote_signer', 'Offerte: naam'], ['quote_signer_role', 'Offerte: functie'], ['quote_signer_phone', 'Offerte: telefoon'], ['quote_signer_email', 'Offerte: e-mail'], ['invoice_signer', 'Factuur: naam'], ['invoice_signer_role', 'Factuur: functie']]],
+];
+function renderSettings(m) {
+  const s = S.settings;
+  m.innerHTML = `<div class="top"><h1>Instellingen</h1>${can('settings.write') ? '<button class="btn pri" id="saveS">Opslaan</button>' : ''}</div>
+  <div class="card"><form id="sf">
+    ${SETTING_FIELDS.map(([t, fs]) => `<div class="sect">${t}</div><div class="form">${fs.map(f => fieldHTML(f, s)).join('')}</div>`).join('')}
+    <div class="sect">Teksten</div><div class="form">
+      <label class="f full">Offerte voorwaarden (één per regel — {btw}, {geldig} worden ingevuld)<textarea name="quote_terms" rows="4">${esc(s.quote_terms)}</textarea></label>
+      <label class="f full">Offerte afsluittekst<textarea name="quote_closing">${esc(s.quote_closing)}</textarea></label>
+      <label class="f full">Factuur afsluittekst ({verval}, {email})<textarea name="invoice_closing">${esc(s.invoice_closing)}</textarea></label></div>
+  </form><p class="muted" style="margin-bottom:0">Bedrijfsnaam, adres, IBAN en logo pas je aan onder <a href="#" id="toCo">Bedrijf</a>.</p></div>
+  <div class="card" style="margin-top:18px" id="acctCard"></div>
+  ${can('users.manage') ? '<div class="card" style="margin-top:18px" id="usersCard"></div>' : ''}
+  ${can('data.export') ? '<div class="card" style="margin-top:18px"><h2>Gegevens exporteren</h2><p class="muted" style="margin-top:0">Download alle gegevens (klanten, documenten, catalogus, koersen, instellingen) als JSON-bestand. De database draait op Neon met automatische back-ups; dit is een extra kopie voor jezelf.</p><a class="btn yel" href="/api/backup">Export downloaden (.json)</a></div>' : ''}`;
+  renderAccount(); if (can('users.manage')) renderUsers();
+  if ($('#saveS')) $('#saveS').onclick = async () => { try { S.settings = await api('settings', { method: 'POST', body: Object.fromEntries(new FormData($('#sf'))) }); toast('Instellingen opgeslagen'); } catch (e) { toast(e.message, 1); } };
+  if ($('#toCo')) $('#toCo').onclick = e => { e.preventDefault(); go('bedrijf'); };
+}
+function track() {}
+
+// ================= account & gebruikers =================
+function renderAccount() {
+  const el = $('#acctCard'); if (!el) return;
+  el.innerHTML = `<h2>Mijn account</h2>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;margin-bottom:12px"><span class="muted">Naam</span><b>${esc(ME.name)}</b><span class="muted">E-mail</span><span>${esc(ME.email)}</span><span class="muted">Rol</span><span>${esc(ROLE_LABEL[ME.role] || ME.role)}</span></div>
+    <form id="pwForm" class="form" autocomplete="off" style="max-width:520px">
+      <label class="f full">Huidig wachtwoord<input type="password" name="current" autocomplete="current-password" required></label>
+      <label class="f full">Nieuw wachtwoord (min. 10 tekens, letters én cijfers)<input type="password" name="next" autocomplete="new-password" required minlength="10"></label>
+      <div class="row full"><button class="btn pri">Wachtwoord wijzigen</button><button type="button" class="btn" id="logout">Uitloggen</button></div></form>`;
+  $('#pwForm').onsubmit = async e => { e.preventDefault(); try { await api('me/password', { method: 'POST', body: Object.fromEntries(new FormData(e.target)) }); e.target.reset(); toast('Wachtwoord gewijzigd'); } catch (er) { toast(er.message, 1); } };
+  $('#logout').onclick = doLogout;
+}
+async function doLogout(e) { if (e && e.preventDefault) e.preventDefault(); await fetch('/api/logout', { method: 'POST' }).catch(() => {}); location.href = '/login'; }
+async function renderUsers() {
+  const el = $('#usersCard'); if (!el) return;
+  el.innerHTML = '<h2>Gebruikers &amp; rollen</h2><div class="muted">Laden…</div>';
+  let list = [], log = [];
+  try { [list, log] = await Promise.all([api('users'), api('audit').catch(() => [])]); } catch (e) { el.innerHTML = '<h2>Gebruikers &amp; rollen</h2><div class="muted">' + esc(e.message) + '</div>'; return; }
+  const when = d => new Date(d).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' });
+  el.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">Gebruikers &amp; rollen</h2><button class="btn pri sm" id="uNew">+ Gebruiker</button></div>
+    <div class="tablewrap"><table><thead><tr><th>Naam</th><th>E-mail</th><th>Rol</th><th>Status</th><th>Laatste login</th><th></th></tr></thead><tbody>${list.map(u => `<tr>
+      <td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(ROLE_LABEL[u.role] || u.role)}</td>
+      <td>${u.active ? '<span class="tag Betaald">Actief</span>' : '<span class="tag Vervallen">Uitgeschakeld</span>'}</td>
+      <td>${u.last_login ? when(u.last_login) : '—'}</td>
+      <td class="num"><button class="btn sm" data-uedit="${u.id}">Bewerken</button></td></tr>`).join('')}</tbody></table></div>
+    <p class="muted" style="font-size:12.5px;margin:10px 0 0"><b>Admin</b>: alles, incl. gebruikers en instellingen · <b>Boekhouder</b>: documenten, klanten, catalogus en koersen (ook verwijderen) · <b>Medewerker</b>: klanten en documenten maken/bewerken, niet verwijderen · <b>Alleen-lezen</b>: alleen bekijken.</p>
+    <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Recente activiteit</summary><div style="max-height:260px;overflow:auto;font-size:12.5px;margin-top:8px">${log.map(l => `<div style="padding:3px 0;border-bottom:1px solid #eef1f6"><span class="muted">${when(l.at)}</span> · ${esc(l.user_name || '—')} · <b>${esc(l.action)}</b> ${esc(l.detail || '')}</div>`).join('') || '—'}</div></details>`;
+  $('#uNew').onclick = () => userModal(null, renderUsers);
+  el.querySelectorAll('[data-uedit]').forEach(b => b.onclick = () => userModal(list.find(u => String(u.id) === b.dataset.uedit), renderUsers));
+}
+function userModal(u, done) {
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal"><h2>${u ? 'Gebruiker bewerken' : 'Nieuwe gebruiker'}</h2><form id="uf" class="form" autocomplete="off">
+    <label class="f">Naam<input name="name" required value="${esc(u?.name)}"></label>
+    <label class="f">E-mail<input name="email" type="email" required value="${esc(u?.email)}"></label>
+    <label class="f">Rol<select name="role">${Object.entries(ROLE_LABEL).map(([k, v]) => `<option value="${k}" ${(u?.role || 'medewerker') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+    <label class="f">${u ? 'Nieuw wachtwoord (leeg = ongewijzigd)' : 'Wachtwoord (min. 10 tekens, letters én cijfers)'}<input name="password" type="password" autocomplete="new-password" ${u ? '' : 'required'} minlength="10"></label>
+    ${u ? `<label class="row full" style="gap:8px;cursor:pointer"><input type="checkbox" name="active" ${u.active ? 'checked' : ''} style="width:18px;height:18px"> Account actief</label>` : ''}
+    </form><div class="row" style="justify-content:space-between;margin-top:14px"><div>${u && u.id !== ME.id ? '<button class="btn danger" id="udel">Verwijderen</button>' : ''}</div><div class="row"><button class="btn" id="ucancel">Annuleren</button><button class="btn pri" id="usave">Opslaan</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $('#ucancel', bg).onclick = close;
+  $('#usave', bg).onclick = async () => {
+    const f = $('#uf', bg); if (!f.reportValidity()) return;
+    const d = Object.fromEntries(new FormData(f)); d.active = u ? !!f.active.checked : true; if (u) d.id = u.id; if (!d.password) delete d.password;
+    try { await api('users', { method: 'POST', body: d }); close(); toast('Opgeslagen'); done(); } catch (e) { toast(e.message, 1); }
+  };
+  if ($('#udel', bg)) $('#udel', bg).onclick = async () => {
+    if (!confirm(`Gebruiker ${u.name} definitief verwijderen? (Liever uitschakelen als je de historie wilt bewaren.)`)) return;
+    try { await api('users/' + u.id, { method: 'DELETE' }); close(); toast('Verwijderd'); done(); } catch (e) { toast(e.message, 1); }
+  };
+}
+
+// ================= editor =================
+async function newDoc(type, extra = {}) {
+  const s = S.settings, { number } = await api('next-number?type=' + type);
+  const isQ = type === 'offerte';
+  S.doc = {
+    type, number, date: today(), due_date: addDays(today(), isQ ? s.quote_valid_days : s.payment_days),
+    client_id: null, client: {}, subject: '', subject_detail: '', reference: '',
+    items: [{ desc: '', sub: '', qty: 1, rate: 0 }], vat_rate: vatDefault(s), discount: 0, currency: defCur(), lang: mainLang(),
+    status: isQ ? 'Concept' : 'Open', paid_on: '', terms: isQ ? s.quote_terms : s.invoice_closing, notes: '', ...extra
+  };
+  if (S.doc.lang !== mainLang() && !extra.terms) { const L2 = langSettings(s, S.doc.lang); S.doc.terms = isQ ? L2.quote_terms : L2.invoice_closing; }
+  S.view = type; render(); window.scrollTo(0, 0);
+}
+async function openDoc(id) { S.doc = await api('docs/' + id); S.view = S.doc.type; render(); window.scrollTo(0, 0); }
+
+function renderEditor(m) {
+  const d = S.doc, isQ = d.type === 'offerte';
+  m.innerHTML = `
+  <div class="top ed-top"><div class="row" style="flex-wrap:nowrap"><button class="btn sm" id="back">← Terug</button><h1>${d.id ? esc(d.number) : (isQ ? 'Nieuwe offerte' : 'Nieuwe factuur')}</h1>${d.id ? tag(d) : ''}</div>
+    <div class="row acts">
+      <button class="btn m-only" id="toPrev" type="button">Voorbeeld ↓</button>
+      ${d.id && isQ ? '<button class="btn yel" id="toInv">→ Factuur maken</button>' : ''}
+      ${d.id && !isQ && d.status !== 'Betaald' ? '<button class="btn" id="paid" style="color:var(--green)">✓ Markeer betaald</button>' : ''}
+      ${d.id ? '<button class="btn" id="dup">Dupliceren</button>' : ''}
+      <button class="btn" id="print">Print / PDF</button>
+      <button class="btn pri" id="save">Opslaan</button></div></div>
+  <div class="editor">
+    <div class="card"><form id="df" autocomplete="off">
+      <div class="form">
+        <label class="f">${isQ ? 'Offertenr.' : 'Factuurnr.'}<input name="number" value="${esc(d.number)}"></label>
+        <label class="f">Taal document<select name="lang">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${docLang(d) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+        <label class="f">Valuta<select name="currency">${[...new Set([...CURRENCIES, curOf(d)])].map(c => `<option ${curOf(d) === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label class="f" id="fxf" style="display:none">Koers → <span id="fxb"></span><input name="fx_rate" type="number" step="any" inputmode="decimal" value="${esc(d.fx_rate ?? '')}" title="1 documentvaluta = koers × hoofdvaluta"></label>
+        <label class="f">Status<select name="status">${STATUS[d.type].map(s => `<option ${d.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+        <label class="f">${isQ ? 'Datum' : 'Factuurdatum'}<input type="date" name="date" value="${esc(d.date)}"></label>
+        <label class="f">${isQ ? 'Geldig tot' : 'Vervaldatum'}<input type="date" name="due_date" value="${esc(d.due_date)}"></label>
+        ${!isQ ? `<label class="f">Betaald op<input type="date" name="paid_on" value="${esc(d.paid_on)}"></label><label class="f">Offertenr. (referentie)<input name="reference" value="${esc(d.reference)}" list="qlist"></label>
+          <datalist id="qlist">${S.docs.filter(x => x.type === 'offerte').map(x => `<option value="${esc(x.number)}">`).join('')}</datalist>` : ''}
+      </div>
+      <div class="sect">Klant</div>
+      <div class="row" style="flex-wrap:nowrap"><select id="csel" style="flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff">
+        <option value="">— Kies klant —</option>${S.clients.map(c => `<option value="${c.id}" ${d.client_id === c.id ? 'selected' : ''}>${esc(plain(c.name))}</option>`).join('')}</select>
+        <button type="button" class="btn" id="newc">+ Nieuw</button></div>
+      <div class="muted" style="margin-top:6px;font-size:12px" id="cinfo"></div>
+      <div class="sect">Betreft</div>
+      <div class="form">
+        <label class="f full">Onderwerp<input name="subject" value="${esc(d.subject)}" placeholder="${isQ ? 'Bijv. voorstel dienstverlening' : 'Bijv. dienstverlening juli 2026'}"></label>
+        ${isQ ? `<label class="f full">Toelichting<input name="subject_detail" value="${esc(d.subject_detail)}" placeholder="Korte toelichting (optioneel)"></label>` : ''}
+      </div>
+      <div class="sect">Regels</div>
+      <div class="items" id="items"></div>
+      <div class="row" style="margin-top:8px"><button type="button" class="btn sm" id="addi">+ Regel toevoegen</button><button type="button" class="btn sm" id="addcat">+ Uit catalogus</button></div>
+      <div style="margin-top:14px;max-width:300px;margin-left:auto">
+        <div class="totline"><span>Subtotaal</span><span id="t-sub"></span></div>
+        <div class="totline"><span>Korting <input name="discount" type="number" step="0.01" min="0" value="${esc(d.discount || '')}" placeholder="0" style="width:90px;padding:3px 6px;border:1px solid var(--line);border-radius:6px"></span><span id="t-disc"></span></div>
+        <div class="totline"><span>BTW <input name="vat_rate" type="number" step="0.1" value="${esc(d.vat_rate)}" style="width:56px;padding:3px 6px;border:1px solid var(--line);border-radius:6px"> %</span><span id="t-vat"></span></div>
+        <div class="totline big"><span>Totaal</span><span id="t-tot"></span></div>
+        <div class="totline muted" id="t-fx" style="display:none;font-size:12px"><span>Omgerekend</span><span></span></div>
+      </div>
+      <div class="sect">${isQ ? 'Voorwaarden' : 'Afsluittekst'}</div>
+      <label class="f"><textarea name="terms" rows="4">${esc(d.terms)}</textarea></label>
+      <div class="sect">Interne notities (niet op document)</div>
+      <label class="f"><textarea name="notes" rows="2">${esc(d.notes)}</textarea></label>
+      ${d.id ? '<div style="margin-top:18px"><button type="button" class="btn danger sm" id="del">Document verwijderen</button></div>' : ''}
+    </form></div>
+    <div class="preview-wrap" id="pw"><div class="preview-scale" id="print-root"></div></div>
+  </div>`;
+
+  const form = $('#df');
+  let fxManual = !!(d.id && d.fx_rate && curOf(d) !== baseCur() && d.fx_rate !== rateFor(curOf(d), d.date));
+  const defTerms = lang => { const L2 = langSettings(S.settings, lang); return isQ ? L2.quote_terms : L2.invoice_closing; };
+  let curLang = docLang(d);
+  const setLang = lang => {
+    const nz = x => String(x || '').replace(/\r\n?/g, '\n').replace(/\s+$/gm, '').trim();
+    if (curLang !== lang && (!nz(form.terms.value) || nz(form.terms.value) === nz(defTerms(curLang)))) { d.terms = defTerms(lang); form.terms.value = d.terms; }
+    curLang = d.lang = lang; form.elements.lang.value = lang; sync();
+  };
+  form.elements.lang.addEventListener('change', e => setLang(e.target.value));
+  form.addEventListener('input', e => { if (e.target.name === 'fx_rate') fxManual = !!e.target.value; if (e.target.name === 'currency') fxManual = false; }, true);
+  const drawItems = () => {
+    $('#items').innerHTML = d.items.map((it, i) => `<div class="item" data-i="${i}">
+      <div class="d"><div class="ac-wrap"><input data-k="desc" value="${esc(it.desc)}" placeholder="${S.catalog.length ? 'Omschrijving — typ om uit catalogus te kiezen' : 'Omschrijving'}"></div><input data-k="sub" value="${esc(it.sub)}" placeholder="Detailregel (optioneel)"></div>
+      <input data-k="qty" type="number" inputmode="decimal" step="any" value="${esc(it.qty)}" title="Aantal" placeholder="Aantal"><input data-k="rate" type="number" inputmode="decimal" step="0.01" value="${esc(it.rate)}" title="Tarief" placeholder="Tarief">
+      <button type="button" class="x" data-rm="${i}" title="Verwijderen">×</button></div>`).join('');
+  };
+  const sync = () => {
+    const fd = Object.fromEntries(new FormData(form));
+    Object.assign(d, fd, { vat_rate: Number(fd.vat_rate) || 0, discount: Number(fd.discount) || 0 });
+    const base = baseCur(), foreign = curOf(d) !== base;
+    if (foreign && !fxManual) { const r = rateFor(curOf(d), d.date); if (r != null && Number(form.fx_rate.value) !== r) form.fx_rate.value = r; }
+    d.fx_rate = foreign ? (Number(form.fx_rate.value) || null) : 1; d.fx_base = base;
+    $('#fxf').style.display = foreign ? '' : 'none'; $('#fxb').textContent = base;
+    const t = calc(d.items, d.vat_rate, d.discount);
+    const M = n => money(n, curOf(d));
+    $('#t-disc').textContent = t.discount ? '−' + M(t.discount) : '—';
+    $('#t-sub').textContent = M(t.subtotal); $('#t-vat').textContent = M(t.vat_amount); $('#t-tot').textContent = M(t.total);
+    $('#t-fx').style.display = foreign ? '' : 'none';
+    $('#t-fx span:last-child').textContent = d.fx_rate ? '≈ ' + money(t.total * d.fx_rate, base) : 'geen koers — voeg toe bij Valuta';
+    const c = d.client || {};
+    $('#cinfo').textContent = c.name ? [c.contact, c.address, c.postal_city, c.country].filter(Boolean).join(' · ') : '';
+    $('#print-root').innerHTML = sheetHTML(d, S.settings);
+    fitPreview();
+  };
+  drawItems(); sync();
+
+  form.addEventListener('input', e => {
+    const row = e.target.closest('.item');
+    if (row) { const it = d.items[row.dataset.i], k = e.target.dataset.k; it[k] = (k === 'qty' || k === 'rate') ? e.target.value : e.target.value; }
+    sync();
+  });
+  $('#items').onclick = e => { const i = e.target.dataset.rm; if (i == null) return; d.items.splice(i, 1); if (!d.items.length) d.items.push({ desc: '', sub: '', qty: 1, rate: 0 }); drawItems(); sync(); };
+  $('#addi').onclick = () => { d.items.push({ desc: '', sub: '', qty: 1, rate: 0 }); drawItems(); sync(); $('#items .item:last-child input').focus(); };
+  // ---- catalogus: inline kiezen (typen in omschrijving) + meerdere tegelijk ----
+  const applyCat = (i, c) => {
+    if (c.currency && c.currency !== curOf(d) && !d.items.some((x, j) => j !== i && Number(x.rate))) { d.currency = c.currency; form.currency.value = c.currency; }
+    else if (c.currency && c.currency !== curOf(d)) toast(`Let op: “${c.name}” staat in de catalogus in ${c.currency}; dit document is in ${curOf(d)}.`, 1, 5000);
+    Object.assign(d.items[i], { desc: c.name, sub: c.description || '', rate: c.price, qty: Number(d.items[i].qty) || 1 });
+  };
+  const markUsed = ids => api('catalog/used', { method: 'POST', body: { ids } }).catch(() => {});
+  let acIdx = -1, acList = [];
+  const closeAc = () => { $('#items .ac')?.remove(); acIdx = -1; acList = []; };
+  const showAc = inp => {
+    closeAc(); const q = inp.value.trim().toLowerCase(); if (!S.catalog.length || q.length < 1) return;
+    acList = S.catalog.filter(c => c.active).map(c => ({ c, s: (c.name.toLowerCase().startsWith(q) ? 0 : 1) - (curOf(c) === curOf(d) ? .5 : 0) - Math.min(c.used, 50) / 100 }))
+      .filter(({ c }) => [c.name, c.description, c.category, c.sku].join(' ').toLowerCase().includes(q)).sort((a, b) => a.s - b.s).slice(0, 8).map(x => x.c);
+    if (!acList.length) return;
+    const box = document.createElement('div'); box.className = 'ac';
+    box.innerHTML = acList.map((c, k) => `<div data-k="${k}"><span>${esc(plain(c.name))}${c.category ? ` <small>· ${esc(c.category)}</small>` : ''}</span><b>${money(c.price, curOf(c))}${c.unit ? ` <small>/${esc(c.unit)}</small>` : ''}</b></div>`).join('');
+    box.onmousedown = e => { const el = e.target.closest('[data-k]'); if (!el) return; e.preventDefault(); pickAc(inp, acList[el.dataset.k]); };
+    inp.parentElement.appendChild(box);
+  };
+  const pickAc = (inp, c) => { const i = Number(inp.closest('.item').dataset.i); applyCat(i, c); closeAc(); markUsed([c.id]); drawItems(); sync(); $(`#items .item[data-i="${i}"] input[data-k="qty"]`)?.select(); };
+  $('#items').addEventListener('input', e => { if (e.target.dataset.k === 'desc') showAc(e.target); });
+  $('#items').addEventListener('focusout', e => { if (e.target.dataset.k === 'desc') setTimeout(closeAc, 120); });
+  $('#items').addEventListener('keydown', e => {
+    if (e.target.dataset.k !== 'desc' || !acList.length) return;
+    const box = $('#items .ac'); if (!box) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); acIdx = (acIdx + (e.key === 'ArrowDown' ? 1 : -1) + acList.length) % acList.length; box.querySelectorAll('[data-k]').forEach((el, k) => el.classList.toggle('on', k === acIdx)); }
+    else if (e.key === 'Enter' && acIdx > -1) { e.preventDefault(); pickAc(e.target, acList[acIdx]); }
+    else if (e.key === 'Escape') closeAc();
+  });
+  $('#addcat').onclick = () => catalogPicker(curOf(d), picked => {
+    const empty = d.items.length === 1 && !d.items[0].desc && !Number(d.items[0].rate);
+    if (empty) d.items = [];
+    for (const { c, qty } of picked) { d.items.push({ desc: '', sub: '', qty, rate: 0 }); applyCat(d.items.length - 1, c); d.items[d.items.length - 1].qty = qty; }
+    markUsed(picked.map(p => p.c.id)); drawItems(); sync();
+  });
+  const pickClient = c => { if (c?.lang && c.lang !== curLang) { setLang(c.lang); toast(`Documenttaal: ${LANGS[c.lang]} (ingesteld bij klant)`); } d.client_id = c?.id || null; d.client = c ? { name: c.name, contact: c.contact, address: c.address, postal_city: c.postal_city, country: c.country, vat_number: c.vat_number, email: c.email, phone: c.phone } : {}; sync(); };
+  $('#csel').onchange = e => pickClient(S.clients.find(c => c.id == e.target.value));
+  $('#newc').onclick = () => clientModal({}, saved => { pickClient(saved); renderEditor(m); });
+  $('#back').onclick = () => go(d.type);
+  $('#toPrev').onclick = () => $('#pw').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('#print').onclick = () => { sync(); track('print_' + d.type); window.print(); };
+
+  const save = async (quiet) => {
+    sync();
+    if (d.type === 'factuur' && d.status === 'Betaald' && !d.paid_on) d.paid_on = today();
+    try { S.doc = await api('docs', { method: 'POST', body: d }); S.docs = await api('docs'); if (!quiet) toast('Opgeslagen'); renderEditor(m); return S.doc; }
+    catch (e) { toast(e.message, 1); }
+  };
+  $('#save').onclick = () => save();
+  if ($('#paid')) $('#paid').onclick = () => { track('mark_paid'); d.status = 'Betaald'; d.paid_on = d.paid_on || today(); form.status.value = 'Betaald'; if (form.paid_on) form.paid_on.value = d.paid_on; save(); };
+  if ($('#dup')) $('#dup').onclick = () => newDoc(d.type, { client_id: d.client_id, client: { ...d.client }, subject: d.subject, subject_detail: d.subject_detail, items: d.items.map(i => ({ ...i })), vat_rate: d.vat_rate, discount: d.discount, currency: curOf(d), lang: docLang(d), terms: d.terms });
+  if ($('#toInv')) $('#toInv').onclick = async () => {
+    track('convert_to_invoice');
+    if (d.status !== 'Geaccepteerd') { d.status = 'Geaccepteerd'; form.status.value = 'Geaccepteerd'; await save(true); }
+    const q = S.doc;
+    newDoc('factuur', { client_id: q.client_id, client: { ...q.client }, subject: q.subject, reference: q.number,
+      items: q.items.map(i => ({ desc: i.desc, sub: `Volgens offerte ${q.number}`, qty: i.qty, rate: i.rate })), vat_rate: q.vat_rate, discount: q.discount, currency: curOf(q), lang: docLang(q) });
+  };
+  if ($('#del')) $('#del').onclick = async () => { if (!confirm(`${d.number} definitief verwijderen?`)) return; await api('docs/' + d.id, { method: 'DELETE' }); S.docs = await api('docs'); go(d.type); toast('Verwijderd'); };
+}
+function fitPreview() {
+  const pw = $('#pw'), ps = $('#print-root'); if (!pw || !ps) return;
+  const sheet = ps.firstElementChild; if (!sheet) return;
+  const avail = pw.clientWidth - 36, w = sheet.offsetWidth, sc = Math.min(1, avail / w);
+  ps.style.transform = `scale(${sc})`; ps.style.height = (sheet.offsetHeight * sc) + 'px'; ps.style.width = w + 'px';
+}
+window.addEventListener('resize', fitPreview);
+
+// ================= document (A4) =================
+const ICON = {
+  pin: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>',
+  tel: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>',
+  web: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>',
+  doc: '<svg viewBox="0 0 40 44" fill="none" stroke="#f6b90b" stroke-width="3"><path d="M24 3H8a4 4 0 0 0-4 4v30a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4V15z"/><path d="M24 3v12h12M12 24h16M12 31h10"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="#f6b90b" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-5M12 8h.01"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="#f6b90b" stroke-width="2"><rect x="2" y="5" width="20" height="15" rx="2"/><path d="M16 12h2M2 9h20"/></svg>',
+};
+const HMARK = (bar = '#fff') => `<svg viewBox="0 0 64 56"><rect x="4" y="4" width="14" height="48" rx="2" fill="${bar}"/><rect x="42" y="4" width="14" height="48" rx="2" fill="${bar}"/><path d="M2 46 C 18 22, 38 22, 62 18" stroke="#f6b90b" stroke-width="9" fill="none" stroke-linecap="round"/></svg>`;
+function logoHTML(s) {
+  return `<div class="logo"><img src="${s.logo || '/logo-light.png'}" alt="${esc(s.company_name)}"></div>`;
+}
+function fill(text, d, s) {
+  return String(text || '').replaceAll('{btw}', String(d.vat_rate).replace('.', ',')).replaceAll('{geldig}', fdate(d.due_date, s._ds))
+    .replaceAll('{bedrijf}', s.company_name || '').replaceAll('{verval}', fdate(d.due_date, s._ds)).replaceAll('{email}', s.invoice_email || s.email || '').replaceAll('{valuta}', d.currency || s.currency || 'EUR');
+}
+// ---- documentindeling: blokken in rijen (max. 2 naast elkaar), teksten aanpasbaar ----
+const BLOCKS = {
+  title: 'Titel + nummers', to: 'Aan (klant)', from: 'Van (bedrijfsgegevens)', subject: 'Betreft',
+  items: 'Regels (tabel)', info: 'Voorwaarden / Betaalgegevens', totals: 'Totalen', closing: 'Afsluittekst', sign: 'Ondertekening',
+};
+const DEFAULT_LAYOUT = { rows: [['title'], ['to', 'from'], ['items'], ['info', 'totals'], ['closing'], ['sign']], hidden: ['subject'], pushDown: true, watermark: true };
+const THEME_LAYOUTS = {
+  hirely: DEFAULT_LAYOUT,
+  modern: { rows: [['from', 'to'], ['title'], ['items'], ['totals'], ['info'], ['closing']], hidden: ['subject', 'sign'], pushDown: false, watermark: false },
+};
+const brandLayout = () => parseJSON(BRAND.defaults?.doc_layout, null);
+const brandLabels = () => parseJSON(BRAND.defaults?.doc_labels, {}) || {};
+const DEFAULT_LABELS = {
+  title_offerte: 'Offerte / Quotation', title_factuur: 'Factuur / Invoice', subtitle_factuur: 'Recruitment & Talent Solutions',
+  m_qnr: 'Offertenr:', m_inr: 'Factuurnr:', m_qdate: 'Datum:', m_idate: 'Factuurdatum:', m_valid: 'Geldig tot:', m_due: 'Vervaldatum:', m_ref: 'Offertenr:',
+  to: 'Aan:', from: 'Van:', subject: 'Betreft:', attn: 'T.a.v.',
+  th_n: '#', th_desc: 'Omschrijving', th_qty: 'Aantal', th_rate: 'Tarief', th_amt: 'Bedrag',
+  info_q: 'Voorwaarden', info_i: 'Betaalgegevens', iban: 'IBAN:', bic: 'BIC:', tnv: 'Ten name van:', ref: 'Referentie:',
+  sub: 'Subtotaal', vat: 'BTW', total_q: 'Totaal (incl. BTW)', total_i: 'Totaal te betalen', greet: 'Met vriendelijke groet,',
+  kvk: 'KvK', btwnr: 'BTW-nr', discount: 'Korting',
+};
+const LANGS = { nl: 'Nederlands', en: 'English' };
+const LBL = {
+  nl: DEFAULT_LABELS,
+  en: { title_offerte: 'Quotation', title_factuur: 'Invoice', subtitle_factuur: DEFAULT_LABELS.subtitle_factuur,
+    m_qnr: 'Quote no:', m_inr: 'Invoice no:', m_qdate: 'Date:', m_idate: 'Invoice date:', m_valid: 'Valid until:', m_due: 'Due date:', m_ref: 'Quote no:',
+    to: 'To:', from: 'From:', subject: 'Subject:', attn: 'Attn.', th_n: '#', th_desc: 'Description', th_qty: 'Qty', th_rate: 'Rate', th_amt: 'Amount',
+    info_q: 'Terms', info_i: 'Payment details', iban: 'IBAN:', bic: 'BIC:', tnv: 'Account name:', ref: 'Reference:',
+    sub: 'Subtotal', vat: 'VAT', total_q: 'Total (incl. VAT)', total_i: 'Total due', greet: 'Kind regards,', kvk: 'CoC', btwnr: 'VAT no.', discount: 'Discount' },
+  nl_modern: { title_offerte: 'OFFERTE', title_factuur: 'FACTUUR', m_qdate: 'DATUM', m_idate: 'FACTUURDATUM', m_valid: 'GELDIG TOT', m_due: 'VERVALDATUM', m_ref: 'OFFERTENR.',
+    from: 'VAN', to: 'AAN', subject: 'BETREFT', th_desc: 'OMSCHRIJVING', th_qty: 'AANTAL', th_rate: 'TARIEF', th_amt: 'BEDRAG', total_i: 'TOTAAL', total_q: 'TOTAAL',
+    info_i: 'BETAALGEGEVENS', info_q: 'VOORWAARDEN', greet: '' },
+  en_modern: { title_offerte: 'QUOTATION', title_factuur: 'INVOICE', m_qdate: 'DATE', m_idate: 'INVOICE DATE', m_valid: 'VALID UNTIL', m_due: 'DUE DATE', m_ref: 'QUOTE NO.',
+    from: 'FROM', to: 'BILL TO', subject: 'SUBJECT', th_desc: 'DESCRIPTION', th_qty: 'QTY', th_rate: 'RATE', th_amt: 'AMOUNT', total_i: 'TOTAL', total_q: 'TOTAL',
+    info_i: 'PAYMENT INFORMATION', info_q: 'TERMS & CONDITIONS', greet: '' },
+};
+const baseLabels = (lang, theme) => ({ ...LBL[lang] || LBL.nl, ...(theme === 'modern' ? LBL[lang + '_modern'] || {} : {}) });
+const LANG_TEXTS = ['tagline', 'quote_terms', 'quote_closing', 'invoice_closing', 'footer_services'];
+const DEFAULT_TEXTS = {
+  en: { quote_terms: 'Prices exclude {btw}% VAT.\nThis quotation is valid until {geldig}.\nDelivery by arrangement.\nOur general terms and conditions apply.',
+    quote_closing: 'We hope this quotation meets your needs and look forward to working with you.',
+    invoice_closing: 'Please pay the total amount no later than {verval}.\nFor any questions, please contact {email}.' },
+  nl: { quote_terms: 'Prijzen zijn in {valuta}, exclusief {btw}% BTW.\nDeze offerte is geldig tot {geldig}.',
+    quote_closing: 'Wij hopen u met deze offerte van dienst te zijn en kijken uit naar een prettige samenwerking.',
+    invoice_closing: 'Gelieve het totaalbedrag uiterlijk {verval} te voldoen.\nBij vragen kunt u contact opnemen via {email}.' },
+};
+const mainLang = (s = S.settings) => s.doc_lang === 'en' ? 'en' : 'nl';
+const docLang = d => d?.lang === 'en' || d?.lang === 'nl' ? d.lang : mainLang();
+function langSettings(s, lang) {
+  const P = mainLang(s); lang = lang === 'en' || lang === 'nl' ? lang : P;
+  const out = { ...s, _lang: lang, _ds: s.date_style === 'nl' && lang === 'en' ? 'en' : (s.date_style === 'en' && lang === 'nl' ? 'nl' : s.date_style) };
+  if (lang === P) return out;
+  for (const k of LANG_TEXTS) out[k] = s[k + '_' + lang] || DEFAULT_TEXTS[lang]?.[k] || s[k] || '';
+  out.doc_labels = s['doc_labels_' + lang] || '{}';
+  return out;
+}
+function parseJSON(s, fb) { try { const v = JSON.parse(s); return v && typeof v === 'object' ? v : fb; } catch { return fb; } }
+function getLayout(s) {
+  const L = parseJSON(s.doc_layout, null) || THEME_LAYOUTS[s.doc_theme] || DEFAULT_LAYOUT;
+  const seen = new Set(), rows = [];
+  for (const r of (L.rows || [])) { const row = r.filter(b => BLOCKS[b] && !seen.has(b)).slice(0, 2); row.forEach(b => seen.add(b)); if (row.length) rows.push(row); }
+  const hidden = (L.hidden || []).filter(b => BLOCKS[b] && !seen.has(b)); hidden.forEach(b => seen.add(b));
+  for (const b of Object.keys(BLOCKS)) if (!seen.has(b)) rows.push([b]); // nieuw blok in een update → onderaan
+  // de tabel staat altijd alleen op een rij
+  const out = rows.flatMap(r => r.length > 1 && r.includes('items') ? r.map(b => [b]) : [r]);
+  return { rows: out, hidden, pushDown: L.pushDown !== false, watermark: L.watermark !== false };
+}
+function sheetHTML(d, s0, opt = {}) {
+  const esc = rich, escE = opt.edit ? ESC : rich; // in de sjablooneditor blijven tags zichtbaar en bewerkbaar
+  const s = langSettings(s0, d.lang), FD = iso => fdate(iso, s._ds);
+  const DC = d.currency || s.currency || 'EUR', M = n => money(n, DC);
+  const isQ = d.type === 'offerte', c = d.client || {}, t = calc(d.items, d.vat_rate, d.discount);
+  const modern = s.doc_theme === 'modern';
+  const items = d.items.filter(i => (i.desc || '').trim() || Number(i.rate));
+  const payLines = String(s.payment_info || '').split('\n').map(x => x.trim()).filter(Boolean)
+    .map(x => esc(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'));
+  const vatTxt = String(d.vat_rate).replace('.', ',');
+  const termLines = fill(d.terms, d, s).split('\n').map(x => x.trim()).filter(Boolean);
+  const labels = { ...baseLabels(s._lang, s.doc_theme), ...parseJSON(s.doc_labels, {}) };
+  const L = k => `<span data-l="${k}">${escE(labels[k])}</span>`;          // aanpasbaar label
+  const S = (k, v) => `<span data-s="${k}">${escE(v ?? s[k] ?? '')}</span>`; // aanpasbare instellingstekst
+  const lay = getLayout(s);
+  const R = {
+    title: () => `<div class="sh-title">
+      <div class="t">${ICON.doc}<div><h3>${L(isQ ? 'title_offerte' : 'title_factuur')}</h3><div class="tl">${isQ ? S('tagline') : L('subtitle_factuur')}</div></div></div>
+      <div class="metabox ${isQ ? '' : 'inv'}">
+        <div class="h">${L(isQ ? 'm_qnr' : 'm_inr')}<span>${esc(d.number)}</span></div>
+        <div>${L(isQ ? 'm_qdate' : 'm_idate')}<span>${FD(d.date)}</span></div>
+        <div>${L(isQ ? 'm_valid' : 'm_due')}<span>${FD(d.due_date)}</span></div>
+        ${!isQ && d.reference ? `<div>${L('m_ref')}<span>${esc(d.reference)}</span></div>` : ''}
+      </div></div>`,
+    to: () => `<div class="party"><b class="l">${L('to')}</b>${c.name ? `<div class="cn">${esc(c.name)}</div>` : `<div style="color:#999">${s._lang === 'en' ? '[client]' : '[klant]'}</div>`}
+      ${c.contact ? `<div>${L('attn')} ${esc(c.contact)}</div>` : ''}${c.address ? `<div>${esc(c.address)}</div>` : ''}${c.postal_city ? `<div>${esc(c.postal_city)}</div>` : ''}${c.country ? `<div>${esc(c.country)}</div>` : ''}${c.email ? `<div class="sm">${esc(c.email)}</div>` : ''}${c.vat_number ? `<div class="sm">${L('btwnr')} ${esc(c.vat_number)}</div>` : ''}</div>`,
+    from: () => `<div class="party"><b class="l">${L('from')}</b><div class="cn">${esc(s.company_name)}</div>
+      ${s.address ? `<div>${esc(s.address)}</div>` : ''}${s.postal_city ? `<div>${esc(s.postal_city)}${s.country ? ', ' + esc(s.country) : ''}</div>` : ''}
+      <div class="ico">${s.phone ? `<span>${ICON.tel}${esc(s.phone)}</span>` : ''}<span>${ICON.mail}${esc(isQ ? s.email : (s.invoice_email || s.email))}</span>${s.website ? `<span>${ICON.web}${esc(s.website)}</span>` : ''}</div>
+      ${(s.kvk || s.btw) ? `<div class="sm">${s.kvk ? L('kvk') + ' ' + esc(s.kvk) : ''}${s.kvk && s.btw ? ' · ' : ''}${s.btw ? L('btwnr') + ' ' + esc(s.btw) : ''}</div>` : ''}</div>`,
+    subject: () => `<div class="party"><b class="l">${L('subject')}</b><div style="font-weight:700">${esc(d.subject)}</div>${d.subject_detail ? `<div style="font-size:9pt">${esc(d.subject_detail)}</div>` : ''}</div>`,
+    items: () => `<table class="dt"><thead><tr><th style="width:9mm" class="c">${L('th_n')}</th><th>${L('th_desc')}</th><th class="c" style="width:18mm">${L('th_qty')}</th><th class="r" style="width:28mm">${L('th_rate')}</th><th class="r" style="width:30mm">${L('th_amt')}</th></tr></thead>
+      <tbody>${items.map((it, i) => `<tr><td class="c">${i + 1}</td><td><b>${esc(it.desc)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</td><td class="c">${esc(String(it.qty).replace('.', ','))}</td><td class="r">${M(it.rate)}</td><td class="r">${M((Number(it.qty) || 0) * (Number(it.rate) || 0))}</td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#999">—</td></tr>'}</tbody></table>`,
+    info: () => isQ
+      ? `<div class="infobox"><h4>${ICON.info}${L('info_q')}</h4>${opt.edit ? `<div style="white-space:pre-line;font-size:8.5pt">${S('quote_terms')}</div>` : `<ul>${termLines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>`}</div>`
+      : `<div class="infobox"><h4>${ICON.wallet}${L('info_i')}</h4>${payLines.length ? payLines.map(x => `<p>${x}</p>`).join('') : `<p><b>${L('iban')}</b> ${esc(s.iban)}</p>${s.bic ? `<p><b>${L('bic')}</b> ${esc(s.bic)}</p>` : ''}<p><b>${L('tnv')}</b> ${esc(s.company_name)}</p>`}<p><b>${L('ref')}</b> ${esc(d.number)}</p></div>`,
+    totals: () => `<div class="tots"><div><b>${L('sub')}</b><span>${M(t.subtotal)}</span></div>${t.discount ? `<div><span>${L('discount')}</span><span>−${M(t.discount)}</span></div>` : ''}<div><span>${L('vat')} (${vatTxt}%)</span><span>${M(t.vat_amount)}</span></div>
+      <div class="g">${L(isQ ? 'total_q' : 'total_i')}<span>${M(t.total)}</span></div></div>`,
+    closing: () => `<div class="closing">${isQ ? S('quote_closing') : (opt.edit ? S('invoice_closing', s.invoice_closing) : esc(termLines.join('\n')))}${isQ ? '' : `\n\n${L('greet')}`}</div>`,
+    sign: () => `<div class="sign">
+      <div class="who"><b>${esc(isQ ? s.quote_signer : s.invoice_signer)}</b>${esc(isQ ? s.quote_signer_role : s.invoice_signer_role)}</div>
+      ${isQ && (s.quote_signer_phone || s.quote_signer_email) ? `<div class="ct">${s.quote_signer_phone ? `<div>${esc(s.quote_signer_phone)}</div>` : ''}${s.quote_signer_email ? `<div>${esc(s.quote_signer_email)}</div>` : ''}</div>` : ''}</div>`,
+  };
+  if (modern) Object.assign(R, {
+    title: () => `<div class="m-dates"><div><div class="ml">${L(isQ ? 'm_qdate' : 'm_idate')}</div><b>${FD(d.date)}</b></div><div><div class="ml">${L(isQ ? 'm_valid' : 'm_due')}</div><b>${FD(d.due_date)}</b></div>${!isQ && d.reference ? `<div><div class="ml">${L('m_ref')}</div><b>${esc(d.reference)}</b></div>` : ''}</div>`,
+    to: () => `<div class="m-box"><div class="ml">${L('to')}</div>${c.name ? `<div class="m-name">${esc(c.name)}</div>` : `<div style="color:#999">${s._lang === 'en' ? '[client]' : '[klant]'}</div>`}
+      <div class="m-sub">${[c.contact ? `${L('attn')} ${esc(c.contact)}` : '', esc(c.address || ''), esc(c.postal_city || ''), esc(c.country || ''), esc(c.email || ''), c.phone ? esc(c.phone) : '', c.vat_number ? `${L('btwnr')} ${esc(c.vat_number)}` : ''].filter(Boolean).join('<br>')}</div></div>`,
+    from: () => `<div class="m-box"><div class="ml">${L('from')}</div><div class="m-name">${esc(s.company_name)}</div>
+      <div class="m-sub">${[esc(s.address || ''), [s.postal_city, s.country].filter(Boolean).map(esc).join(', '), esc(s.phone || ''), esc((isQ ? s.email : (s.invoice_email || s.email)) || ''), esc(s.website || ''),
+        [s.kvk ? L('kvk') + ' ' + esc(s.kvk) : '', s.btw ? L('btwnr') + ' ' + esc(s.btw) : ''].filter(Boolean).join(' · ')].filter(Boolean).join('<br>')}</div></div>`,
+    subject: () => `<div class="m-box"><div class="ml">${L('subject')}</div><div class="m-name">${esc(d.subject)}</div>${d.subject_detail ? `<div class="m-sub">${esc(d.subject_detail)}</div>` : ''}</div>`,
+    items: () => `<table class="m-table"><thead><tr><th>${L('th_desc')}</th><th class="c" style="width:16mm">${L('th_qty')}</th><th class="r" style="width:32mm">${L('th_rate')}</th><th class="r" style="width:34mm">${L('th_amt')}</th></tr></thead>
+      <tbody>${items.map(it => `<tr><td>${esc(it.desc)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</td><td class="c">${esc(String(it.qty))}</td><td class="r">${M(it.rate)}</td><td class="r">${M((Number(it.qty) || 0) * (Number(it.rate) || 0))}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#999">—</td></tr>'}</tbody></table>`,
+    totals: () => `<div class="m-tots"><div><span>${L('sub')}</span><span>${M(t.subtotal)}</span></div>${t.discount ? `<div><span>${L('discount')}</span><span>−${M(t.discount)}</span></div>` : ''}
+      <div><span>${L('vat')} (${String(d.vat_rate)}%)</span><span>${M(t.vat_amount)}</span></div>
+      <div class="g"><span>${L(isQ ? 'total_q' : 'total_i')}</span><span>${M(t.total)}</span></div></div>`,
+    info: () => isQ
+      ? `<div class="m-box"><div class="ml">${L('info_q')}</div><div class="m-sub" style="white-space:pre-line">${opt.edit ? S('quote_terms') : termLines.map(esc).join('<br>')}</div></div>`
+      : `<div class="m-box"><div class="ml">${L('info_i')}</div><div class="m-pay">${payLines.length ? payLines.join('<br>') : [s.iban ? `<b>${L('iban')}</b> ${esc(s.iban)}` : '', s.bic ? `<b>${L('bic')}</b> ${esc(s.bic)}` : '', `<b>${L('tnv')}</b> ${esc(s.company_name)}`].filter(Boolean).join('<br>')}</div></div>`,
+    closing: () => `<div class="m-closing">${isQ ? S('quote_closing') : (opt.edit ? S('invoice_closing', s.invoice_closing) : esc(termLines.join('\n')))}${!isQ && labels.greet ? `\n\n${L('greet')}` : ''}</div>`,
+    sign: () => `<div class="m-sign"><b>${esc(isQ ? s.quote_signer : s.invoice_signer)}</b><span>${esc(isQ ? s.quote_signer_role : s.invoice_signer_role)}</span></div>`,
+  });
+  const block = b => `<div class="blk" data-b="${b}">${opt.edit ? `<span class="blk-h" data-drag="${b}">⠿ ${esc(BLOCKS[b])}</span>` : ''}${R[b]()}</div>`;
+  // afsluiting + ondertekening onderaan de pagina: eerste rij met een van beide krijgt 'push'
+  const pushAt = lay.pushDown ? lay.rows.findIndex(r => r.includes('closing') || r.includes('sign')) : -1;
+  const rows = lay.rows.map((r, ri) => `<div class="rw ${ri === pushAt && ri > 0 ? 'push' : ''} ${r.length > 1 ? 'two' : ''} ${r.includes('totals') && r.length > 1 ? (r[0] === 'totals' ? 'tl' : 'tr') : ''}">${r.map(block).join('')}</div>`).join('');
+  const wm = lay.watermark ? `<img class="wm${s.logo ? ' wm-custom' : ''}" src="${s.logo || '/watermark.png'}" alt="">` : '';
+  if (modern) return `<div class="sheet modern${opt.edit ? ' editing' : ''}">
+  <div class="m-top"></div>
+  <div class="m-head"><div class="m-logo"><img src="${s.logo || '/logo.png'}" alt=""></div>
+    <div class="m-ttl"><h1>${L(isQ ? 'title_offerte' : 'title_factuur')}</h1><div class="m-no">${esc(d.number)}</div>${isQ && s.tagline ? `<div class="m-tag">${S('tagline')}</div>` : ''}</div></div>
+  <div class="m-rule"></div>
+  <div class="sh-body">${wm}${rows}</div>
+  <div class="m-foot"><div><i></i><span>${esc(s.company_name)}</span></div><span>${esc(d.number)}</span></div>
+</div>`;
+  return `<div class="sheet${opt.edit ? ' editing' : ''}">
+  <div class="sh-head">
+    ${logoHTML(s)}
+    <svg class="sh-wave" viewBox="0 0 210 20" preserveAspectRatio="none">
+      <path d="M0 20 L0 13 C 45 3, 110 12, 210 2 L210 20 Z" fill="#fff"/>
+      <path d="M0 18 C 18 10, 40 6, 64 6 C 40 8, 18 13, 0 20 Z" fill="#f6b90b"/>
+    </svg>
+  </div>
+  <div class="sh-body">
+    ${wm}
+    ${rows}
+  </div>
+  <div class="sh-foot"><img class="fmark" src="${s.logo || '/mark.png'}" alt=""><b>${esc(s.company_name)}</b><span class="sep">|</span>${S('footer_services')}</div>
+</div>`;
+}
+
+// ================= shared bindings =================
+function bindCommon(m) {
+  m.querySelectorAll('[data-open]').forEach(r => r.onclick = () => openDoc(r.dataset.open));
+  m.querySelectorAll('[data-new]').forEach(b => b.onclick = () => newDoc(b.dataset.new));
+}
+
+// ---- rol-afhankelijke weergave (de server dwingt de rechten zelf af) ----
+function applyRole() {
+  const b = document.body.classList;
+  b.toggle('ro-docs', !can('docs.write')); b.toggle('ro-del', !can('docs.delete'));
+  b.toggle('ro-clients', !can('clients.write')); b.toggle('ro-catalog', !can('catalog.write'));
+  b.toggle('ro-rates', !can('rates.write')); b.toggle('ro-settings', !can('settings.write'));
+}
+setInterval(() => fetch('/api/ping').then(r => { if (r.status === 401) location.href = '/login'; }).catch(() => {}), 120000);
+$('#mHelp').onclick = () => go('handleiding');
+$('#whoName').textContent = ME.name; $('#whoRole').textContent = ROLE_LABEL[ME.role] || ROLE_LABEL['alleen-lezen'];
+$('#sideOut').onclick = doLogout;
+applyRole();
+loadAll().then(() => { setSideLogo(); $('#ver').textContent = $('#mVer').textContent = 'v' + APP_VERSION; render(); })
+  .catch(e => { $('#main').innerHTML = `<div class="card empty">Kan de gegevens niet laden.<br><small>${esc(e.message)}</small></div>`; });
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+// Databaseschema (Postgres / Neon). Idempotent: veilig om vaker uit te voeren.
+export const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS users (
+     id SERIAL PRIMARY KEY,
+     email TEXT NOT NULL UNIQUE,
+     name TEXT NOT NULL,
+     role TEXT NOT NULL CHECK (role IN ('admin','boekhouder','medewerker','alleen-lezen')),
+     password_hash TEXT NOT NULL,
+     active BOOLEAN NOT NULL DEFAULT TRUE,
+     session_version INTEGER NOT NULL DEFAULT 1,
+     failed_attempts INTEGER NOT NULL DEFAULT 0,
+     locked_until TIMESTAMPTZ,
+     last_login TIMESTAMPTZ,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower ON users (lower(email))`,
+  `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
+  `CREATE TABLE IF NOT EXISTS clients (
+     id SERIAL PRIMARY KEY,
+     name TEXT NOT NULL, contact TEXT, address TEXT, postal_city TEXT, country TEXT,
+     vat_number TEXT, email TEXT, phone TEXT, notes TEXT, lang TEXT,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE TABLE IF NOT EXISTS documents (
+     id SERIAL PRIMARY KEY,
+     type TEXT NOT NULL CHECK (type IN ('offerte','factuur')),
+     number TEXT NOT NULL UNIQUE, date TEXT, due_date TEXT,
+     client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL, client_json TEXT,
+     subject TEXT, subject_detail TEXT, reference TEXT,
+     items_json TEXT NOT NULL DEFAULT '[]', vat_rate DOUBLE PRECISION NOT NULL DEFAULT 21,
+     subtotal DOUBLE PRECISION NOT NULL DEFAULT 0, vat_amount DOUBLE PRECISION NOT NULL DEFAULT 0, total DOUBLE PRECISION NOT NULL DEFAULT 0,
+     discount DOUBLE PRECISION NOT NULL DEFAULT 0,
+     status TEXT, paid_on TEXT, terms TEXT, notes TEXT,
+     currency TEXT, fx_rate DOUBLE PRECISION, fx_base TEXT, lang TEXT,
+     created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_by_name TEXT,
+     updated_by_name TEXT,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE INDEX IF NOT EXISTS documents_type_date ON documents (type, date DESC)`,
+  `CREATE TABLE IF NOT EXISTS catalog (
+     id SERIAL PRIMARY KEY,
+     kind TEXT NOT NULL DEFAULT 'dienst' CHECK (kind IN ('dienst','product')),
+     name TEXT NOT NULL, description TEXT, category TEXT, unit TEXT, sku TEXT,
+     price DOUBLE PRECISION NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, used INTEGER NOT NULL DEFAULT 0,
+     currency TEXT,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE TABLE IF NOT EXISTS rates (
+     id SERIAL PRIMARY KEY, date TEXT NOT NULL, currency TEXT NOT NULL, base TEXT NOT NULL, rate DOUBLE PRECISION NOT NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (date, currency, base))`,
+  `CREATE TABLE IF NOT EXISTS audit_log (
+     id BIGSERIAL PRIMARY KEY, at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     user_id INTEGER, user_name TEXT, action TEXT NOT NULL, detail TEXT)`,
+];

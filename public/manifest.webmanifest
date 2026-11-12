@@ -1,7 +1,7 @@
 {
   "name": "ICA Administratie",
   "short_name": "ICA",
-  "start_url": "/",
+  "start_url": "/app",
   "display": "standalone",
   "background_color": "#f3f5f9",
   "theme_color": "#102454",

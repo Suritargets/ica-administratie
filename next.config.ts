@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   poweredByHeader: false,
-  outputFileTracingIncludes: { '/': ['./src/spa/**/*', './src/brand/**/*'] },
+  outputFileTracingIncludes: { '/app': ['./src/spa/**/*', './src/brand/**/*'] },
   async headers() {
     return [{
       source: '/:path*',

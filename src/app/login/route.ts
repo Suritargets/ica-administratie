@@ -30,13 +30,13 @@ button:hover{background:var(--navy2)}button:disabled{opacity:.6;cursor:wait}
 const f=document.getElementById('f'),err=document.getElementById('err'),go=document.getElementById('go');
 f.onsubmit=async e=>{e.preventDefault();err.textContent='';go.disabled=true;go.textContent='Bezig…';
  try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,password:f.password.value})});
-  const j=await r.json().catch(()=>({}));if(r.ok){location.replace('/');return}err.textContent=j.error||'Inloggen mislukt.'}
+  const j=await r.json().catch(()=>({}));if(r.ok){location.replace('/app');return}err.textContent=j.error||'Inloggen mislukt.'}
  catch{err.textContent='Geen verbinding met de server.'}
  go.disabled=false;go.textContent='Inloggen'};
 </script></body></html>`;
 
 export async function GET(req: Request) {
-  try { if (await currentUser(req)) return new Response(null, { status: 302, headers: { Location: '/' } }); } catch {}
+  try { if (await currentUser(req)) return new Response(null, { status: 302, headers: { Location: '/app' } }); } catch {}
   return new Response(page(), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
     'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; form-action 'self'" } });
 }

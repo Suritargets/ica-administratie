@@ -35,6 +35,12 @@ a{color:inherit}
 .nav:hover{background:var(--navy-2);color:#fff}
 .nav.on{background:var(--yellow);color:var(--on-accent,var(--navy));font-weight:600}
 .nav svg{width:18px;height:18px;flex:none}
+.grp{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:#fff;cursor:pointer;border:0;background:none;text-align:left;width:100%;font-weight:600;font-size:inherit;font-family:inherit}
+.grp:hover{background:var(--navy-2)}.grp svg{width:18px;height:18px;flex:none}.grp span{flex:1}.grp .chev{width:16px;height:16px;transition:transform .15s}
+.grp.closed .chev{transform:rotate(-90deg)}
+.grp-body{display:flex;flex-direction:column;gap:2px}.grp.closed+.grp-body{display:none}
+.nav.sub{padding:8px 12px 8px 26px;font-size:14px}
+.tag.Deels{background:#fff4d6;color:#8a6100}
 .side-foot{margin-top:auto;font-size:11px;color:#8b96ad;padding:8px;line-height:1.6}
 .credit a{color:var(--accent-dark,var(--yellow));text-decoration:none;font-weight:600}.credit a:hover{text-decoration:underline}
 .mfoot{display:none}
@@ -267,6 +273,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--yellow);outline-
   .nav{flex:1 1 0;flex-direction:column;gap:3px;padding:6px 0;font-size:10.5px;white-space:nowrap;overflow:hidden;border-radius:10px;text-align:center;justify-content:center;width:auto;min-width:0;color:#aab5cc}
   .nav svg{width:22px;height:22px}
   .nav.d-nav{display:none}
+  .grp{display:none}.grp-body,.grp.closed+.grp-body{display:contents!important}.nav.sub{padding:6px 0;font-size:10.5px}
   .help{grid-template-columns:1fr}.help-toc{position:static;max-height:none;flex-direction:row;flex-wrap:wrap}.help-toc input{width:100%}.help-toc a{background:#f1f4f9;font-size:12px}
   .nav .lbl{font-size:0}.nav .lbl::after{content:attr(data-s);font-size:10px}
   .nav.on{background:transparent;color:var(--accent-dark,var(--yellow));font-weight:600}
@@ -352,16 +359,22 @@ body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catal
       <div class="brand-sub" style="color:#8b96ad">ADMINISTRATIE</div>
     </div>
     <button class="nav" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="lbl" data-s="Home">Dashboard</span></button>
-    <button class="nav" data-view="offerte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl" data-s="Offerte">Offertes</span></button>
-    <button class="nav" data-view="factuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="lbl" data-s="Factuur">Facturen</span></button>
+    <button class="grp" id="salesGrp" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M12 7v10M14.5 9.5c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.4.7-2.4 1.8s1 1.5 2.4 1.9c1.4.4 2.4.8 2.4 1.9s-1 1.8-2.4 1.8c-1.1 0-2-.4-2.5-1.2"/></svg><span>Sales</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="grp-body" id="salesBody">
+    <button class="nav sub" data-view="offerte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl" data-s="Offerte">Offertes</span></button>
+    <button class="nav sub" data-view="factuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="lbl" data-s="Factuur">Facturen</span></button>
+    <button class="nav sub d-nav" data-view="creditnota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 12h6"/></svg><span class="lbl" data-s="Credit">Creditnota's</span></button>
+    <button class="nav sub d-nav" data-view="betalingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span class="lbl" data-s="Betaling">Betalingen</span></button>
+    <button class="nav sub" data-view="catalogus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Items">Catalogus</span></button>
+    <button class="nav sub d-nav" data-view="terugkerend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18.5 2v4h-4M5.5 22v-4h4"/></svg><span class="lbl" data-s="Terugk.">Terugkerend</span></button>
+    </div>
     <button class="nav" data-view="klanten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span class="lbl" data-s="Klanten">Klanten</span></button>
     <button class="nav d-nav" data-view="afspraken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="lbl" data-s="Afspraken">Afspraken</span></button>
-    <button class="nav" data-view="catalogus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Items">Catalogus</span></button>
     <button class="nav" data-view="valuta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span class="lbl" data-s="Valuta">Valuta</span></button>
     <button class="nav" data-view="bedrijf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg><span class="lbl" data-s="Bedrijf">Bedrijf</span></button>
     <button class="nav" data-view="instellingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="lbl" data-s="Instel.">Instellingen</span></button>
-    <button class="nav" data-view="gebruikers" id="navUsers" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M22 21v-1a6 6 0 0 0-4-5.6"/></svg><span class="lbl" data-s="Users">Gebruikers</span></button>
-    <button class="nav" data-view="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg><span class="lbl" data-s="Account">Mijn account</span></button>
+    <button class="nav d-nav" data-view="gebruikers" id="navUsers" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M22 21v-1a6 6 0 0 0-4-5.6"/></svg><span class="lbl" data-s="Users">Gebruikers</span></button>
+    <button class="nav d-nav" data-view="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg><span class="lbl" data-s="Account">Mijn account</span></button>
     <button class="nav d-nav" data-view="handleiding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg><span class="lbl" data-s="Help">Handleiding</span></button>
     <div class="side-foot"><b id="whoName"></b><br><span id="whoRole" style="opacity:.8"></span> · <a href="#" id="sideOut" style="color:#9cc0f0">Uitloggen</a><br>Versie <span id="ver"></span><div class="credit" style="margin-top:8px;padding-top:8px;border-top:1px solid #23355a">Design by <a href="https://suritargets.com" target="_blank" rel="noopener">suritargets.com</a></div></div>
   </aside>
@@ -448,8 +461,10 @@ function toast(msg, err, ms = 2600) {
   const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), ms);
 }
-const STATUS = { offerte: ['Concept', 'Verzonden', 'Geaccepteerd', 'Afgewezen', 'Verlopen'], factuur: ['Concept', 'Open', 'Betaald', 'Vervallen'] };
+const STATUS = { offerte: ['Concept', 'Verzonden', 'Geaccepteerd', 'Afgewezen', 'Verlopen'], factuur: ['Concept', 'Open', 'Betaald', 'Vervallen'], creditnota: ['Concept', 'Verzonden', 'Verwerkt'] };
+const TYPE_NL = { offerte: 'offerte', factuur: 'factuur', creditnota: 'creditnota' };
 const effStatus = d => (d.type === 'factuur' && d.status === 'Open' && d.due_date && d.due_date < today()) ? 'Vervallen'
+  : (d.type === 'factuur' && d.status === 'Open' && d.paid_amount > 0) ? 'Deels betaald'
   : (d.type === 'offerte' && ['Concept', 'Verzonden'].includes(d.status) && d.due_date && d.due_date < today()) ? 'Verlopen' : d.status;
 const tag = d => { const s = effStatus(d) || '—'; return `<span class="tag ${esc(s)}">${esc(s)}</span>`; };
 
@@ -463,6 +478,8 @@ function go(view) {
   if (S.view === 'sjabloon' && S.tpl?.dirty && !confirm('Je wijzigingen aan de documentindeling zijn nog niet opgeslagen. Toch weggaan?')) return;
   S.view = view; S.doc = null; S.filter = { q: '', status: '', kind: '', cat: '', cur: '' }; render(); window.scrollTo(0, 0); }
 document.querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.view));
+$('#salesGrp').onclick = () => { const g = $('#salesGrp'); g.classList.toggle('closed'); try { localStorage.setItem('salesClosed', g.classList.contains('closed') ? '1' : ''); } catch {} };
+try { if (localStorage.getItem('salesClosed')) $('#salesGrp').classList.add('closed'); } catch {}
 
 function roPostRender(m) {
   const off = el => { el.disabled = true; };
@@ -476,7 +493,7 @@ function render0() {
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('on', b.dataset.view === (S.doc ? S.doc.type : S.view === 'sjabloon' ? 'bedrijf' : S.view)));
   const m = $('#main');
   if (S.doc) return renderEditor(m);
-  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, klanten: renderClients, afspraken: renderAppointments, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings, gebruikers: renderUsersView, account: renderAccountView })[S.view](m);
+  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, creditnota: renderList, betalingen: renderPayments, terugkerend: renderRecurring, klanten: renderClients, afspraken: renderAppointments, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings, gebruikers: renderUsersView, account: renderAccountView })[S.view](m);
 }
 
 // ================= dashboard =================
@@ -515,16 +532,16 @@ function renderList(m) {
     .filter(d => !f.cur || curOf(d) === f.cur);
   const usedCur = [...new Set(S.docs.filter(d => d.type === type).map(curOf))];
   m.innerHTML = `
-  <div class="top"><h1>${isQ ? 'Offerte register' : 'Factuur register'}</h1>
-    <div class="row"><button class="btn sm" id="csv">Export CSV</button><button class="btn pri" data-new="${type}">+ Nieuwe ${type}</button></div></div>
+  <div class="top"><h1>${{ offerte: 'Offerte register', factuur: 'Factuur register', creditnota: 'Creditnota register' }[type]}</h1>
+    <div class="row"><button class="btn sm" id="csv">Export CSV</button><button class="btn pri" data-new="${type}">+ Nieuwe ${TYPE_NL[type]}</button></div></div>
   <div class="card">
     <div class="filters"><input id="fq" placeholder="Zoek op nummer, klant, omschrijving…" value="${esc(f.q)}">
       <select id="fs"><option value="">Alle statussen</option>${STATUS[type].concat(isQ ? [] : []).map(s => `<option ${f.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
       ${usedCur.length > 1 || f.cur ? `<select id="fc"><option value="">Alle valuta's</option>${usedCur.map(c => `<option ${f.cur === c ? 'selected' : ''}>${c}</option>`).join('')}</select>` : ''}</div>
     <div class="tablewrap"><table class="list cards"><thead><tr>
-      <th>${isQ ? 'Offertenr.' : 'Factuurnr.'}</th><th>Datum</th><th>Klant</th><th>Omschrijving</th><th>${isQ ? 'Geldig tot' : 'Vervaldatum'}</th>${isQ ? '' : '<th>Offertenr.</th>'}<th>Status</th><th class="num">Excl. BTW</th><th class="num">Incl. BTW</th></tr></thead>
+      <th>${{ offerte: 'Offertenr.', factuur: 'Factuurnr.', creditnota: 'Creditnr.' }[type]}</th><th>Datum</th><th>Klant</th><th>Omschrijving</th><th>${isQ ? 'Geldig tot' : 'Vervaldatum'}</th>${isQ ? '' : `<th>${type === 'creditnota' ? 'Factuurnr.' : 'Offertenr.'}</th>`}<th>Status</th><th class="num">Excl. BTW</th><th class="num">Incl. BTW</th></tr></thead>
     <tbody>${rows.map(d => `<tr class="click" data-open="${d.id}"><td class="c-num"><b>${esc(d.number)}</b></td><td class="m-hide">${fdate(d.date)}</td><td class="c-cli">${esc(plain(d.client?.name || '—'))}<div class="muted d-only">${esc(d.client?.contact || '')}</div></td><td class="m-hide">${esc(d.subject || '')}</td><td class="m-hide">${fdate(d.due_date)}</td>${isQ ? '' : `<td class="m-hide">${esc(d.reference || '')}</td>`}<td class="c-st">${tag(d)}</td><td class="num m-hide">${money(d.subtotal, curOf(d))}</td><td class="num c-tot"><b>${money(d.total, curOf(d))}</b></td><td class="c-meta m-only">${fdate(d.date)} · ${isQ ? 'geldig tot' : 'vervalt'} ${fdate(d.due_date)}${d.subject ? ' · ' + esc(d.subject) : ''}</td></tr>`).join('')
-      || `<tr><td colspan="9" class="empty">Nog geen ${isQ ? 'offertes' : 'facturen'}. Klik op “+ Nieuwe ${type}”.</td></tr>`}</tbody>
+      || `<tr><td colspan="9" class="empty">Nog geen ${{ offerte: 'offertes', factuur: 'facturen', creditnota: "creditnota's" }[type]}. Klik op “+ Nieuwe ${TYPE_NL[type]}”.</td></tr>`}</tbody>
     ${rows.length ? `<tfoot><tr><td colspan="${isQ ? 7 : 8}" class="muted" style="padding:10px">${rows.length} regels</td><td class="num" style="padding:10px"><b>${moneyMulti(sumByCur(rows, 'total'))}</b></td></tr></tfoot>` : ''}
     </table></div>
   </div>`;
@@ -1089,6 +1106,7 @@ const SETTING_FIELDS = [
 function renderSettings(m) {
   const s = S.settings;
   m.innerHTML = `<div class="top"><h1>Instellingen</h1>${can('settings.write') ? '<button class="btn pri" id="saveS">Opslaan</button>' : ''}</div>
+  <div class="row m-only" style="margin-bottom:12px"><button class="btn" data-go="account">Mijn account</button>${can('users.manage') ? '<button class="btn" data-go="gebruikers">Gebruikers</button>' : ''}<button class="btn" data-go="betalingen">Betalingen</button><button class="btn" data-go="terugkerend">Terugkerend</button><button class="btn" data-go="creditnota">Creditnota's</button></div>
   <div class="card"><form id="sf">
     ${SETTING_FIELDS.map(([t, fs]) => `<div class="sect">${t}</div><div class="form">${fs.map(f => fieldHTML(f, s)).join('')}</div>`).join('')}
     <div class="sect">Teksten</div><div class="form">
@@ -1098,6 +1116,7 @@ function renderSettings(m) {
   </form><p class="muted" style="margin-bottom:0">Bedrijfsnaam, adres, IBAN en logo pas je aan onder <a href="#" id="toCo">Bedrijf</a>.</p></div>
   ${can('settings.write') ? '<div class="card" style="margin-top:18px"><h2>E-mail</h2><p class="muted" style="margin-top:0">Afspraakaanvragen worden gemeld aan het e-mailadres onder Bedrijf (of het SMTP-account), en bezoekers krijgen een ontvangstbevestiging en een bericht bij bevestigen of annuleren.</p><button class="btn" id="mailTest">Test e-mail naar mezelf</button></div>' : ''}
   ${can('data.export') ? '<div class="card" style="margin-top:18px"><h2>Gegevens exporteren</h2><p class="muted" style="margin-top:0">Download alle gegevens (klanten, documenten, catalogus, koersen, instellingen) als JSON-bestand. De database draait op Neon met automatische back-ups; dit is een extra kopie voor jezelf.</p><a class="btn yel" href="/api/backup">Export downloaden (.json)</a></div>' : ''}`;
+  m.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
   if ($('#mailTest')) $('#mailTest').onclick = async () => { const b = $('#mailTest'); b.disabled = true; try { const r = await api('mail/test', { method: 'POST' }); toast('Test-mail verstuurd naar ' + r.to, false, 4500); } catch (e) { toast(e.message, 1, 5000); } b.disabled = false; };
   if ($('#saveS')) $('#saveS').onclick = async () => { try { S.settings = await api('settings', { method: 'POST', body: Object.fromEntries(new FormData($('#sf'))) }); toast('Instellingen opgeslagen'); } catch (e) { toast(e.message, 1); } };
   if ($('#toCo')) $('#toCo').onclick = e => { e.preventDefault(); go('bedrijf'); };
@@ -1168,6 +1187,104 @@ function userModal(u, done) {
   };
 }
 
+// ================= betalingen =================
+const METHODS = ['Bank', 'Contant', 'Kaart', 'Anders'];
+async function renderPayments(m) {
+  m.innerHTML = '<div class="top"><h1>Betalingen</h1></div><div class="card"><div class="muted">Laden…</div></div>';
+  let list = [];
+  try { list = await api('payments'); } catch (e) { m.querySelector('.card').textContent = e.message; return; }
+  S.docs = await api('docs');
+  const month = today().slice(0, 7);
+  const thisMonth = list.filter(p => (p.date || '').startsWith(month));
+  const sumCur = arr => moneyMulti(sumByCur(arr.map(p => ({ currency: p.currency, total: p.amount })), 'total'));
+  m.innerHTML = `<div class="top"><h1>Betalingen</h1>${can('docs.write') ? '<button class="btn pri" id="pNew">+ Betaling</button>' : ''}</div>
+  <div class="kpis"><div class="card kpi"><div class="l">Ontvangen deze maand</div><div class="v">${thisMonth.length ? sumCur(thisMonth) : '—'}</div><div class="muted">${thisMonth.length} betalingen</div></div>
+    <div class="card kpi"><div class="l">Totaal ontvangen</div><div class="v">${list.length ? sumCur(list) : '—'}</div><div class="muted">${list.length} betalingen</div></div>
+    <div class="card kpi"><div class="l">Openstaande facturen</div><div class="v">${S.docs.filter(d => d.type === 'factuur' && d.status === 'Open').length}</div><div class="muted">nog niet volledig betaald</div></div></div>
+  <div class="card"><div class="tablewrap"><table class="list"><thead><tr><th>Datum</th><th>Factuur</th><th>Klant</th><th>Methode</th><th>Referentie</th><th class="num">Bedrag</th><th></th></tr></thead>
+  <tbody>${list.map(p => `<tr><td>${fdate(p.date)}</td><td><a href="#" data-inv="${p.invoice_id}"><b>${esc(p.number)}</b></a></td><td>${esc(plain(p.client?.name || '—'))}</td><td>${esc(p.method)}</td><td>${esc(p.reference || '')}</td><td class="num"><b>${money(p.amount, p.currency || defCur())}</b></td>
+    <td class="num">${can('docs.delete') ? `<button class="btn sm danger" data-pdel="${p.id}">Verwijderen</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nog geen betalingen. Klik op “+ Betaling”.</td></tr>'}</tbody></table></div></div>`;
+  if ($('#pNew')) $('#pNew').onclick = () => paymentModal(null, () => renderPayments(m));
+  m.querySelectorAll('[data-inv]').forEach(a => a.onclick = e => { e.preventDefault(); openDoc(a.dataset.inv); });
+  m.querySelectorAll('[data-pdel]').forEach(b => b.onclick = async () => {
+    if (!confirm('Deze betaling verwijderen? De factuurstatus wordt opnieuw berekend.')) return;
+    try { await api('payments/' + b.dataset.pdel, { method: 'DELETE' }); toast('Verwijderd'); renderPayments(m); } catch (e) { toast(e.message, 1); }
+  });
+}
+function paymentModal(inv, done) {
+  const open = S.docs.filter(d => d.type === 'factuur' && d.status !== 'Betaald');
+  const remaining = d => Math.max(Math.round(((d?.total || 0) - (d?.paid_amount || 0)) * 100) / 100, 0);
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal"><h2>Betaling registreren</h2><form id="pf" class="form" autocomplete="off">
+    <label class="f full">Factuur<select name="invoice_id" ${inv ? 'disabled' : ''}>${inv ? `<option value="${inv.id}">${esc(inv.number)}</option>` : '<option value="">— Kies factuur —</option>' + open.map(d => `<option value="${d.id}">${esc(d.number)} · ${esc(plain(d.client?.name || ''))} · ${money(remaining(d), curOf(d))} open</option>`).join('')}</select></label>
+    <label class="f">Bedrag<input name="amount" type="number" step="0.01" min="0.01" required value="${inv ? remaining(inv) : ''}"></label>
+    <label class="f">Datum<input name="date" type="date" required value="${today()}"></label>
+    <label class="f">Methode<select name="method">${METHODS.map(x => `<option>${x}</option>`).join('')}</select></label>
+    <label class="f">Referentie<input name="reference" placeholder="Bijv. bankreferentie"></label>
+    <label class="f full">Notitie<input name="note"></label></form>
+    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" id="pcancel">Annuleren</button><button class="btn pri" id="psave">Opslaan</button></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove(), f = $('#pf', bg);
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $('#pcancel', bg).onclick = close;
+  if (!inv) f.invoice_id.onchange = () => { const d = open.find(x => String(x.id) === f.invoice_id.value); f.amount.value = d ? remaining(d) : ''; };
+  $('#psave', bg).onclick = async () => {
+    if (!f.reportValidity()) return;
+    const d = Object.fromEntries(new FormData(f)); d.invoice_id = inv ? inv.id : d.invoice_id;
+    try { await api('payments', { method: 'POST', body: d }); close(); toast('Betaling opgeslagen'); done(); } catch (e) { toast(e.message, 1); }
+  };
+}
+
+// ================= terugkerende facturen =================
+const INTERVAL_NL = { week: 'Wekelijks', maand: 'Maandelijks', kwartaal: 'Per kwartaal', jaar: 'Jaarlijks' };
+async function renderRecurring(m) {
+  m.innerHTML = '<div class="top"><h1>Terugkerende facturen</h1></div><div class="card"><div class="muted">Laden…</div></div>';
+  let list = [];
+  try { list = await api('recurring'); } catch (e) { m.querySelector('.card').textContent = e.message; return; }
+  S.docs = await api('docs');
+  m.innerHTML = `<div class="top"><h1>Terugkerende facturen</h1><div class="row">${can('docs.write') ? '<button class="btn" id="rRun">Nu uitvoeren</button><button class="btn pri" id="rNew">+ Terugkerende factuur</button>' : ''}</div></div>
+  <div class="card"><p class="muted" style="margin-top:0">Facturen worden automatisch aangemaakt op de volgende datum (dagelijks gecontroleerd). Met “Nu uitvoeren” maak je de facturen die al aan de beurt zijn direct aan.</p>
+  <div class="tablewrap"><table class="list"><thead><tr><th>Naam</th><th>Klant</th><th>Interval</th><th>Volgende</th><th>Eindigt</th><th>Status</th><th class="num">Bedrag</th><th></th></tr></thead>
+  <tbody>${list.map(r => `<tr><td><b>${esc(r.name)}</b></td><td>${esc(plain(r.client?.name || '—'))}</td><td>${INTERVAL_NL[r.interval]}</td><td>${fdate(r.next_date)}</td><td>${r.end_date ? fdate(r.end_date) : '—'}</td>
+    <td>${r.active ? '<span class="tag Betaald">Actief</span>' : '<span class="tag Concept">Gepauzeerd</span>'}</td><td class="num">${money(r.total, r.currency || defCur())}</td>
+    <td class="num">${can('docs.write') ? `<button class="btn sm" data-redit="${r.id}">Bewerken</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">Nog geen terugkerende facturen. Open een factuur en klik op “Terugkerend”, of gebruik “+ Terugkerende factuur”.</td></tr>'}</tbody></table></div></div>`;
+  const again = () => renderRecurring(m);
+  if ($('#rNew')) $('#rNew').onclick = () => recurringModal(null, again);
+  if ($('#rRun')) $('#rRun').onclick = async () => {
+    try { const r = await api('recurring/run', { method: 'POST' }); S.docs = await api('docs'); toast(r.made.length ? `${r.made.length} factuur/facturen aangemaakt: ${r.made.join(', ')}` : 'Niets aan de beurt', false, 5000); again(); } catch (e) { toast(e.message, 1); }
+  };
+  m.querySelectorAll('[data-redit]').forEach(b => b.onclick = () => recurringModal(list.find(r => String(r.id) === b.dataset.redit), again));
+}
+function recurringModal(r, done, src) {
+  const invs = S.docs.filter(d => d.type === 'factuur');
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  const defName = x => [plain(x?.client?.name || ''), x?.subject].filter(Boolean).join(' – ');
+  bg.innerHTML = `<div class="modal"><h2>${r ? 'Terugkerende factuur bewerken' : 'Terugkerende factuur'}</h2><form id="rf" class="form" autocomplete="off">
+    ${r ? '' : `<label class="f full">Gebaseerd op factuur<select name="source_id" ${src ? 'disabled' : ''}>${src ? `<option value="${src.id}">${esc(src.number)}</option>` : '<option value="">— Kies factuur —</option>' + invs.map(d => `<option value="${d.id}">${esc(d.number)} · ${esc(plain(d.client?.name || ''))}</option>`).join('')}</select></label>`}
+    <label class="f full">Naam<input name="name" required value="${esc(r ? r.name : defName(src))}"></label>
+    <label class="f">Interval<select name="interval">${Object.entries(INTERVAL_NL).map(([k, v]) => `<option value="${k}" ${(r?.interval || 'maand') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+    <label class="f">Eerstvolgende factuur op<input name="next_date" type="date" required value="${esc(r?.next_date || today())}"></label>
+    <label class="f">Stopt na (optioneel)<input name="end_date" type="date" value="${esc(r?.end_date || '')}"></label>
+    <label class="f">Nieuwe facturen krijgen status<select name="auto_status"><option ${r?.auto_status !== 'Concept' ? 'selected' : ''}>Open</option><option ${r?.auto_status === 'Concept' ? 'selected' : ''}>Concept</option></select></label>
+    ${r ? `<label class="row full" style="gap:8px;cursor:pointer"><input type="checkbox" name="active" ${r.active ? 'checked' : ''} style="width:18px;height:18px"> Actief</label>` : ''}</form>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><div>${r && can('docs.delete') ? '<button class="btn danger" id="rdel">Verwijderen</button>' : ''}</div><div class="row"><button class="btn" id="rcancel">Annuleren</button><button class="btn pri" id="rsave">Opslaan</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove(), f = $('#rf', bg);
+  bg.onclick = e => { if (e.target === bg) close(); };
+  $('#rcancel', bg).onclick = close;
+  if (!r && !src) f.source_id.onchange = () => { const d = invs.find(x => String(x.id) === f.source_id.value); if (d && !f.name.value) f.name.value = defName(d); };
+  $('#rsave', bg).onclick = async () => {
+    if (!f.reportValidity()) return;
+    const d = Object.fromEntries(new FormData(f));
+    if (r) { d.id = r.id; d.active = !!f.active.checked; } else d.source_id = src ? src.id : d.source_id;
+    try { await api('recurring', { method: 'POST', body: d }); close(); toast('Opgeslagen'); done(); } catch (e) { toast(e.message, 1); }
+  };
+  if ($('#rdel', bg)) $('#rdel', bg).onclick = async () => {
+    if (!confirm('Deze terugkerende factuur verwijderen? Al aangemaakte facturen blijven bestaan.')) return;
+    try { await api('recurring/' + r.id, { method: 'DELETE' }); close(); toast('Verwijderd'); done(); } catch (e) { toast(e.message, 1); }
+  };
+}
+
 // ================= editor =================
 async function newDoc(type, extra = {}) {
   const s = S.settings, { number } = await api('next-number?type=' + type);
@@ -1176,7 +1293,7 @@ async function newDoc(type, extra = {}) {
     type, number, date: today(), due_date: addDays(today(), isQ ? s.quote_valid_days : s.payment_days),
     client_id: null, client: {}, subject: '', subject_detail: '', reference: '',
     items: [{ desc: '', sub: '', qty: 1, rate: 0 }], vat_rate: vatDefault(s), discount: 0, currency: defCur(), lang: mainLang(),
-    status: isQ ? 'Concept' : 'Open', paid_on: '', terms: isQ ? s.quote_terms : s.invoice_closing, notes: '', ...extra
+    status: type === 'factuur' ? 'Open' : 'Concept', paid_on: '', terms: isQ ? s.quote_terms : s.invoice_closing, notes: '', ...extra
   };
   if (S.doc.lang !== mainLang() && !extra.terms) { const L2 = langSettings(s, S.doc.lang); S.doc.terms = isQ ? L2.quote_terms : L2.invoice_closing; }
   S.view = type; render(); window.scrollTo(0, 0);
@@ -1186,11 +1303,12 @@ async function openDoc(id) { S.doc = await api('docs/' + id); S.view = S.doc.typ
 function renderEditor(m) {
   const d = S.doc, isQ = d.type === 'offerte';
   m.innerHTML = `
-  <div class="top ed-top"><div class="row" style="flex-wrap:nowrap"><button class="btn sm" id="back">← Terug</button><h1>${d.id ? esc(d.number) : (isQ ? 'Nieuwe offerte' : 'Nieuwe factuur')}</h1>${d.id ? tag(d) : ''}</div>
+  <div class="top ed-top"><div class="row" style="flex-wrap:nowrap"><button class="btn sm" id="back">← Terug</button><h1>${d.id ? esc(d.number) : 'Nieuwe ' + TYPE_NL[d.type]}</h1>${d.id ? tag(d) : ''}</div>
     <div class="row acts">
       <button class="btn m-only" id="toPrev" type="button">Voorbeeld ↓</button>
       ${d.id && isQ ? '<button class="btn yel" id="toInv">→ Factuur maken</button>' : ''}
-      ${d.id && !isQ && d.status !== 'Betaald' ? '<button class="btn" id="paid" style="color:var(--green)">✓ Markeer betaald</button>' : ''}
+      ${d.id && d.type === 'factuur' && d.status !== 'Betaald' ? '<button class="btn" id="paid" style="color:var(--green)">+ Betaling</button>' : ''}
+      ${d.id && d.type === 'factuur' ? '<button class="btn" id="toCredit">Creditnota</button><button class="btn" id="toRec">Terugkerend</button>' : ''}
       ${d.id ? '<button class="btn" id="dup">Dupliceren</button>' : ''}
       <button class="btn" id="print">Print</button>
       <button class="btn" id="pdf">PDF</button>
@@ -1198,15 +1316,18 @@ function renderEditor(m) {
   <div class="editor">
     <div class="card"><form id="df" autocomplete="off">
       <div class="form">
-        <label class="f">${isQ ? 'Offertenr.' : 'Factuurnr.'}<input name="number" value="${esc(d.number)}"></label>
+        <label class="f">${{ offerte: 'Offertenr.', factuur: 'Factuurnr.', creditnota: 'Creditnr.' }[d.type]}<input name="number" value="${esc(d.number)}"></label>
         <label class="f">Taal document<select name="lang">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${docLang(d) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
         <label class="f">Valuta<select name="currency">${[...new Set([...CURRENCIES, curOf(d)])].map(c => `<option ${curOf(d) === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
         <label class="f" id="fxf" style="display:none">Koers → <span id="fxb"></span><input name="fx_rate" type="number" step="any" inputmode="decimal" value="${esc(d.fx_rate ?? '')}" title="1 documentvaluta = koers × hoofdvaluta"></label>
         <label class="f">Status<select name="status">${STATUS[d.type].map(s => `<option ${d.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
         <label class="f">${isQ ? 'Datum' : 'Factuurdatum'}<input type="date" name="date" value="${esc(d.date)}"></label>
         <label class="f">${isQ ? 'Geldig tot' : 'Vervaldatum'}<input type="date" name="due_date" value="${esc(d.due_date)}"></label>
-        ${!isQ ? `<label class="f">Betaald op<input type="date" name="paid_on" value="${esc(d.paid_on)}"></label><label class="f">Offertenr. (referentie)<input name="reference" value="${esc(d.reference)}" list="qlist"></label>
+        ${d.type === 'factuur' ? `<label class="f">Betaald op<input type="date" name="paid_on" value="${esc(d.paid_on)}"></label><label class="f">Offertenr. (referentie)<input name="reference" value="${esc(d.reference)}" list="qlist"></label>
           <datalist id="qlist">${S.docs.filter(x => x.type === 'offerte').map(x => `<option value="${esc(x.number)}">`).join('')}</datalist>` : ''}
+        ${d.type === 'creditnota' ? `<label class="f full">Factuurnr. (referentie)<input name="reference" value="${esc(d.reference)}" list="qlist"></label>
+          <datalist id="qlist">${S.docs.filter(x => x.type === 'factuur').map(x => `<option value="${esc(x.number)}">`).join('')}</datalist>` : ''}
+        ${d.type === 'factuur' && d.id && d.paid_amount > 0 ? `<div class="muted full" style="font-size:12.5px">Ontvangen: <b>${money(d.paid_amount, curOf(d))}</b> · nog open: <b>${money(Math.max(d.total - d.paid_amount, 0), curOf(d))}</b></div>` : ''}
       </div>
       <div class="sect">Klant</div>
       <div class="row" style="flex-wrap:nowrap"><select id="csel" style="flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff">
@@ -1336,11 +1457,23 @@ function renderEditor(m) {
   const save = async (quiet) => {
     sync();
     if (d.type === 'factuur' && d.status === 'Betaald' && !d.paid_on) d.paid_on = today();
-    try { S.doc = await api('docs', { method: 'POST', body: d }); S.docs = await api('docs'); if (!quiet) toast('Opgeslagen'); renderEditor(m); return S.doc; }
+    try { const sv = await api('docs', { method: 'POST', body: d }); S.doc = await api('docs/' + sv.id); S.docs = await api('docs'); if (!quiet) toast('Opgeslagen'); renderEditor(m); return S.doc; }
     catch (e) { toast(e.message, 1); }
   };
   $('#save').onclick = () => save();
-  if ($('#paid')) $('#paid').onclick = () => { track('mark_paid'); d.status = 'Betaald'; d.paid_on = d.paid_on || today(); form.status.value = 'Betaald'; if (form.paid_on) form.paid_on.value = d.paid_on; save(); };
+  if ($('#paid')) $('#paid').onclick = async () => {
+    const cur = await save(true); if (!cur) return;
+    paymentModal(cur, async () => { S.docs = await api('docs'); S.doc = await api('docs/' + cur.id); renderEditor(m); });
+  };
+  if ($('#toCredit')) $('#toCredit').onclick = async () => {
+    const cur = await save(true); if (!cur) return;
+    newDoc('creditnota', { client_id: cur.client_id, client: { ...cur.client }, subject: 'Creditnota voor ' + cur.number, reference: cur.number,
+      items: cur.items.map(i => ({ ...i })), vat_rate: cur.vat_rate, discount: cur.discount, currency: curOf(cur), lang: docLang(cur), status: 'Concept' });
+  };
+  if ($('#toRec')) $('#toRec').onclick = async () => {
+    const cur = await save(true); if (!cur) return;
+    recurringModal(null, async () => { go('terugkerend'); }, cur);
+  };
   if ($('#dup')) $('#dup').onclick = () => newDoc(d.type, { client_id: d.client_id, client: { ...d.client }, subject: d.subject, subject_detail: d.subject_detail, items: d.items.map(i => ({ ...i })), vat_rate: d.vat_rate, discount: d.discount, currency: curOf(d), lang: docLang(d), terms: d.terms });
   if ($('#toInv')) $('#toInv').onclick = async () => {
     track('convert_to_invoice');
@@ -1458,10 +1591,12 @@ function sheetHTML(d, s0, opt = {}) {
   const labels = { ...baseLabels(s._lang, s.doc_theme), ...parseJSON(s.doc_labels, {}) };
   const L = k => `<span data-l="${k}">${escE(labels[k])}</span>`;          // aanpasbaar label
   const S = (k, v) => `<span data-s="${k}">${escE(v ?? s[k] ?? '')}</span>`; // aanpasbare instellingstekst
+  const TT = () => { if (isQ) return L('title_offerte'); if (d.type !== 'creditnota') return L('title_factuur');
+    const t = s._lang === 'en' ? 'Credit note' : (modern ? 'Creditnota' : 'Creditnota / Credit note'); return `<span>${modern ? t.toUpperCase() : t}</span>`; };
   const lay = getLayout(s);
   const R = {
     title: () => `<div class="sh-title">
-      <div class="t">${ICON.doc}<div><h3>${L(isQ ? 'title_offerte' : 'title_factuur')}</h3><div class="tl">${isQ ? S('tagline') : L('subtitle_factuur')}</div></div></div>
+      <div class="t">${ICON.doc}<div><h3>${TT()}</h3><div class="tl">${isQ ? S('tagline') : L('subtitle_factuur')}</div></div></div>
       <div class="metabox ${isQ ? '' : 'inv'}">
         <div class="h">${L(isQ ? 'm_qnr' : 'm_inr')}<span>${esc(d.number)}</span></div>
         <div>${L(isQ ? 'm_qdate' : 'm_idate')}<span>${FD(d.date)}</span></div>
@@ -1514,7 +1649,7 @@ function sheetHTML(d, s0, opt = {}) {
   if (modern) return `<div class="sheet modern${opt.edit ? ' editing' : ''}">
   <div class="m-top"></div>
   <div class="m-head"><div class="m-logo"><img src="${s.logo || '/logo.png'}" alt=""></div>
-    <div class="m-ttl"><h1>${L(isQ ? 'title_offerte' : 'title_factuur')}</h1><div class="m-no">${esc(d.number)}</div>${isQ && s.tagline ? `<div class="m-tag">${S('tagline')}</div>` : ''}</div></div>
+    <div class="m-ttl"><h1>${TT()}</h1><div class="m-no">${esc(d.number)}</div>${isQ && s.tagline ? `<div class="m-tag">${S('tagline')}</div>` : ''}</div></div>
   <div class="m-rule"></div>
   <div class="sh-body">${wm}${rows}</div>
   <div class="m-foot"><div><i></i><span>${esc(s.company_name)}</span></div><span>${esc(d.number)}</span></div>

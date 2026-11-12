@@ -2,6 +2,7 @@ import { q, q1 } from '@/lib/db';
 import { allowed, currentUser, hashPassword, makeSession, passwordProblem, sameOrigin, sessionCookie, verifyPassword, type User } from '@/lib/auth';
 import { isRole, permsOf, type Perm } from '@/lib/perms';
 import { layout, mailAppointmentStatus, sendMail, smtpConfigured } from '@/lib/mail';
+import { addDaysIso, baseCur, calc, cleanCur, getSettings, INTERVALS, nextNumber, rateFor, round2, runRecurring, todayPb, type DocType } from '@/lib/docs';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -16,36 +17,6 @@ async function body(req: Request): Promise<any> {
 }
 
 // ---------- helpers (overgenomen uit de desktop-app) ----------
-const round2 = (n: unknown) => Math.round((Number(n) || 0) * 100) / 100;
-function calc(items: any[], vatRate: unknown, discount: unknown = 0) {
-  const subtotal = round2((items || []).reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.rate) || 0), 0));
-  const disc = round2(Math.min(Math.max(Number(discount) || 0, 0), subtotal));
-  const vat_amount = round2((subtotal - disc) * (Number(vatRate) || 0) / 100);
-  return { subtotal, discount: disc, vat_amount, total: round2(subtotal - disc + vat_amount) };
-}
-async function getSettings(): Promise<Record<string, string>> {
-  const rows = await q<{ key: string; value: string }>('SELECT key, value FROM settings');
-  return Object.fromEntries(rows.map(r => [r.key, r.value]));
-}
-async function nextNumber(type: 'offerte' | 'factuur') {
-  const s = await getSettings();
-  const prefix = String((type === 'offerte' ? s.quote_prefix : s.invoice_prefix) || (type === 'offerte' ? 'Q' : 'INV')).trim().replace(/[^A-Za-z0-9-]/g, '') || 'DOC';
-  const year = new Date().getFullYear();
-  const rows = await q<{ number: string }>('SELECT number FROM documents WHERE number LIKE $1', [`${prefix}-${year}-%`]);
-  const max = rows.reduce((m, r) => Math.max(m, parseInt(r.number.split('-').pop() || '0', 10) || 0), 0);
-  return `${prefix}-${year}-${String(max + 1).padStart(4, '0')}`;
-}
-const cleanCur = async (c: unknown) => {
-  const v = String(c || '').toUpperCase().trim();
-  return /^[A-Z]{3}$/.test(v) ? v : ((await getSettings()).currency || 'EUR');
-};
-const baseCur = async () => cleanCur((await getSettings()).base_currency || (await getSettings()).currency);
-async function rateFor(cur: string, date: string | null, base: string): Promise<number | null> {
-  if (!cur || cur === base) return 1;
-  const r = await q1<{ rate: number }>('SELECT rate FROM rates WHERE currency = $1 AND base = $2 AND date <= $3 ORDER BY date DESC LIMIT 1', [cur, base, date || '9999'])
-    || await q1<{ rate: number }>('SELECT rate FROM rates WHERE currency = $1 AND base = $2 ORDER BY date ASC LIMIT 1', [cur, base]);
-  return r ? r.rate : null;
-}
 function rowToDoc(r: any) {
   if (!r) return null;
   const { client_json, items_json, ...rest } = r;
@@ -54,6 +25,16 @@ function rowToDoc(r: any) {
 const audit = (u: User | null, action: string, detail = '') =>
   q('INSERT INTO audit_log (user_id, user_name, action, detail) VALUES ($1, $2, $3, $4)', [u?.id ?? null, u?.name ?? null, action, detail]).catch(() => {});
 const isUnique = (e: any) => e?.code === '23505';
+
+// Status van een factuur volgt de betalingen: volledig betaald → Betaald, anders weer Open
+async function syncPaid(invoiceId: number) {
+  const inv = await q1<any>('SELECT id, total, status FROM documents WHERE id = $1', [invoiceId]);
+  if (!inv) return;
+  const p = await q1<{ s: number; last: string | null }>('SELECT COALESCE(SUM(amount),0)::float8 AS s, MAX(date) AS last FROM payments WHERE invoice_id = $1', [invoiceId]);
+  const paid = p?.s ?? 0;
+  if (paid >= inv.total - 0.005 && paid > 0) await q("UPDATE documents SET status='Betaald', paid_on=$1, updated_at=now() WHERE id=$2", [p!.last, invoiceId]);
+  else if (inv.status === 'Betaald' || inv.status === 'Concept') await q("UPDATE documents SET status='Open', paid_on=NULL, updated_at=now() WHERE id=$1", [invoiceId]);
+}
 
 const CLIENT_FIELDS = ['name', 'contact', 'address', 'postal_city', 'country', 'vat_number', 'email', 'phone', 'notes', 'lang'];
 const CATALOG_FIELDS = ['kind', 'name', 'description', 'category', 'unit', 'sku', 'price', 'active', 'currency'];
@@ -293,21 +274,99 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
       return ok ? json(200, { ok: true, to: me.email }) : fail(502, 'Versturen mislukt. Controleer de SMTP-gegevens en de serverlogs.');
     }
 
-    if (resource === 'next-number') return json(200, { number: await nextNumber(url.searchParams.get('type') === 'factuur' ? 'factuur' : 'offerte') });
+    if (resource === 'next-number') {
+      const t = url.searchParams.get('type');
+      return json(200, { number: await nextNumber((t === 'factuur' || t === 'creditnota') ? t : 'offerte') });
+    }
+
+    // ---- betalingen op facturen ----
+    if (resource === 'payments') {
+      if (m === 'GET') {
+        const rows = await q<any>(`SELECT p.*, d.number, d.client_json, d.currency, d.total FROM payments p JOIN documents d ON d.id = p.invoice_id ORDER BY p.date DESC, p.id DESC`);
+        return json(200, rows.map(({ client_json, ...r }) => ({ ...r, client: JSON.parse(client_json || '{}') })));
+      }
+      if (m === 'POST') {
+        if (!need('docs.write')) return FORBIDDEN();
+        const b = await body(req);
+        const inv = await q1<any>('SELECT id, number, total, status FROM documents WHERE id = $1 AND type = $2', [Number(b.invoice_id), 'factuur']);
+        if (!inv) return fail(400, 'Kies een factuur.');
+        const amount = round2(b.amount);
+        if (!(amount > 0)) return fail(400, 'Vul een bedrag groter dan 0 in.');
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date)) ? String(b.date) : todayPb();
+        const method = ['Bank', 'Contant', 'Kaart', 'Anders'].includes(b.method) ? b.method : 'Bank';
+        await q('INSERT INTO payments (invoice_id, date, amount, method, reference, note, created_by_name) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+          [inv.id, date, amount, method, String(b.reference || '').slice(0, 100), String(b.note || '').slice(0, 300), me.name]);
+        await syncPaid(inv.id);
+        await audit(me, 'payment_added', `${inv.number} ${amount}`);
+        return json(200, { ok: true });
+      }
+      if (m === 'DELETE' && id) {
+        if (!need('docs.delete')) return FORBIDDEN();
+        const p = await q1<any>('DELETE FROM payments WHERE id = $1 RETURNING invoice_id, amount', [Number(id)]);
+        if (p) { await syncPaid(p.invoice_id); await audit(me, 'payment_deleted', `#${id} ${p.amount}`); }
+        return json(200, { ok: true });
+      }
+    }
+
+    // ---- terugkerende facturen ----
+    if (resource === 'recurring') {
+      if (m === 'GET') {
+        const rows = await q<any>('SELECT * FROM recurring ORDER BY active DESC, next_date');
+        return json(200, rows.map(({ client_json, items_json, ...r }) => ({ ...r, client: JSON.parse(client_json || '{}'), items: JSON.parse(items_json || '[]'),
+          ...calc(JSON.parse(items_json || '[]'), r.vat_rate, r.discount) })));
+      }
+      if (id === 'run' && m === 'POST') {
+        if (!need('docs.write')) return FORBIDDEN();
+        const made = await runRecurring(me.name);
+        await audit(me, 'recurring_run', made.join(', '));
+        return json(200, { made });
+      }
+      if (m === 'POST') {
+        if (!need('docs.write')) return FORBIDDEN();
+        const b = await body(req);
+        if (!INTERVALS.includes(b.interval)) return fail(400, 'Kies een interval.');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.next_date))) return fail(400, 'Vul een geldige startdatum in.');
+        const end = /^\d{4}-\d{2}-\d{2}$/.test(String(b.end_date)) ? b.end_date : null;
+        const auto = b.auto_status === 'Concept' ? 'Concept' : 'Open';
+        const name = String(b.name || '').trim().slice(0, 120) || 'Terugkerende factuur';
+        const anchor = Number(String(b.next_date).slice(8, 10));
+        if (b.id) {
+          const row = await q1('UPDATE recurring SET name=$1, interval=$2, next_date=$3, end_date=$4, auto_status=$5, active=$6, anchor_day=$7 WHERE id=$8 RETURNING id',
+            [name, b.interval, b.next_date, end, auto, b.active !== false, anchor, Number(b.id)]);
+          if (!row) return fail(404, 'Niet gevonden');
+          await audit(me, 'recurring_updated', name);
+          return json(200, { ok: true });
+        }
+        const src = await q1<any>("SELECT * FROM documents WHERE id = $1 AND type = 'factuur'", [Number(b.source_id)]);
+        if (!src) return fail(400, 'Kies een factuur als basis.');
+        await q(`INSERT INTO recurring (name, client_id, client_json, subject, reference, items_json, vat_rate, discount, currency, lang, terms, notes, interval, next_date, anchor_day, end_date, auto_status, created_by_name)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+          [name, src.client_id, src.client_json, src.subject, '', src.items_json, src.vat_rate, src.discount, src.currency, src.lang, src.terms, src.notes, b.interval, b.next_date, anchor, end, auto, me.name]);
+        await audit(me, 'recurring_created', name);
+        return json(200, { ok: true });
+      }
+      if (m === 'DELETE' && id) {
+        if (!need('docs.delete')) return FORBIDDEN();
+        await q('DELETE FROM recurring WHERE id = $1', [Number(id)]);
+        await audit(me, 'recurring_deleted', `#${id}`);
+        return json(200, { ok: true });
+      }
+    }
 
     if (resource === 'docs') {
-      if (m === 'GET' && id) return json(200, rowToDoc(await q1('SELECT * FROM documents WHERE id = $1', [Number(id)])));
+      const SEL = 'SELECT d.*, COALESCE((SELECT SUM(amount) FROM payments p WHERE p.invoice_id = d.id), 0)::float8 AS paid_amount FROM documents d';
+      if (m === 'GET' && id) return json(200, rowToDoc(await q1(SEL + ' WHERE d.id = $1', [Number(id)])));
       if (m === 'GET') {
         const type = url.searchParams.get('type');
         const rows = type
-          ? await q('SELECT * FROM documents WHERE type = $1 ORDER BY date DESC, number DESC', [type])
-          : await q('SELECT * FROM documents ORDER BY date DESC, number DESC');
+          ? await q(SEL + ' WHERE d.type = $1 ORDER BY d.date DESC, d.number DESC', [type])
+          : await q(SEL + ' ORDER BY d.date DESC, d.number DESC');
         return json(200, rows.map(rowToDoc));
       }
       if (m === 'POST') {
         if (!need('docs.write')) return FORBIDDEN();
         const d = await body(req);
-        if (!['offerte', 'factuur'].includes(d.type)) return fail(400, 'Ongeldig type');
+        if (!['offerte', 'factuur', 'creditnota'].includes(d.type)) return fail(400, 'Ongeldig type');
         if (!d.number) d.number = await nextNumber(d.type);
         const items = (d.items || []).filter((it: any) => (it.desc || '').trim() || Number(it.rate));
         const t = calc(items, d.vat_rate, d.discount);
@@ -353,6 +412,7 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
         exported_at: new Date().toISOString(),
         settings: await q('SELECT * FROM settings'), clients: await q('SELECT * FROM clients'), catalog: await q('SELECT * FROM catalog'),
         rates: await q('SELECT * FROM rates'), documents: await q('SELECT * FROM documents'),
+        payments: await q('SELECT * FROM payments'), recurring: await q('SELECT * FROM recurring'),
         users: await q('SELECT id, email, name, role, active, created_at FROM users'),
       };
       await audit(me, 'data_exported');

@@ -1,6 +1,7 @@
 import { q, q1 } from '@/lib/db';
 import { allowed, currentUser, hashPassword, makeSession, passwordProblem, sameOrigin, sessionCookie, verifyPassword, type User } from '@/lib/auth';
 import { isRole, permsOf, type Perm } from '@/lib/perms';
+import { layout, mailAppointmentStatus, sendMail, smtpConfigured } from '@/lib/mail';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -265,10 +266,17 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
         if (!need('clients.write')) return FORBIDDEN();
         const b = await body(req);
         if (!['aangevraagd', 'bevestigd', 'geannuleerd'].includes(b.status)) return fail(400, 'Ongeldige status');
-        const row = await q1('UPDATE appointments SET status = $1 WHERE id = $2 RETURNING id, date, time, name, status', [b.status, Number(b.id)]);
+        const before = await q1<{ status: string }>('SELECT status FROM appointments WHERE id = $1', [Number(b.id)]);
+        const row = await q1<any>('UPDATE appointments SET status = $1 WHERE id = $2 RETURNING id, date, time, name, email, phone, status', [b.status, Number(b.id)]);
         if (!row) return fail(404, 'Afspraak niet gevonden');
         await audit(me, 'appointment_' + b.status, `${row.name} ${row.date} ${row.time}`);
-        return json(200, row);
+        // bezoeker een bericht sturen bij bevestigen of annuleren (alleen bij een echte wijziging, en alleen als de afspraak in de toekomst ligt)
+        let mailed: boolean | null = null;
+        if (b.status !== 'aangevraagd' && before?.status !== b.status && smtpConfigured()) {
+          const office = (await getSettings()).email || process.env.SMTP_USER || '';
+          mailed = await mailAppointmentStatus(row, b.status, office);
+        }
+        return json(200, { id: row.id, date: row.date, time: row.time, name: row.name, status: row.status, mailed });
       }
       if (m === 'DELETE' && id) {
         if (!need('clients.delete')) return FORBIDDEN();
@@ -276,6 +284,13 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
         await audit(me, 'appointment_deleted', `#${id}`);
         return json(200, { ok: true });
       }
+    }
+
+    if (resource === 'mail' && id === 'test' && m === 'POST') {
+      if (!need('settings.write')) return FORBIDDEN();
+      if (!smtpConfigured()) return fail(400, 'SMTP is niet ingesteld (SMTP_HOST, SMTP_USER en SMTP_PASSWORD op Vercel).');
+      const ok = await sendMail({ to: me.email, subject: 'Test e-mail — ICA Administratie', html: layout('Test geslaagd ✓', '<p>De e-mailkoppeling werkt. Afspraakmeldingen worden vanaf nu verstuurd.</p>'), text: 'Test geslaagd. De e-mailkoppeling werkt.' });
+      return ok ? json(200, { ok: true, to: me.email }) : fail(502, 'Versturen mislukt. Controleer de SMTP-gegevens en de serverlogs.');
     }
 
     if (resource === 'next-number') return json(200, { number: await nextNumber(url.searchParams.get('type') === 'factuur' ? 'factuur' : 'offerte') });

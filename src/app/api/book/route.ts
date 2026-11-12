@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { q, q1 } from '@/lib/db';
 import { sameOrigin } from '@/lib/auth';
+import { mailNewAppointment } from '@/lib/mail';
 import { allTimes, dayBookable, freeTimes, isoDay, nowPb, parseAvail, validDate } from '@/lib/appointments';
 
 export const dynamic = 'force-dynamic';
@@ -90,6 +91,9 @@ export async function POST(req: Request) {
       if (e?.code === '23505') return json(409, { error: 'Dit tijdstip is net bezet. Kies een ander moment.' });
       throw e;
     }
+    // e-mail naar kantoor + ontvangstbevestiging naar de bezoeker (mislukken blokkeert de boeking niet)
+    const office = (await q1<{ value: string }>("SELECT value FROM settings WHERE key = 'email'"))?.value || process.env.SMTP_USER || '';
+    if (office) await mailNewAppointment({ date, time, name, email, phone, subject, message }, office);
     return json(200, { ok: true, date, time });
   } catch (e) {
     console.error('book POST', e);

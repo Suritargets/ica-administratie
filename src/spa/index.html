@@ -1096,8 +1096,10 @@ function renderSettings(m) {
   </form><p class="muted" style="margin-bottom:0">Bedrijfsnaam, adres, IBAN en logo pas je aan onder <a href="#" id="toCo">Bedrijf</a>.</p></div>
   <div class="card" style="margin-top:18px" id="acctCard"></div>
   ${can('users.manage') ? '<div class="card" style="margin-top:18px" id="usersCard"></div>' : ''}
+  ${can('settings.write') ? '<div class="card" style="margin-top:18px"><h2>E-mail</h2><p class="muted" style="margin-top:0">Afspraakaanvragen worden gemeld aan het e-mailadres onder Bedrijf (of het SMTP-account), en bezoekers krijgen een ontvangstbevestiging en een bericht bij bevestigen of annuleren.</p><button class="btn" id="mailTest">Test e-mail naar mezelf</button></div>' : ''}
   ${can('data.export') ? '<div class="card" style="margin-top:18px"><h2>Gegevens exporteren</h2><p class="muted" style="margin-top:0">Download alle gegevens (klanten, documenten, catalogus, koersen, instellingen) als JSON-bestand. De database draait op Neon met automatische back-ups; dit is een extra kopie voor jezelf.</p><a class="btn yel" href="/api/backup">Export downloaden (.json)</a></div>' : ''}`;
   renderAccount(); if (can('users.manage')) renderUsers();
+  if ($('#mailTest')) $('#mailTest').onclick = async () => { const b = $('#mailTest'); b.disabled = true; try { const r = await api('mail/test', { method: 'POST' }); toast('Test-mail verstuurd naar ' + r.to, false, 4500); } catch (e) { toast(e.message, 1, 5000); } b.disabled = false; };
   if ($('#saveS')) $('#saveS').onclick = async () => { try { S.settings = await api('settings', { method: 'POST', body: Object.fromEntries(new FormData($('#sf'))) }); toast('Instellingen opgeslagen'); } catch (e) { toast(e.message, 1); } };
   if ($('#toCo')) $('#toCo').onclick = e => { e.preventDefault(); go('bedrijf'); };
 }
@@ -1533,7 +1535,7 @@ async function renderAppointments(m) {
     <div class="card"><h2>Aankomend (${upcoming.length})</h2>${table(upcoming, 'Geen aankomende afspraken.')}</div>
     ${past.length ? `<div class="card" style="margin-top:18px"><h2>Eerder / geannuleerd</h2>${table(past.slice().reverse(), '')}</div>` : ''}
     <p class="muted" style="font-size:12.5px">Aanvragen komen binnen als <b>aangevraagd</b> en houden het tijdstip bezet. Neem contact op met de bezoeker en klik op <b>Bevestigen</b>. Bij <b>Annuleren</b> komt het tijdstip weer vrij. Beschikbare dagen en tijden stel je in onder Instellingen.</p>`;
-  m.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { await api('appointments', { method: 'POST', body: { id: b.dataset.id, status: b.dataset.ast } }); toast('Bijgewerkt'); renderAppointments(m); } catch (e) { toast(e.message, 1); } });
+  m.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { const r = await api('appointments', { method: 'POST', body: { id: b.dataset.id, status: b.dataset.ast } }); toast(r.mailed === true ? 'Bijgewerkt — bezoeker is per e-mail op de hoogte gebracht' : r.mailed === false ? 'Bijgewerkt, maar de e-mail kon niet verstuurd worden' : 'Bijgewerkt', r.mailed === false, 4500); renderAppointments(m); } catch (e) { toast(e.message, 1); } });
   m.querySelectorAll('[data-adel]').forEach(b => b.onclick = async () => { if (!confirm('Deze afspraak definitief verwijderen?')) return; try { await api('appointments/' + b.dataset.adel, { method: 'DELETE' }); renderAppointments(m); } catch (e) { toast(e.message, 1); } });
 }
 

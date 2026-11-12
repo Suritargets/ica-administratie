@@ -797,7 +797,7 @@ const HELP = () => { const N = esc(BRAND.name || 'de app'), K = '<kbd>', k = '</
     <li>Concept-facturen tellen <b>niet</b> mee in de totalen.</li></ul>
     <p><b>Lijsten:</b> zoek op nummer, klant of omschrijving en filter op status of valuta. Onderaan staat het totaal (per valuta). <b>Export CSV</b> geeft het register voor Excel.</p>`],
   ['print', 'Printen &amp; PDF', `
-    <p>Klik in een offerte of factuur op <b>Print / PDF</b>. Kies in het printvenster als printer <b>Opslaan als PDF</b> (of <i>Microsoft Print to PDF</i>) om een PDF te maken die je kunt mailen. Zet bij "Meer instellingen" de marges op <b>Geen</b> en vink <b>Achtergrondafbeeldingen</b> aan voor het mooiste resultaat.</p>
+    <p>Klik in een offerte of factuur op <b>Print</b> om af te drukken, of op <b>PDF</b> om een PDF te maken die je kunt mailen (kies dan in het printvenster als printer <b>Opslaan als PDF</b>; de bestandsnaam wordt al ingevuld). Zet bij "Meer instellingen" de marges op <b>Geen</b> en vink <b>Achtergrondafbeeldingen</b> aan voor het mooiste resultaat.</p>
     <p>Rechts in de editor zie je altijd een live voorbeeld van het document. Op de telefoon tik je op <b>Voorbeeld ↓</b>.</p>`],
   ['regels', 'Regels &amp; catalogus kiezen', `
     <p>Elke regel heeft een omschrijving, een optionele detailregel, aantal en tarief (excl. BTW).</p>
@@ -1183,7 +1183,8 @@ function renderEditor(m) {
       ${d.id && isQ ? '<button class="btn yel" id="toInv">→ Factuur maken</button>' : ''}
       ${d.id && !isQ && d.status !== 'Betaald' ? '<button class="btn" id="paid" style="color:var(--green)">✓ Markeer betaald</button>' : ''}
       ${d.id ? '<button class="btn" id="dup">Dupliceren</button>' : ''}
-      <button class="btn" id="print">Print / PDF</button>
+      <button class="btn" id="print">Print</button>
+      <button class="btn" id="pdf">PDF</button>
       <button class="btn pri" id="save">Opslaan</button></div></div>
   <div class="editor">
     <div class="card"><form id="df" autocomplete="off">
@@ -1312,6 +1313,16 @@ function renderEditor(m) {
   $('#back').onclick = () => go(d.type);
   $('#toPrev').onclick = () => $('#pw').scrollIntoView({ behavior: 'smooth', block: 'start' });
   $('#print').onclick = () => { sync(); track('print_' + d.type); window.print(); };
+  // PDF: zelfde afdrukweergave, maar met een bestandsnaam (nummer + klant) en de printer-keuze "Opslaan als PDF"
+  $('#pdf').onclick = () => {
+    sync(); track('pdf_' + d.type);
+    const old = document.title;
+    const nm = [d.number, d.client?.name].filter(Boolean).join(' - ').replace(/[\\/:*?"<>|]+/g, ' ').trim();
+    if (nm) document.title = nm;
+    window.addEventListener('afterprint', () => { document.title = old; }, { once: true });
+    toast('Kies als printer "Opslaan als PDF"');
+    setTimeout(() => window.print(), 300);
+  };
 
   const save = async (quiet) => {
     sync();

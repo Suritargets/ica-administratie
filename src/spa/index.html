@@ -564,7 +564,7 @@ function clientModal(c, onSaved) {
   const F = (k, l, full) => `<label class="f ${full ? 'full' : ''}">${l}<input name="${k}" value="${esc(c[k])}"></label>`;
   bg.innerHTML = `<div class="modal"><h2>${c.id ? 'Klant bewerken' : 'Nieuwe klant'}</h2><form class="form" id="cf">
     ${F('name', 'Bedrijfsnaam *', 1)}${F('contact', 'T.a.v. / Contactpersoon')}${F('email', 'E-mail')}${F('address', 'Adres')}${F('postal_city', 'Postcode + plaats')}
-    ${F('country', 'Land')}${F('vat_number', 'BTW-nummer')}${F('phone', 'Telefoon')}
+    ${F('country', 'Land')}${F('vat_number', 'FIN-nummer')}${F('phone', 'Telefoon')}
     <label class="f">Taal documenten<select name="lang"><option value="">Standaard (${LANGS[mainLang()]})</option>${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${c.lang === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
     <label class="f full">Notities<textarea name="notes">${esc(c.notes)}</textarea></label></form>
     <div class="row" style="margin-top:16px;justify-content:space-between">
@@ -895,7 +895,7 @@ const COMPANY_FIELDS = [
   ['Algemeen', [['company_name', 'Bedrijfsnaam'], ['tagline', 'Tagline (onder titel offerte)'], ['website', 'Website']]],
   ['Adres', [['address', 'Adres'], ['postal_city', 'Postcode + plaats'], ['country', 'Land']]],
   ['Contact', [['phone', 'Telefoon'], ['email', 'Algemeen e-mail'], ['invoice_email', 'Facturatie e-mail']]],
-  ['Registratie & bank', [['kvk', 'KvK-nummer'], ['btw', 'BTW-nummer'], ['iban', 'IBAN'], ['bic', 'BIC'], ['payment_info', 'Betaalinformatie op factuur (vervangt IBAN/BIC als ingevuld; **vet** mag)', 'area']]],
+  ['Registratie & bank', [['fin', 'FIN-nummer'], ['kvk', 'KvK-nummer'], ['btw', 'BTW-nummer'], ['iban', 'IBAN'], ['bic', 'BIC'], ['payment_info', 'Betaalinformatie op factuur (vervangt IBAN/BIC als ingevuld; **vet** mag)', 'area']]],
 ];
 function renderCompany(m) {
   const s = S.settings;
@@ -1466,9 +1466,9 @@ function sheetHTML(d, s0, opt = {}) {
   if (modern) Object.assign(R, {
     title: () => `<div class="m-dates"><div><div class="ml">${L(isQ ? 'm_qdate' : 'm_idate')}</div><b>${FD(d.date)}</b></div><div><div class="ml">${L(isQ ? 'm_valid' : 'm_due')}</div><b>${FD(d.due_date)}</b></div>${!isQ && d.reference ? `<div><div class="ml">${L('m_ref')}</div><b>${esc(d.reference)}</b></div>` : ''}</div>`,
     to: () => `<div class="m-box"><div class="ml">${L('to')}</div>${c.name ? `<div class="m-name">${esc(c.name)}</div>` : `<div style="color:#999">${s._lang === 'en' ? '[client]' : '[klant]'}</div>`}
-      <div class="m-sub">${[c.contact ? `${L('attn')} ${esc(c.contact)}` : '', esc(c.address || ''), esc(c.postal_city || ''), esc(c.country || ''), esc(c.email || ''), c.phone ? esc(c.phone) : '', c.vat_number ? `${L('btwnr')} ${esc(c.vat_number)}` : ''].filter(Boolean).join('<br>')}</div></div>`,
+      <div class="m-sub">${[c.vat_number ? `FIN: ${esc(c.vat_number)}` : '', c.contact ? `${L('attn')} ${esc(c.contact)}` : '', esc(c.address || ''), esc(c.postal_city || ''), esc(c.country || '')].filter(Boolean).join('<br>')}</div></div>`,
     from: () => `<div class="m-box"><div class="ml">${L('from')}</div><div class="m-name">${esc(s.company_name)}</div>
-      <div class="m-sub">${[esc(s.address || ''), [s.postal_city, s.country].filter(Boolean).map(esc).join(', '), esc(s.phone || ''), esc((isQ ? s.email : (s.invoice_email || s.email)) || ''), esc(s.website || ''),
+      <div class="m-sub">${[s.fin ? `FIN: ${esc(s.fin)}` : '', esc(s.address || ''), [s.postal_city, s.country].filter(Boolean).map(esc).join(', '), esc(s.phone || ''), isQ ? esc(s.email || '') : '', esc(s.website || ''),
         [s.kvk ? L('kvk') + ' ' + esc(s.kvk) : '', s.btw ? L('btwnr') + ' ' + esc(s.btw) : ''].filter(Boolean).join(' · ')].filter(Boolean).join('<br>')}</div></div>`,
     subject: () => `<div class="m-box"><div class="ml">${L('subject')}</div><div class="m-name">${esc(d.subject)}</div>${d.subject_detail ? `<div class="m-sub">${esc(d.subject_detail)}</div>` : ''}</div>`,
     items: () => `<table class="m-table"><thead><tr><th>${L('th_desc')}</th><th class="c" style="width:16mm">${L('th_qty')}</th><th class="r" style="width:32mm">${L('th_rate')}</th><th class="r" style="width:34mm">${L('th_amt')}</th></tr></thead>

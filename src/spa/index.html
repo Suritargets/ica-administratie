@@ -371,6 +371,12 @@ body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catal
     <button class="nav sub" data-view="catalogus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Items">Catalogus</span></button>
     <button class="nav sub d-nav" data-view="terugkerend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18.5 2v4h-4M5.5 22v-4h4"/></svg><span class="lbl" data-s="Terugk.">Terugkerend</span></button>
     </div>
+    <button class="grp" id="expGrp" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M7 15h3"/></svg><span>Uitgaven</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="grp-body" id="expBody">
+    <button class="nav sub d-nav" data-view="uitgaven"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h3"/></svg><span class="lbl" data-s="Uitgaven">Uitgaven</span></button>
+    <button class="nav sub d-nav" data-view="uitgcat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Categ.">Categorieën</span></button>
+    <button class="nav sub d-nav" data-view="uitgterug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18.5 2v4h-4M5.5 22v-4h4"/></svg><span class="lbl" data-s="Terugk.">Terugkerende uitgaven</span></button>
+    </div>
     <button class="nav" data-view="klanten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span class="lbl" data-s="Klanten">Klanten</span></button>
     <button class="nav d-nav" data-view="afspraken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="lbl" data-s="Afspraken">Afspraken</span></button>
     <button class="nav" data-view="valuta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span class="lbl" data-s="Valuta">Valuta</span></button>
@@ -493,8 +499,11 @@ function go(view) {
   if (S.view === 'sjabloon' && S.tpl?.dirty && !confirm('Je wijzigingen aan de documentindeling zijn nog niet opgeslagen. Toch weggaan?')) return;
   S.view = view; S.doc = null; S.filter = { q: '', status: '', kind: '', cat: '', cur: '' }; render(); window.scrollTo(0, 0); }
 document.querySelectorAll('.nav').forEach(b => b.onclick = () => go(b.dataset.view));
-$('#salesGrp').onclick = () => { const g = $('#salesGrp'); g.classList.toggle('closed'); try { localStorage.setItem('salesClosed', g.classList.contains('closed') ? '1' : ''); } catch {} };
-try { if (localStorage.getItem('salesClosed')) $('#salesGrp').classList.add('closed'); } catch {}
+for (const [gid, key] of [['salesGrp', 'salesClosed'], ['expGrp', 'expClosed']]) {
+  const g = $('#' + gid);
+  g.onclick = () => { g.classList.toggle('closed'); try { localStorage.setItem(key, g.classList.contains('closed') ? '1' : ''); } catch {} };
+  try { if (localStorage.getItem(key)) g.classList.add('closed'); } catch {}
+}
 
 function roPostRender(m) {
   const off = el => { el.disabled = true; };
@@ -508,7 +517,7 @@ function render0() {
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('on', b.dataset.view === (S.doc ? S.doc.type : S.view === 'sjabloon' ? 'bedrijf' : S.view)));
   const m = $('#main');
   if (S.doc) return renderEditor(m);
-  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, creditnota: renderList, betalingen: renderPayments, terugkerend: renderRecurring, klanten: renderClients, afspraken: renderAppointments, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings, gebruikers: renderUsersView, activiteit: renderActivity, account: renderAccountView })[S.view](m);
+  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, creditnota: renderList, betalingen: renderPayments, terugkerend: renderRecurring, klanten: renderClients, afspraken: renderAppointments, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings, gebruikers: renderUsersView, activiteit: renderActivity, uitgaven: renderExpenses, uitgcat: renderExpCats, uitgterug: renderRecExpenses, account: renderAccountView })[S.view](m);
 }
 
 // ================= dashboard =================
@@ -1121,7 +1130,7 @@ const SETTING_FIELDS = [
 function renderSettings(m) {
   const s = S.settings;
   m.innerHTML = `<div class="top"><h1>Instellingen</h1>${can('settings.write') ? '<button class="btn pri" id="saveS">Opslaan</button>' : ''}</div>
-  <div class="row m-only" style="margin-bottom:12px"><button class="btn" data-go="account">Mijn account</button>${can('users.manage') ? '<button class="btn" data-go="gebruikers">Gebruikers</button>' : ''}<button class="btn" data-go="betalingen">Betalingen</button><button class="btn" data-go="terugkerend">Terugkerend</button><button class="btn" data-go="creditnota">Creditnota's</button></div>
+  <div class="row m-only" style="margin-bottom:12px"><button class="btn" data-go="account">Mijn account</button>${can('users.manage') ? '<button class="btn" data-go="gebruikers">Gebruikers</button>' : ''}<button class="btn" data-go="betalingen">Betalingen</button><button class="btn" data-go="terugkerend">Terugkerend</button><button class="btn" data-go="creditnota">Creditnota's</button><button class="btn" data-go="uitgaven">Uitgaven</button><button class="btn" data-go="uitgcat">Categorieën</button><button class="btn" data-go="uitgterug">Terugk. uitgaven</button></div>
   <div class="card"><form id="sf">
     ${SETTING_FIELDS.map(([t, fs]) => `<div class="sect">${t}</div><div class="form">${fs.map(f => fieldHTML(f, s)).join('')}</div>`).join('')}
     <div class="sect">Teksten</div><div class="form">
@@ -1155,6 +1164,9 @@ const ACTION_NL = {
   creditnota_created: 'Creditnota aangemaakt', creditnota_updated: 'Creditnota gewijzigd', document_deleted: 'Document verwijderd',
   payment_added: 'Betaling geregistreerd', payment_deleted: 'Betaling verwijderd',
   recurring_created: 'Terugkerende factuur aangemaakt', recurring_updated: 'Terugkerende factuur gewijzigd', recurring_deleted: 'Terugkerende factuur verwijderd', recurring_run: 'Terugkerende facturen uitgevoerd',
+  expense_created: 'Uitgave aangemaakt', expense_updated: 'Uitgave gewijzigd', expense_deleted: 'Uitgave verwijderd', expense_scanned: 'Bon gescand',
+  expense_category_created: 'Uitgavecategorie aangemaakt', expense_category_updated: 'Uitgavecategorie gewijzigd', expense_category_deleted: 'Uitgavecategorie verwijderd',
+  recurring_expense_created: 'Terugkerende uitgave aangemaakt', recurring_expense_updated: 'Terugkerende uitgave gewijzigd', recurring_expense_deleted: 'Terugkerende uitgave verwijderd', recurring_expense_run: 'Terugkerende uitgaven uitgevoerd',
   appointment_bevestigd: 'Afspraak bevestigd', appointment_geannuleerd: 'Afspraak geannuleerd', appointment_aangevraagd: 'Afspraak teruggezet', appointment_deleted: 'Afspraak verwijderd',
 };
 const actNL = a => ACTION_NL[a] || a;
@@ -1162,7 +1174,7 @@ async function renderActivity(m) {
   if (!can('users.manage')) { m.innerHTML = '<div class="top"><h1>Activiteit</h1></div><div class="card">Geen toegang.</div>'; return; }
   const F = S.act || (S.act = { user: '', action: '', from: '', to: '', q: '' });
   const when = d => new Date(d).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'medium' });
-  const groups = [['', 'Alle acties'], ['login', 'Inloggen'], ['logout', 'Uitloggen'], ['password', 'Wachtwoord'], ['user', 'Gebruikers'], ['offerte', 'Offertes'], ['factuur', 'Facturen'], ['creditnota', "Creditnota's"], ['payment', 'Betalingen'], ['recurring', 'Terugkerend'], ['client', 'Klanten'], ['catalog', 'Catalogus'], ['rate', 'Koersen'], ['settings', 'Instellingen'], ['appointment', 'Afspraken'], ['document', 'Verwijderde documenten'], ['data', 'Export']];
+  const groups = [['', 'Alle acties'], ['login', 'Inloggen'], ['logout', 'Uitloggen'], ['password', 'Wachtwoord'], ['user', 'Gebruikers'], ['offerte', 'Offertes'], ['factuur', 'Facturen'], ['creditnota', "Creditnota's"], ['payment', 'Betalingen'], ['expense', 'Uitgaven'], ['recurring_expense', 'Terugk. uitgaven'], ['recurring', 'Terugkerend'], ['client', 'Klanten'], ['catalog', 'Catalogus'], ['rate', 'Koersen'], ['settings', 'Instellingen'], ['appointment', 'Afspraken'], ['document', 'Verwijderde documenten'], ['data', 'Export']];
   let rows = [], more = false, users = [];
   const qs = before => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(F)) if (v) p.set(k, v); if (before) p.set('before', before); p.set('limit', '100'); return p.toString(); };
   const load = async before => { const r = await api('audit?' + qs(before)); rows = before ? rows.concat(r.rows) : r.rows; more = r.more; users = r.users; };
@@ -1346,6 +1358,243 @@ function recurringModal(r, done, src) {
   if ($('#rdel', bg)) $('#rdel', bg).onclick = async () => {
     if (!confirm('Deze terugkerende factuur verwijderen? Al aangemaakte facturen blijven bestaan.')) return;
     try { await api('recurring/' + r.id, { method: 'DELETE' }); close(); toast('Verwijderd'); done(); } catch (e) { toast(e.message, 1); }
+  };
+}
+
+// ================= uitgaven =================
+const EXP_METHODS = ['Bank', 'Contant', 'Kaart', 'Anders'];
+const effExp = e => (e.status === 'Open' && e.due_date && e.due_date < today()) ? 'Vervallen' : e.status;
+const expTag = e => { const st = effExp(e); return `<span class="tag ${esc(st)}">${esc(st)}</span>`; };
+async function loadExp() { [S.expenses, S.expCats] = await Promise.all([api('expenses'), api('expense-categories')]); }
+
+// bon/factuur klaarmaken voor upload: afbeeldingen verkleind, pdf als geheel
+function fileToReceipt(file) {
+  return new Promise((resolve, reject) => {
+    const type = file.type;
+    if (type === 'application/pdf') {
+      if (file.size > 2.9 * 1024 * 1024) return reject(new Error('PDF is te groot (max. 3 MB). Maak een kleinere scan.'));
+      const r = new FileReader();
+      r.onload = () => resolve({ data: String(r.result).split(',')[1], type, name: file.name });
+      r.onerror = () => reject(new Error('Bestand kon niet worden gelezen.'));
+      r.readAsDataURL(file);
+    } else if (/^image\//.test(type)) {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => {
+        const sc = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve({ data: c.toDataURL('image/jpeg', 0.82).split(',')[1], type: 'image/jpeg', name: file.name.replace(/\.\w+$/, '') + '.jpg' });
+      };
+      img.onerror = () => reject(new Error('Afbeelding kon niet worden gelezen (HEIC wordt niet ondersteund; gebruik JPG of PNG).'));
+      img.src = url;
+    } else reject(new Error('Alleen afbeeldingen en PDF worden ondersteund.'));
+  });
+}
+const catIdByName = n => (S.expCats.find(c => c.name === n) || {}).id || '';
+
+async function renderExpenses(m) {
+  m.innerHTML = '<div class="top"><h1>Uitgaven</h1></div><div class="card"><div class="muted">Laden…</div></div>';
+  try { await loadExp(); } catch (e) { m.querySelector('.card').textContent = e.message; return; }
+  const f = S.expF || (S.expF = { q: '', cat: '', status: '' });
+  const draw = () => {
+    const q = f.q.toLowerCase();
+    const rows = S.expenses.filter(e => (!f.cat || String(e.category_id || '') === f.cat) && (!f.status || effExp(e) === f.status)
+      && (!q || [e.number, e.vendor, e.reference, e.description, e.category].join(' ').toLowerCase().includes(q)));
+    const month = today().slice(0, 7), sumC = arr => arr.length ? moneyMulti(sumByCur(arr, 'total')) : '—';
+    const mon = S.expenses.filter(e => (e.date || '').startsWith(month)), open = S.expenses.filter(e => e.status !== 'Betaald');
+    m.innerHTML = `<div class="top"><h1>Uitgaven</h1><div class="row">${can('exp.write') ? '<button class="btn" id="xScan">Scan bon / factuur</button><button class="btn pri" id="xNew">+ Nieuwe uitgave</button><input type="file" id="xFile" accept="image/*,application/pdf" hidden>' : ''}</div></div>
+    <div class="kpis"><div class="card kpi"><div class="l">Uitgaven deze maand</div><div class="v">${sumC(mon)}</div><div class="muted">${mon.length} uitgaven</div></div>
+      <div class="card kpi"><div class="l">Nog te betalen</div><div class="v">${sumC(open)}</div><div class="muted">${open.length} open · ${open.filter(e => effExp(e) === 'Vervallen').length} vervallen</div></div>
+      <div class="card kpi"><div class="l">Totaal geregistreerd</div><div class="v">${sumC(S.expenses)}</div><div class="muted">${S.expenses.length} uitgaven</div></div></div>
+    <div class="card"><div class="filters"><input id="xq" placeholder="Zoek op leverancier, nummer, omschrijving…" value="${esc(f.q)}">
+      <select id="xc"><option value="">Alle categorieën</option>${S.expCats.map(c => `<option value="${c.id}" ${f.cat === String(c.id) ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+      <select id="xs"><option value="">Alle statussen</option>${['Open', 'Vervallen', 'Betaald'].map(x => `<option ${f.status === x ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+    <div class="tablewrap"><table class="list"><thead><tr><th>Nr.</th><th>Leverancier</th><th>Categorie</th><th>Datum</th><th>Vervalt</th><th>Status</th><th class="num">Totaal</th></tr></thead>
+    <tbody>${rows.map(e => `<tr class="click" data-xe="${e.id}"><td><b>${esc(e.number)}</b></td><td>${esc(e.vendor)}${e.has_receipt ? ' 📎' : ''}<div class="muted">${esc(e.description || '')}</div></td><td>${esc(e.category || '—')}</td><td>${fdate(e.date)}</td><td>${fdate(e.due_date)}</td><td>${expTag(e)}</td><td class="num"><b>${money(e.total, curOf(e))}</b></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nog geen uitgaven. Klik op “+ Nieuwe uitgave” of scan een bon.</td></tr>'}</tbody>
+    ${rows.length ? `<tfoot><tr><td colspan="6" class="muted" style="padding:10px">${rows.length} regels</td><td class="num" style="padding:10px"><b>${moneyMulti(sumByCur(rows, 'total'))}</b></td></tr></tfoot>` : ''}</table></div></div>`;
+    const again = async () => { await loadExp(); draw(); };
+    $('#xq').oninput = e => { f.q = e.target.value; const pos = e.target.selectionStart; draw(); const i = $('#xq'); i.focus(); i.setSelectionRange(pos, pos); };
+    $('#xc').onchange = e => { f.cat = e.target.value; draw(); };
+    $('#xs').onchange = e => { f.status = e.target.value; draw(); };
+    m.querySelectorAll('[data-xe]').forEach(tr => tr.onclick = () => expenseModal(S.expenses.find(e => String(e.id) === tr.dataset.xe), {}, again));
+    if ($('#xNew')) $('#xNew').onclick = () => expenseModal(null, {}, again);
+    if ($('#xScan')) {
+      $('#xScan').onclick = () => $('#xFile').click();
+      $('#xFile').onchange = async ev => {
+        const file = ev.target.files[0]; ev.target.value = ''; if (!file) return;
+        try {
+          toast('Bon wordt gelezen…', false, 6000);
+          const rec = await fileToReceipt(file);
+          let scan = null;
+          try { scan = await api('expenses/scan', { method: 'POST', body: { data: rec.data, type: rec.type } }); } catch (er) { toast(er.message, 1, 6000); }
+          expenseModal(null, { scan, receipt: rec }, again);
+        } catch (er) { toast(er.message, 1, 5000); }
+      };
+    }
+  };
+  draw();
+}
+
+// uitgave bekijken/bewerken/aanmaken. opts: { scan, receipt } (uit een gescande bon)
+function expenseModal(e, opts, done) {
+  const sc = opts.scan || {};
+  const v = {
+    vendor: e ? e.vendor : sc.vendor || '', category_id: e ? e.category_id : (sc.category ? catIdByName(sc.category) : ''),
+    date: e ? e.date : sc.date || today(), due_date: e ? e.due_date : sc.due_date || '', reference: e ? e.reference : sc.reference || '',
+    description: e ? e.description : sc.description || '', currency: e ? curOf(e) : (sc.currency || defCur()), total: e ? e.total : (sc.total || ''),
+    vat_rate: e ? e.vat_rate : (sc.total ? sc.vat_rate : Number(vatDefault(S.settings)) || 0), status: e ? e.status : 'Open', paid_on: e ? e.paid_on : '', method: e ? e.method : 'Bank', notes: e ? e.notes : '',
+  };
+  let rec = opts.receipt || null, removeRec = false;
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal" style="max-width:640px"><h2>${e ? 'Uitgave ' + esc(e.number) : 'Nieuwe uitgave'}</h2>
+  <div class="row" style="margin-bottom:10px;flex-wrap:wrap"><button type="button" class="btn sm" id="xmScan">${can('exp.write') ? 'Scan bon / factuur (AI)' : ''}</button><input type="file" id="xmFile" accept="image/*,application/pdf" hidden>
+    <span class="muted" id="xmRec" style="font-size:12.5px"></span></div>
+  <form id="xf" class="form" autocomplete="off">
+    <label class="f full">Leverancier<input name="vendor" required value="${esc(v.vendor)}"></label>
+    <label class="f">Categorie<select name="category_id"><option value="">— Geen —</option>${S.expCats.filter(c => c.active || c.id === v.category_id).map(c => `<option value="${c.id}" ${String(v.category_id) === String(c.id) ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+    <label class="f">Referentie (factuur-/bonnr.)<input name="reference" value="${esc(v.reference)}"></label>
+    <label class="f">Datum<input type="date" name="date" value="${esc(v.date)}"></label>
+    <label class="f">Vervaldatum<input type="date" name="due_date" value="${esc(v.due_date)}"></label>
+    <label class="f full">Omschrijving<input name="description" value="${esc(v.description)}"></label>
+    <label class="f">Valuta<select name="currency">${[...new Set([...CURRENCIES, v.currency])].map(c => `<option ${v.currency === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+    <label class="f">Totaal (incl. BTW)<input name="total" type="number" step="0.01" min="0.01" required value="${esc(v.total)}"></label>
+    <label class="f">BTW %<input name="vat_rate" type="number" step="0.1" min="0" value="${esc(v.vat_rate)}"></label>
+    <div class="muted" id="xcalc" style="align-self:end;font-size:12.5px;padding-bottom:10px"></div>
+    <label class="f">Status<select name="status">${['Open', 'Betaald'].map(x => `<option ${v.status === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+    <label class="f">Betaald op<input type="date" name="paid_on" value="${esc(v.paid_on || '')}"></label>
+    <label class="f">Betaalmethode<select name="method">${EXP_METHODS.map(x => `<option ${v.method === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+    <label class="f full">Notities<input name="notes" value="${esc(v.notes)}"></label></form>
+  <div class="row" style="justify-content:space-between;margin-top:14px"><div>${e && can('exp.delete') ? '<button class="btn danger" id="xdel">Verwijderen</button>' : ''}</div><div class="row"><button class="btn" id="xcancel">Annuleren</button>${can('exp.write') ? '<button class="btn pri" id="xsave">Opslaan</button>' : ''}</div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove(), f = $('#xf', bg);
+  bg.onclick = ev => { if (ev.target === bg) close(); };
+  $('#xcancel', bg).onclick = close;
+  if (!can('exp.write')) f.querySelectorAll('input, select').forEach(i => { i.disabled = true; });
+  const recInfo = () => {
+    const el = $('#xmRec', bg);
+    el.innerHTML = rec ? `📎 ${esc(rec.name)} <a href="#" id="xmRm">verwijderen</a>` : (e && e.has_receipt && !removeRec ? `📎 <a href="/api/expenses/${e.id}/receipt" target="_blank" rel="noopener">Bon bekijken</a> · <a href="#" id="xmRm">verwijderen</a>` : '');
+    if ($('#xmRm', bg)) $('#xmRm', bg).onclick = ev => { ev.preventDefault(); if (rec) rec = null; else removeRec = true; recInfo(); };
+  };
+  const calcLine = () => {
+    const t = Number(f.total.value) || 0, r = Number(f.vat_rate.value) || 0, sub = Math.round(t / (1 + r / 100) * 100) / 100;
+    $('#xcalc', bg).textContent = t ? `Excl. BTW ${money(sub, f.currency.value)} · BTW ${money(Math.round((t - sub) * 100) / 100, f.currency.value)}` : '';
+  };
+  f.addEventListener('input', ev => { if (ev.target.name === 'status' && ev.target.value === 'Betaald' && !f.paid_on.value) f.paid_on.value = today(); calcLine(); });
+  recInfo(); calcLine();
+  if (!can('exp.write')) $('#xmScan', bg).style.display = 'none';
+  $('#xmScan', bg).onclick = () => $('#xmFile', bg).click();
+  $('#xmFile', bg).onchange = async ev => {
+    const file = ev.target.files[0]; ev.target.value = ''; if (!file) return;
+    try {
+      toast('Bon wordt gelezen…', false, 6000);
+      rec = await fileToReceipt(file); removeRec = false; recInfo();
+      const r = await api('expenses/scan', { method: 'POST', body: { data: rec.data, type: rec.type } });
+      const set = (n, val) => { if (val) f[n].value = val; };
+      set('vendor', r.vendor); set('date', r.date); set('due_date', r.due_date); set('reference', r.reference); set('description', r.description);
+      if (r.currency && [...f.currency.options].some(o => o.value === r.currency)) f.currency.value = r.currency;
+      if (r.total) { f.total.value = r.total; f.vat_rate.value = r.vat_rate; }
+      if (r.category) f.category_id.value = catIdByName(r.category);
+      calcLine(); toast('Gegevens ingevuld — controleer ze voor je opslaat', false, 4500);
+    } catch (er) { toast(er.message, 1, 6000); }
+  };
+  if ($('#xsave', bg)) $('#xsave', bg).onclick = async () => {
+    if (!f.reportValidity()) return;
+    const d = Object.fromEntries(new FormData(f));
+    if (e) d.id = e.id;
+    if (rec) { d.receipt = rec.data; d.receipt_type = rec.type; d.receipt_name = rec.name; } else if (removeRec) d.remove_receipt = true;
+    try { await api('expenses', { method: 'POST', body: d }); close(); toast('Uitgave opgeslagen'); done(); } catch (er) { toast(er.message, 1); }
+  };
+  if ($('#xdel', bg)) $('#xdel', bg).onclick = async () => {
+    if (!confirm(`Uitgave ${e.number} definitief verwijderen?`)) return;
+    try { await api('expenses/' + e.id, { method: 'DELETE' }); close(); toast('Verwijderd'); done(); } catch (er) { toast(er.message, 1); }
+  };
+}
+
+// ---- categorieën
+async function renderExpCats(m) {
+  m.innerHTML = '<div class="top"><h1>Uitgavecategorieën</h1></div><div class="card"><div class="muted">Laden…</div></div>';
+  let list = [];
+  try { list = await api('expense-categories'); } catch (e) { m.querySelector('.card').textContent = e.message; return; }
+  m.innerHTML = `<div class="top"><h1>Uitgavecategorieën</h1>${can('exp.write') ? '<button class="btn pri" id="cNew">+ Categorie</button>' : ''}</div>
+  <div class="card"><p class="muted" style="margin-top:0">Categorieën gebruik je om uitgaven in te delen (bijv. Huur, Transport). Bij het scannen van een bon stelt de AI een categorie voor uit deze lijst.</p>
+  <div class="tablewrap"><table class="list"><thead><tr><th>Categorie</th><th>Uitgaven</th><th>Status</th><th></th></tr></thead>
+  <tbody>${list.map(c => `<tr><td><b>${esc(c.name)}</b></td><td>${c.used}</td><td>${c.active ? '<span class="tag Betaald">Actief</span>' : '<span class="tag Concept">Inactief</span>'}</td><td class="num">${can('exp.write') ? `<button class="btn sm" data-cedit="${c.id}">Bewerken</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">Nog geen categorieën.</td></tr>'}</tbody></table></div></div>`;
+  const again = () => renderExpCats(m);
+  if ($('#cNew')) $('#cNew').onclick = () => catModal(null, again);
+  m.querySelectorAll('[data-cedit]').forEach(b => b.onclick = () => catModal(list.find(c => String(c.id) === b.dataset.cedit), again));
+}
+function catModal(c, done) {
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal"><h2>${c ? 'Categorie bewerken' : 'Nieuwe categorie'}</h2><form id="cf" class="form" autocomplete="off">
+    <label class="f full">Naam<input name="name" required value="${esc(c?.name)}"></label>
+    ${c ? `<label class="row full" style="gap:8px;cursor:pointer"><input type="checkbox" name="active" ${c.active ? 'checked' : ''} style="width:18px;height:18px"> Actief (kan gekozen worden bij nieuwe uitgaven)</label>` : ''}</form>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><div>${c && can('exp.delete') ? '<button class="btn danger" id="cdel">Verwijderen</button>' : ''}</div><div class="row"><button class="btn" id="ccancel">Annuleren</button><button class="btn pri" id="csave">Opslaan</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove(), f = $('#cf', bg);
+  bg.onclick = ev => { if (ev.target === bg) close(); };
+  $('#ccancel', bg).onclick = close;
+  f.onsubmit = ev => { ev.preventDefault(); $('#csave', bg).click(); };
+  $('#csave', bg).onclick = async () => {
+    if (!f.reportValidity()) return;
+    const d = { name: f.name.value }; if (c) { d.id = c.id; d.active = !!f.active.checked; }
+    try { await api('expense-categories', { method: 'POST', body: d }); close(); toast('Opgeslagen'); done(); } catch (er) { toast(er.message, 1, 5000); }
+  };
+  if ($('#cdel', bg)) $('#cdel', bg).onclick = async () => {
+    if (!confirm(`Categorie “${c.name}” verwijderen?`)) return;
+    try { await api('expense-categories/' + c.id, { method: 'DELETE' }); close(); toast('Verwijderd'); done(); } catch (er) { toast(er.message, 1, 6000); }
+  };
+}
+
+// ---- terugkerende uitgaven
+async function renderRecExpenses(m) {
+  m.innerHTML = '<div class="top"><h1>Terugkerende uitgaven</h1></div><div class="card"><div class="muted">Laden…</div></div>';
+  let list = [];
+  try { [list, S.expCats] = await Promise.all([api('recurring-expenses'), api('expense-categories')]); } catch (e) { m.querySelector('.card').textContent = e.message; return; }
+  m.innerHTML = `<div class="top"><h1>Terugkerende uitgaven</h1><div class="row">${can('exp.write') ? '<button class="btn" id="reRun">Nu uitvoeren</button><button class="btn pri" id="reNew">+ Terugkerende uitgave</button>' : ''}</div></div>
+  <div class="card"><p class="muted" style="margin-top:0">Vaste kosten zoals huur of internet worden automatisch als uitgave aangemaakt op de volgende datum (dagelijks gecontroleerd). Met “Nu uitvoeren” maak je de uitgaven die al aan de beurt zijn direct aan.</p>
+  <div class="tablewrap"><table class="list"><thead><tr><th>Naam</th><th>Leverancier</th><th>Categorie</th><th>Interval</th><th>Volgende</th><th>Eindigt</th><th>Status</th><th class="num">Bedrag</th><th></th></tr></thead>
+  <tbody>${list.map(r => `<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.vendor || '—')}</td><td>${esc(r.category || '—')}</td><td>${INTERVAL_NL[r.interval]}</td><td>${fdate(r.next_date)}</td><td>${r.end_date ? fdate(r.end_date) : '—'}</td>
+    <td>${r.active ? '<span class="tag Betaald">Actief</span>' : '<span class="tag Concept">Gepauzeerd</span>'}</td><td class="num">${money(r.total, r.currency || defCur())}</td>
+    <td class="num">${can('exp.write') ? `<button class="btn sm" data-reedit="${r.id}">Bewerken</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">Nog geen terugkerende uitgaven.</td></tr>'}</tbody></table></div></div>`;
+  const again = () => renderRecExpenses(m);
+  if ($('#reNew')) $('#reNew').onclick = () => recExpModal(null, again);
+  if ($('#reRun')) $('#reRun').onclick = async () => {
+    try { const r = await api('recurring-expenses/run', { method: 'POST' }); toast(r.made.length ? `${r.made.length} uitgave(n) aangemaakt: ${r.made.join(', ')}` : 'Niets aan de beurt', false, 5000); again(); } catch (e) { toast(e.message, 1); }
+  };
+  m.querySelectorAll('[data-reedit]').forEach(b => b.onclick = () => recExpModal(list.find(r => String(r.id) === b.dataset.reedit), again));
+}
+function recExpModal(r, done) {
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  const cur = r?.currency || defCur();
+  bg.innerHTML = `<div class="modal" style="max-width:640px"><h2>${r ? 'Terugkerende uitgave bewerken' : 'Terugkerende uitgave'}</h2><form id="rf" class="form" autocomplete="off">
+    <label class="f full">Naam<input name="name" required value="${esc(r?.name)}" placeholder="Bijv. Kantoorhuur"></label>
+    <label class="f">Leverancier<input name="vendor" value="${esc(r?.vendor)}"></label>
+    <label class="f">Categorie<select name="category_id"><option value="">— Geen —</option>${S.expCats.filter(c => c.active || c.id === r?.category_id).map(c => `<option value="${c.id}" ${String(r?.category_id) === String(c.id) ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+    <label class="f full">Omschrijving<input name="description" value="${esc(r?.description)}"></label>
+    <label class="f">Valuta<select name="currency">${[...new Set([...CURRENCIES, cur])].map(c => `<option ${cur === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+    <label class="f">Totaal (incl. BTW)<input name="total" type="number" step="0.01" min="0.01" required value="${esc(r?.total ?? '')}"></label>
+    <label class="f">BTW %<input name="vat_rate" type="number" step="0.1" min="0" value="${esc(r ? r.vat_rate : (Number(vatDefault(S.settings)) || 0))}"></label>
+    <label class="f">Interval<select name="interval">${Object.entries(INTERVAL_NL).map(([k, v]) => `<option value="${k}" ${(r?.interval || 'maand') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+    <label class="f">Eerstvolgende uitgave op<input name="next_date" type="date" required value="${esc(r?.next_date || today())}"></label>
+    <label class="f">Stopt na (optioneel)<input name="end_date" type="date" value="${esc(r?.end_date || '')}"></label>
+    <label class="f">Nieuwe uitgaven krijgen status<select name="auto_status"><option ${r?.auto_status !== 'Betaald' ? 'selected' : ''}>Open</option><option ${r?.auto_status === 'Betaald' ? 'selected' : ''}>Betaald</option></select></label>
+    <label class="f">Betaalmethode<select name="method">${EXP_METHODS.map(x => `<option ${(r?.method || 'Bank') === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+    <label class="f full">Notities<input name="notes" value="${esc(r?.notes)}"></label>
+    ${r ? `<label class="row full" style="gap:8px;cursor:pointer"><input type="checkbox" name="active" ${r.active ? 'checked' : ''} style="width:18px;height:18px"> Actief</label>` : ''}</form>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><div>${r && can('exp.delete') ? '<button class="btn danger" id="rdel">Verwijderen</button>' : ''}</div><div class="row"><button class="btn" id="rcancel">Annuleren</button><button class="btn pri" id="rsave">Opslaan</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove(), f = $('#rf', bg);
+  bg.onclick = ev => { if (ev.target === bg) close(); };
+  $('#rcancel', bg).onclick = close;
+  $('#rsave', bg).onclick = async () => {
+    if (!f.reportValidity()) return;
+    const d = Object.fromEntries(new FormData(f)); if (r) { d.id = r.id; d.active = !!f.active.checked; }
+    try { await api('recurring-expenses', { method: 'POST', body: d }); close(); toast('Opgeslagen'); done(); } catch (er) { toast(er.message, 1); }
+  };
+  if ($('#rdel', bg)) $('#rdel', bg).onclick = async () => {
+    if (!confirm('Deze terugkerende uitgave verwijderen? Al aangemaakte uitgaven blijven bestaan.')) return;
+    try { await api('recurring-expenses/' + r.id, { method: 'DELETE' }); close(); toast('Verwijderd'); done(); } catch (er) { toast(er.message, 1); }
   };
 }
 

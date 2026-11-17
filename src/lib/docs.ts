@@ -97,3 +97,46 @@ export async function runRecurring(userName: string | null): Promise<string[]> {
   }
   return made;
 }
+
+// ---------- uitgaven ----------
+export async function nextExpenseNumber() {
+  const s = await getSettings();
+  const prefix = String(s.expense_prefix || 'EXP').trim().replace(/[^A-Za-z0-9-]/g, '') || 'EXP';
+  const year = new Date().getFullYear();
+  const rows = await q<{ number: string }>('SELECT number FROM expenses WHERE number LIKE $1', [`${prefix}-${year}-%`]);
+  const max = rows.reduce((m, r) => Math.max(m, parseInt(r.number.split('-').pop() || '0', 10) || 0), 0);
+  return `${prefix}-${year}-${String(max + 1).padStart(4, '0')}`;
+}
+
+export function splitVat(total: number, vatRate: number) {
+  const t = round2(total), rate = Number(vatRate) || 0;
+  const subtotal = round2(t / (1 + rate / 100));
+  return { subtotal, vat_amount: round2(t - subtotal), total: t };
+}
+
+// Maakt uitgaven aan voor alle actieve terugkerende uitgaven waarvan de datum is bereikt.
+export async function runRecurringExpenses(userName: string | null): Promise<string[]> {
+  const today = todayPb();
+  const due = await q<any>('SELECT * FROM recurring_expenses WHERE active = true AND next_date <= $1 ORDER BY next_date', [today]);
+  const base = await baseCur();
+  const made: string[] = [];
+  for (const r of due) {
+    let next: string = r.next_date, guard = 0;
+    while (next <= today && (!r.end_date || next <= r.end_date) && guard++ < 12) {
+      const v = splitVat(r.total, r.vat_rate);
+      const cur = await cleanCur(r.currency);
+      const fx = cur === base ? 1 : await rateFor(cur, next, base);
+      const number = await nextExpenseNumber();
+      const paid = r.auto_status === 'Betaald';
+      await q(`INSERT INTO expenses (number, vendor, category_id, date, due_date, description, subtotal, vat_rate, vat_amount, total, currency, fx_rate, fx_base,
+        status, paid_on, method, notes, recurring_id, created_by_name, updated_by_name) VALUES ($1,$2,$3,$4,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
+        [number, r.vendor || r.name, r.category_id, next, r.description || '', v.subtotal, r.vat_rate, v.vat_amount, v.total, cur, fx, base,
+          paid ? 'Betaald' : 'Open', paid ? next : null, r.method || 'Bank', r.notes || '', r.id, userName || 'Terugkerend']);
+      made.push(number);
+      next = nextRun(next, r.interval, r.anchor_day);
+    }
+    const ended = r.end_date && next > r.end_date;
+    await q('UPDATE recurring_expenses SET next_date = $1, last_run = $2, active = $3 WHERE id = $4', [next, today, ended ? false : r.active, r.id]);
+  }
+  return made;
+}

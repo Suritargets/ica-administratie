@@ -14,13 +14,14 @@ export type Perm =
   | 'clients.write' | 'clients.delete'
   | 'catalog.write' | 'catalog.delete'
   | 'rates.write'
+  | 'exp.write' | 'exp.delete'
   | 'settings.write'
   | 'users.manage' | 'data.export';
 
 const MATRIX: Record<Role, Perm[]> = {
-  admin: ['docs.write', 'docs.delete', 'clients.write', 'clients.delete', 'catalog.write', 'catalog.delete', 'rates.write', 'settings.write', 'users.manage', 'data.export'],
-  boekhouder: ['docs.write', 'docs.delete', 'clients.write', 'clients.delete', 'catalog.write', 'catalog.delete', 'rates.write'],
-  medewerker: ['docs.write', 'clients.write'],
+  admin: ['docs.write', 'docs.delete', 'clients.write', 'clients.delete', 'catalog.write', 'catalog.delete', 'rates.write', 'exp.write', 'exp.delete', 'settings.write', 'users.manage', 'data.export'],
+  boekhouder: ['docs.write', 'docs.delete', 'clients.write', 'clients.delete', 'catalog.write', 'catalog.delete', 'rates.write', 'exp.write', 'exp.delete'],
+  medewerker: ['docs.write', 'clients.write', 'exp.write'],
   'alleen-lezen': [],
 };
 

@@ -1,4 +1,4 @@
-import { runRecurring } from '@/lib/docs';
+import { runRecurring, runRecurringExpenses } from '@/lib/docs';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -9,7 +9,8 @@ export async function GET(req: Request) {
   if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) return new Response('Niet toegestaan', { status: 401 });
   try {
     const made = await runRecurring('Terugkerend (automatisch)');
-    return Response.json({ ok: true, made });
+    const expenses = await runRecurringExpenses('Terugkerend (automatisch)');
+    return Response.json({ ok: true, made, expenses });
   } catch (e) {
     console.error('cron recurring', e);
     return Response.json({ error: 'mislukt' }, { status: 500 });

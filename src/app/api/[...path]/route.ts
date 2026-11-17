@@ -3,7 +3,8 @@ import { q, q1 } from '@/lib/db';
 import { allowed, currentUser, hashPassword, makeSession, passwordProblem, sameOrigin, sessionCookie, verifyPassword, type User } from '@/lib/auth';
 import { isRole, permsOf, type Perm } from '@/lib/perms';
 import { layout, mailAppointmentStatus, sendMail, smtpConfigured } from '@/lib/mail';
-import { addDaysIso, baseCur, calc, cleanCur, getSettings, INTERVALS, nextNumber, rateFor, round2, runRecurring, todayPb, type DocType } from '@/lib/docs';
+import { addDaysIso, baseCur, calc, cleanCur, getSettings, INTERVALS, nextExpenseNumber, nextNumber, rateFor, round2, runRecurring, runRecurringExpenses, splitVat, todayPb, type DocType } from '@/lib/docs';
+import { ocrConfigured, RECEIPT_TYPES, scanReceipt } from '@/lib/ocr';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -439,6 +440,151 @@ async function handleInner(req: Request, ctx: { params: Promise<{ path: string[]
       }
     }
 
+    // ---- uitgaven: categorieën ----
+    if (resource === 'expense-categories') {
+      if (m === 'GET') return json(200, await q('SELECT c.*, (SELECT COUNT(*)::int FROM expenses e WHERE e.category_id = c.id) AS used FROM expense_categories c ORDER BY lower(c.name)'));
+      if (m === 'POST') {
+        if (!need('exp.write')) return FORBIDDEN();
+        const b = await body(req);
+        const name = String(b.name || '').trim().slice(0, 60);
+        if (!name) return fail(400, 'Naam is verplicht');
+        try {
+          if (b.id) await q('UPDATE expense_categories SET name = $1, active = $2 WHERE id = $3', [name, b.active !== false, Number(b.id)]);
+          else await q('INSERT INTO expense_categories (name) VALUES ($1)', [name]);
+        } catch (e) { if (isUnique(e)) return fail(400, 'Deze categorie bestaat al.'); throw e; }
+        await audit(me, b.id ? 'expense_category_updated' : 'expense_category_created', name);
+        return json(200, { ok: true });
+      }
+      if (m === 'DELETE' && id) {
+        if (!need('exp.delete')) return FORBIDDEN();
+        const used = await q1<{ n: number }>('SELECT COUNT(*)::int AS n FROM expenses WHERE category_id = $1', [Number(id)]);
+        if ((used?.n ?? 0) > 0) return fail(400, `Deze categorie wordt gebruikt door ${used!.n} uitgave(n). Zet hem op inactief of wijzig die uitgaven eerst.`);
+        await q('DELETE FROM expense_categories WHERE id = $1', [Number(id)]);
+        await audit(me, 'expense_category_deleted', `#${id}`);
+        return json(200, { ok: true });
+      }
+    }
+
+    // ---- uitgaven ----
+    if (resource === 'expenses') {
+      const COLS = `e.id, e.number, e.vendor, e.category_id, c.name AS category, e.date, e.due_date, e.reference, e.description, e.subtotal, e.vat_rate, e.vat_amount,
+        e.total, e.currency, e.fx_rate, e.fx_base, e.status, e.paid_on, e.method, e.notes, e.receipt_name, (e.receipt_b64 IS NOT NULL) AS has_receipt, e.recurring_id, e.created_by_name, e.created_at`;
+      const FROM = 'FROM expenses e LEFT JOIN expense_categories c ON c.id = e.category_id';
+      if (id === 'scan' && m === 'POST') {
+        if (!need('exp.write')) return FORBIDDEN();
+        if (!ocrConfigured()) return fail(400, 'Scannen is nog niet ingesteld (ANTHROPIC_API_KEY ontbreekt op Vercel). Je kunt de uitgave wel handmatig invullen.');
+        const b = await body(req);
+        const data = String(b.data || ''), type = String(b.type || '');
+        if (!RECEIPT_TYPES.includes(type)) return fail(400, 'Alleen afbeeldingen (JPG, PNG, WEBP, GIF) en PDF worden ondersteund.');
+        if (!data || data.length > 4_000_000) return fail(400, 'Bestand te groot (maximaal ongeveer 3 MB).');
+        const cats = (await q<{ name: string }>('SELECT name FROM expense_categories WHERE active ORDER BY lower(name)')).map(r => r.name);
+        try {
+          const scan = await scanReceipt(data, type, cats);
+          await audit(me, 'expense_scanned', scan.vendor);
+          return json(200, scan);
+        } catch (e: any) {
+          console.error('scan', e?.status, e?.message);
+          return fail(502, 'Het document kon niet worden gelezen. Vul de gegevens handmatig in.');
+        }
+      }
+      if (m === 'GET' && id && sub === 'receipt') {
+        const r = await q1<any>('SELECT receipt_b64, receipt_type, receipt_name FROM expenses WHERE id = $1', [Number(id)]);
+        if (!r?.receipt_b64) return fail(404, 'Geen bon');
+        const ext = r.receipt_type === 'application/pdf' ? 'pdf' : String(r.receipt_type || '').split('/')[1] || 'bin';
+        return new Response(Buffer.from(r.receipt_b64, 'base64'), { headers: { 'Content-Type': r.receipt_type, 'Cache-Control': 'private, no-store',
+          'Content-Disposition': `inline; filename="${String(r.receipt_name || 'bon').replace(/[^\w.\- ]/g, '_')}${/\.\w{2,4}$/.test(String(r.receipt_name || '')) ? '' : '.' + ext}"`, 'X-Content-Type-Options': 'nosniff' } });
+      }
+      if (m === 'GET' && id) return json(200, await q1(`SELECT ${COLS} ${FROM} WHERE e.id = $1`, [Number(id)]));
+      if (m === 'GET') return json(200, await q(`SELECT ${COLS} ${FROM} ORDER BY e.date DESC NULLS LAST, e.id DESC`));
+      if (m === 'POST') {
+        if (!need('exp.write')) return FORBIDDEN();
+        const b = await body(req);
+        const vendor = String(b.vendor || '').trim().slice(0, 120);
+        if (!vendor) return fail(400, 'Vul de leverancier in.');
+        const total = round2(b.total);
+        if (!(total > 0)) return fail(400, 'Vul een totaalbedrag groter dan 0 in.');
+        const vatRate = Math.min(Math.max(Number(b.vat_rate) || 0, 0), 100);
+        const v = splitVat(total, vatRate);
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.date)) ? String(b.date) : todayPb();
+        const due = /^\d{4}-\d{2}-\d{2}$/.test(String(b.due_date)) ? String(b.due_date) : null;
+        const status = b.status === 'Betaald' ? 'Betaald' : 'Open';
+        const paidOn = status === 'Betaald' ? (/^\d{4}-\d{2}-\d{2}$/.test(String(b.paid_on)) ? String(b.paid_on) : date) : null;
+        const method = ['Bank', 'Contant', 'Kaart', 'Anders'].includes(b.method) ? b.method : 'Bank';
+        const catId = Number(b.category_id) > 0 ? Number(b.category_id) : null;
+        const base = await baseCur(), cur = await cleanCur(b.currency), fx = await rateFor(cur, date, base);
+        const rec = String(b.receipt || '');
+        if (rec && (rec.length > 4_000_000 || !RECEIPT_TYPES.includes(String(b.receipt_type)))) return fail(400, 'Bon te groot of niet ondersteund (JPG/PNG/WEBP/GIF/PDF, max. ongeveer 3 MB).');
+        const fields = [vendor, catId, date, due, String(b.reference || '').slice(0, 60), String(b.description || '').slice(0, 300), v.subtotal, vatRate, v.vat_amount, v.total, cur, fx, base, status, paidOn, method, String(b.notes || '').slice(0, 1000)];
+        let rowId: number;
+        try {
+          if (b.id) {
+            const r = await q1<any>(`UPDATE expenses SET vendor=$1, category_id=$2, date=$3, due_date=$4, reference=$5, description=$6, subtotal=$7, vat_rate=$8, vat_amount=$9, total=$10,
+              currency=$11, fx_rate=$12, fx_base=$13, status=$14, paid_on=$15, method=$16, notes=$17, updated_by_name=$18, updated_at=now() WHERE id=$19 RETURNING id, number`, [...fields, me.name, Number(b.id)]);
+            if (!r) return fail(404, 'Niet gevonden');
+            rowId = r.id;
+            await audit(me, 'expense_updated', `${r.number} · ${vendor} · ${total}`);
+          } else {
+            const number = await nextExpenseNumber();
+            const r = await q1<any>(`INSERT INTO expenses (vendor, category_id, date, due_date, reference, description, subtotal, vat_rate, vat_amount, total, currency, fx_rate, fx_base, status, paid_on, method, notes, number, created_by_name, updated_by_name)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$19) RETURNING id`, [...fields, number, me.name]);
+            rowId = r.id;
+            await audit(me, 'expense_created', `${number} · ${vendor} · ${total}`);
+          }
+        } catch (e) { if (isUnique(e)) return fail(400, 'Dit nummer bestaat al.'); throw e; }
+        if (rec) await q('UPDATE expenses SET receipt_b64=$1, receipt_type=$2, receipt_name=$3 WHERE id=$4', [rec, b.receipt_type, String(b.receipt_name || '').slice(0, 120), rowId]);
+        else if (b.remove_receipt) await q('UPDATE expenses SET receipt_b64=NULL, receipt_type=NULL, receipt_name=NULL WHERE id=$1', [rowId]);
+        return json(200, await q1(`SELECT ${COLS} ${FROM} WHERE e.id = $1`, [rowId]));
+      }
+      if (m === 'DELETE' && id) {
+        if (!need('exp.delete')) return FORBIDDEN();
+        const r = await q1<any>('DELETE FROM expenses WHERE id = $1 RETURNING number, vendor, total', [Number(id)]);
+        await audit(me, 'expense_deleted', r ? `${r.number} · ${r.vendor} · ${r.total}` : `#${id}`);
+        return json(200, { ok: true });
+      }
+    }
+
+    // ---- terugkerende uitgaven ----
+    if (resource === 'recurring-expenses') {
+      if (m === 'GET') return json(200, await q('SELECT r.*, c.name AS category FROM recurring_expenses r LEFT JOIN expense_categories c ON c.id = r.category_id ORDER BY r.active DESC, r.next_date'));
+      if (id === 'run' && m === 'POST') {
+        if (!need('exp.write')) return FORBIDDEN();
+        const made = await runRecurringExpenses(me.name);
+        await audit(me, 'recurring_expense_run', made.join(', '));
+        return json(200, { made });
+      }
+      if (m === 'POST') {
+        if (!need('exp.write')) return FORBIDDEN();
+        const b = await body(req);
+        if (!INTERVALS.includes(b.interval)) return fail(400, 'Kies een interval.');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.next_date))) return fail(400, 'Vul een geldige datum in voor de eerstvolgende uitgave.');
+        const total = round2(b.total);
+        if (!(total > 0)) return fail(400, 'Vul een bedrag groter dan 0 in.');
+        const name = String(b.name || '').trim().slice(0, 120);
+        if (!name) return fail(400, 'Vul een naam in.');
+        const end = /^\d{4}-\d{2}-\d{2}$/.test(String(b.end_date)) ? b.end_date : null;
+        const vals = [name, String(b.vendor || '').slice(0, 120), Number(b.category_id) > 0 ? Number(b.category_id) : null, String(b.description || '').slice(0, 300), total,
+          Math.min(Math.max(Number(b.vat_rate) || 0, 0), 100), await cleanCur(b.currency), ['Bank', 'Contant', 'Kaart', 'Anders'].includes(b.method) ? b.method : 'Bank',
+          String(b.notes || '').slice(0, 1000), b.interval, b.next_date, Number(String(b.next_date).slice(8, 10)), end, b.auto_status === 'Betaald' ? 'Betaald' : 'Open'];
+        if (b.id) {
+          const r = await q1(`UPDATE recurring_expenses SET name=$1, vendor=$2, category_id=$3, description=$4, total=$5, vat_rate=$6, currency=$7, method=$8, notes=$9, interval=$10, next_date=$11, anchor_day=$12, end_date=$13, auto_status=$14, active=$15 WHERE id=$16 RETURNING id`,
+            [...vals, b.active !== false, Number(b.id)]);
+          if (!r) return fail(404, 'Niet gevonden');
+          await audit(me, 'recurring_expense_updated', name);
+        } else {
+          await q(`INSERT INTO recurring_expenses (name, vendor, category_id, description, total, vat_rate, currency, method, notes, interval, next_date, anchor_day, end_date, auto_status, created_by_name)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, [...vals, me.name]);
+          await audit(me, 'recurring_expense_created', name);
+        }
+        return json(200, { ok: true });
+      }
+      if (m === 'DELETE' && id) {
+        if (!need('exp.delete')) return FORBIDDEN();
+        await q('DELETE FROM recurring_expenses WHERE id = $1', [Number(id)]);
+        await audit(me, 'recurring_expense_deleted', `#${id}`);
+        return json(200, { ok: true });
+      }
+    }
+
     // Volledige gegevensexport (JSON) — alleen admin
     if (resource === 'backup' && m === 'GET') {
       if (!need('data.export')) return FORBIDDEN();
@@ -447,6 +593,8 @@ async function handleInner(req: Request, ctx: { params: Promise<{ path: string[]
         settings: await q('SELECT * FROM settings'), clients: await q('SELECT * FROM clients'), catalog: await q('SELECT * FROM catalog'),
         rates: await q('SELECT * FROM rates'), documents: await q('SELECT * FROM documents'),
         payments: await q('SELECT * FROM payments'), recurring: await q('SELECT * FROM recurring'),
+        expense_categories: await q('SELECT * FROM expense_categories'), recurring_expenses: await q('SELECT * FROM recurring_expenses'),
+        expenses: await q('SELECT id, number, vendor, category_id, date, due_date, reference, description, subtotal, vat_rate, vat_amount, total, currency, status, paid_on, method, notes, receipt_name FROM expenses'),
         users: await q('SELECT id, email, name, role, active, created_at FROM users WHERE is_super = false OR $1::boolean', [!!me.is_super]),
       };
       await audit(me, 'data_exported');

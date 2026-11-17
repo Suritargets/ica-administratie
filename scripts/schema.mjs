@@ -69,6 +69,31 @@ export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS audit_log (
      id BIGSERIAL PRIMARY KEY, at TIMESTAMPTZ NOT NULL DEFAULT now(),
      user_id INTEGER, user_name TEXT, action TEXT NOT NULL, detail TEXT)`,
+  `CREATE TABLE IF NOT EXISTS expense_categories (
+     id SERIAL PRIMARY KEY, name TEXT NOT NULL, active BOOLEAN NOT NULL DEFAULT TRUE,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS expense_categories_name ON expense_categories (lower(name))`,
+  `INSERT INTO expense_categories (name) SELECT n FROM (VALUES ('Kantoorbenodigdheden'),('Huur'),('Nutsvoorzieningen'),('Salarissen'),('Transport'),('Telecom & internet'),('Marketing'),('Professionele diensten'),('Belastingen'),('Overig')) AS v(n) WHERE NOT EXISTS (SELECT 1 FROM expense_categories)`,
+  `CREATE TABLE IF NOT EXISTS expenses (
+     id SERIAL PRIMARY KEY, number TEXT NOT NULL UNIQUE,
+     vendor TEXT NOT NULL, category_id INTEGER REFERENCES expense_categories(id) ON DELETE SET NULL,
+     date TEXT, due_date TEXT, reference TEXT, description TEXT,
+     subtotal DOUBLE PRECISION NOT NULL DEFAULT 0, vat_rate DOUBLE PRECISION NOT NULL DEFAULT 0,
+     vat_amount DOUBLE PRECISION NOT NULL DEFAULT 0, total DOUBLE PRECISION NOT NULL DEFAULT 0,
+     currency TEXT, fx_rate DOUBLE PRECISION, fx_base TEXT,
+     status TEXT NOT NULL DEFAULT 'Open', paid_on TEXT, method TEXT, notes TEXT,
+     receipt_b64 TEXT, receipt_type TEXT, receipt_name TEXT, recurring_id INTEGER,
+     created_by_name TEXT, updated_by_name TEXT,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE INDEX IF NOT EXISTS expenses_date ON expenses (date DESC)`,
+  `CREATE TABLE IF NOT EXISTS recurring_expenses (
+     id SERIAL PRIMARY KEY, name TEXT NOT NULL, vendor TEXT, category_id INTEGER REFERENCES expense_categories(id) ON DELETE SET NULL,
+     description TEXT, total DOUBLE PRECISION NOT NULL DEFAULT 0, vat_rate DOUBLE PRECISION NOT NULL DEFAULT 0,
+     currency TEXT, method TEXT, notes TEXT,
+     interval TEXT NOT NULL CHECK (interval IN ('week','maand','kwartaal','jaar')),
+     next_date TEXT NOT NULL, anchor_day INTEGER NOT NULL DEFAULT 1, end_date TEXT, last_run TEXT,
+     auto_status TEXT NOT NULL DEFAULT 'Open', active BOOLEAN NOT NULL DEFAULT TRUE,
+     created_by_name TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
   `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS ip TEXT`,
   `CREATE INDEX IF NOT EXISTS audit_log_at ON audit_log (at DESC)`,
   `CREATE TABLE IF NOT EXISTS appointments (

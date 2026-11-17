@@ -325,6 +325,19 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--yellow);outline-
   .btn{padding:10px 14px}
   .m-only{display:block}.btn.m-only{display:inline-flex}.m-inline{display:inline}
   .d-only{display:none!important}
+  /* overige tabellen (betalingen, uitgaven, activiteit, gebruikers, ...) worden ook kaarten; de labels komen uit de kopregel */
+  table.mt{display:block;width:100%}
+  table.mt thead{display:none}
+  table.mt tbody,table.mt tfoot{display:block}
+  table.mt tr{display:block;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:10px;background:#fff}
+  table.mt tr.click:active{background:#f4f6fa}
+  table.mt td{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:4px 0!important;border:0!important;text-align:right!important;min-width:0;word-break:break-word}
+  table.mt td[data-l]::before{content:attr(data-l);color:var(--muted);font-size:12px;text-align:left;flex:none;max-width:42%;padding-top:1px}
+  table.mt td.empty{display:block;text-align:center!important}
+  table.mt td:not([data-l]){justify-content:flex-end;flex-wrap:wrap}
+  table.mt tfoot tr{background:none;border:0;padding:2px 0}
+  table.mt .muted{font-size:12px}
+  .tablewrap{overflow-x:visible}
   /* tabellen worden kaarten */
   table.cards thead{display:none}
   table.cards,table.cards tbody,table.cards tfoot{display:block}
@@ -2198,6 +2211,15 @@ function applyRole() {
 }
 setInterval(() => fetch('/api/ping').then(r => { if (r.status === 401) location.href = '/login'; }).catch(() => {}), 120000);
 $('#mHelp').onclick = () => go('handleiding');
+// kopteksten als label bij elke cel, voor de kaartweergave van tabellen op mobiel
+function labelTables(root) {
+  root.querySelectorAll('table:not(.cards)').forEach(t => {
+    t.classList.add('mt');
+    const heads = [...t.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    t.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => { if (heads[i] && !td.dataset.l && !td.classList.contains('empty')) td.dataset.l = heads[i]; }));
+  });
+}
+{ const main = $('#main'); let tm; new MutationObserver(() => { clearTimeout(tm); tm = setTimeout(() => labelTables(main), 30); }).observe(main, { childList: true, subtree: true }); }
 // mobiel menu: alle onderdelen in een uitschuifpaneel
 (() => {
   const dr = $('#mDrawer'), list = $('#mdList');

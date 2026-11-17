@@ -43,6 +43,20 @@ export function dayBookable(a: Avail, date: string, now = nowPb()): boolean {
   return date >= today && date <= last;
 }
 
+export type AgendaEvt = { date: string; end_date: string | null; all_day: boolean; start_time: string | null; end_time: string | null; blocks: boolean };
+
+// Door agenda-evenementen geblokkeerde tijdsloten op een dag ('all' = hele dag dicht)
+export function blockedTimes(a: Avail, events: AgendaEvt[], date: string): Set<string> | 'all' {
+  const out = new Set<string>();
+  for (const e of events) {
+    if (!e.blocks || date < e.date || date > (e.end_date || e.date)) continue;
+    if (e.all_day) return 'all';
+    const s = toMin(e.start_time || '', 0), en = toMin(e.end_time || '', 0);
+    for (let t = a.start; t + a.slot <= a.end; t += a.slot) if (t < en && t + a.slot > s) out.add(`${pad(Math.floor(t / 60))}:${pad(t % 60)}`);
+  }
+  return out;
+}
+
 // Vrije tijden op een dag: niet in het verleden (+ voorlooptijd) en niet al bezet
 export function freeTimes(a: Avail, date: string, taken: Set<string>, now = nowPb()): string[] {
   if (!dayBookable(a, date, now)) return [];

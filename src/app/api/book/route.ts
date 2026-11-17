@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { q, q1 } from '@/lib/db';
 import { sameOrigin } from '@/lib/auth';
 import { mailNewAppointment } from '@/lib/mail';
-import { allTimes, dayBookable, freeTimes, isoDay, nowPb, parseAvail, validDate } from '@/lib/appointments';
+import { allTimes, blockedTimes, dayBookable, freeTimes, isoDay, nowPb, parseAvail, validDate, type AgendaEvt } from '@/lib/appointments';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -21,6 +21,9 @@ const takenOn = async (from: string, to: string) => {
   return map;
 };
 
+const eventsBetween = (from: string, to: string) =>
+  q<AgendaEvt>('SELECT date, end_date, all_day, start_time, end_time, blocks FROM agenda_events WHERE blocks AND date <= $2 AND COALESCE(end_date, date) >= $1', [from, to]);
+
 // GET /api/book?month=YYYY-MM  → { days: { "YYYY-MM-DD": vrijeSlots } }
 // GET /api/book?date=YYYY-MM-DD → { times: ["09:00", …] }
 export async function GET(req: Request) {
@@ -34,7 +37,10 @@ export async function GET(req: Request) {
 
     if (date) {
       if (!validDate(date)) return json(400, { error: 'Ongeldige datum' });
-      const taken = (await takenOn(date, date)).get(date) ?? new Set<string>();
+      const taken = new Set((await takenOn(date, date)).get(date) ?? []);
+      const blk = blockedTimes(a, await eventsBetween(date, date), date);
+      if (blk === 'all') return json(200, { enabled: true, times: [] });
+      blk.forEach(t => taken.add(t));
       return json(200, { enabled: true, times: freeTimes(a, date, taken, now) });
     }
     if (month && /^\d{4}-\d{2}$/.test(month)) {
@@ -42,10 +48,16 @@ export async function GET(req: Request) {
       if (isNaN(first.getTime())) return json(400, { error: 'Ongeldige maand' });
       const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0));
       const taken = await takenOn(isoDay(first), isoDay(last));
+      const evs = await eventsBetween(isoDay(first), isoDay(last));
       const days: Record<string, number> = {};
       for (let d = new Date(first); d <= last; d = new Date(d.getTime() + 86400000)) {
         const key = isoDay(d);
-        if (dayBookable(a, key, now)) days[key] = freeTimes(a, key, taken.get(key) ?? new Set(), now).length;
+        if (dayBookable(a, key, now)) {
+          const blk = blockedTimes(a, evs, key);
+          if (blk === 'all') continue;
+          const tk = new Set(taken.get(key) ?? []); blk.forEach(t => tk.add(t));
+          days[key] = freeTimes(a, key, tk, now).length;
+        }
       }
       return json(200, { enabled: true, days, slots: allTimes(a).length });
     }
@@ -73,7 +85,8 @@ export async function POST(req: Request) {
 
     const a = parseAvail(await settings());
     if (!a.enabled) return json(400, { error: 'Afspraken maken is momenteel niet mogelijk.' });
-    const taken = (await takenOn(date, date)).get(date) ?? new Set<string>();
+    const taken = new Set((await takenOn(date, date)).get(date) ?? []);
+    if (validDate(date)) { const blk = blockedTimes(a, await eventsBetween(date, date), date); if (blk === 'all') return json(409, { error: 'Op deze dag zijn geen afspraken mogelijk.' }); blk.forEach(t => taken.add(t)); }
     if (!validDate(date) || !freeTimes(a, date, taken).includes(time)) return json(409, { error: 'Dit tijdstip is niet meer beschikbaar. Kies een ander moment.' });
 
     // misbruik tegengaan: max. 5 aanvragen per uur per IP en max. 3 openstaande per e-mailadres

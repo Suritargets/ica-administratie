@@ -271,6 +271,46 @@ async function handleInner(req: Request, ctx: { params: Promise<{ path: string[]
       }
     }
 
+    // ---- agenda (eigen evenementen; blokkeren desgewenst de online boekingen) ----
+    if (resource === 'agenda') {
+      const isDay = (v: unknown) => /^\d{4}-\d{2}-\d{2}$/.test(String(v));
+      if (m === 'GET') {
+        const month = String(url.searchParams.get('month') || '');
+        if (!/^\d{4}-\d{2}$/.test(month)) return fail(400, 'Geef een maand op (YYYY-MM).');
+        const from = month + '-01', to = month + '-31';
+        const events = await q('SELECT * FROM agenda_events WHERE date <= $2 AND COALESCE(end_date, date) >= $1 ORDER BY date, all_day DESC, start_time', [from, to]);
+        const appointments = await q('SELECT id, date, time, name, email, phone, subject, message, status FROM appointments WHERE date BETWEEN $1 AND $2 ORDER BY date, time', [from, to]);
+        return json(200, { events, appointments });
+      }
+      if (m === 'POST') {
+        if (!need('clients.write')) return FORBIDDEN();
+        const b = await body(req);
+        const title = String(b.title || '').trim().slice(0, 120);
+        if (!title) return fail(400, 'Vul een titel in.');
+        if (!isDay(b.date)) return fail(400, 'Vul een geldige datum in.');
+        const allDay = !!b.all_day;
+        const endDate = allDay && isDay(b.end_date) && b.end_date > b.date ? b.end_date : null;
+        const hm = /^([01]\d|2[0-3]):[0-5]\d$/;
+        if (!allDay && (!hm.test(String(b.start_time)) || !hm.test(String(b.end_time)) || String(b.end_time) <= String(b.start_time))) return fail(400, 'Vul een begin- en eindtijd in (eindtijd na begintijd).');
+        const vals = [title, b.date, endDate, allDay, allDay ? null : b.start_time, allDay ? null : b.end_time, String(b.notes || '').slice(0, 500), b.blocks !== false];
+        if (b.id) {
+          const r = await q1('UPDATE agenda_events SET title=$1, date=$2, end_date=$3, all_day=$4, start_time=$5, end_time=$6, notes=$7, blocks=$8 WHERE id=$9 RETURNING id', [...vals, Number(b.id)]);
+          if (!r) return fail(404, 'Niet gevonden');
+          await audit(me, 'agenda_updated', `${title} · ${b.date}`);
+        } else {
+          await q('INSERT INTO agenda_events (title, date, end_date, all_day, start_time, end_time, notes, blocks, created_by_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)', [...vals, me.name]);
+          await audit(me, 'agenda_created', `${title} · ${b.date}`);
+        }
+        return json(200, { ok: true });
+      }
+      if (m === 'DELETE' && id) {
+        if (!need('clients.write')) return FORBIDDEN();
+        const r = await q1<any>('DELETE FROM agenda_events WHERE id = $1 RETURNING title, date', [Number(id)]);
+        await audit(me, 'agenda_deleted', r ? `${r.title} · ${r.date}` : `#${id}`);
+        return json(200, { ok: true });
+      }
+    }
+
     if (resource === 'appointments') {
       if (m === 'GET') {
         const from = new Date(Date.now() - 3 * 3600 * 1000 - 14 * 86400000).toISOString().slice(0, 10);

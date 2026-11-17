@@ -94,6 +94,11 @@ export const SCHEMA = [
      next_date TEXT NOT NULL, anchor_day INTEGER NOT NULL DEFAULT 1, end_date TEXT, last_run TEXT,
      auto_status TEXT NOT NULL DEFAULT 'Open', active BOOLEAN NOT NULL DEFAULT TRUE,
      created_by_name TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE TABLE IF NOT EXISTS agenda_events (
+     id SERIAL PRIMARY KEY, title TEXT NOT NULL, date TEXT NOT NULL, end_date TEXT,
+     all_day BOOLEAN NOT NULL DEFAULT FALSE, start_time TEXT, end_time TEXT, notes TEXT,
+     blocks BOOLEAN NOT NULL DEFAULT TRUE, created_by_name TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `CREATE INDEX IF NOT EXISTS agenda_events_date ON agenda_events (date)`,
   `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS ip TEXT`,
   `CREATE INDEX IF NOT EXISTS audit_log_at ON audit_log (at DESC)`,
   `CREATE TABLE IF NOT EXISTS appointments (

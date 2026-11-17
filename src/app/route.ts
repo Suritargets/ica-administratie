@@ -1,5 +1,4 @@
 import { q } from '@/lib/db';
-import { currentUser } from '@/lib/auth';
 import brand from '@/brand/brand.json';
 import { BOOKING_CSS, BOOKING_JS } from '@/lib/booking-widget';
 
@@ -22,8 +21,6 @@ async function publicInfo(): Promise<Record<string, string>> {
 
 export async function GET(req: Request) {
   const i = await publicInfo();
-  let loggedIn = false;
-  try { loggedIn = !!(await currentUser(req)); } catch {}
   const C = brand.colors;
 
   const addrLines = [i.address, [i.postal_city, i.country].filter(Boolean).join(', ')].filter(Boolean);
@@ -75,7 +72,7 @@ footer{padding:34px 0 40px;color:var(--mut);font-size:13.5px;text-align:center}
 footer a{color:var(--mut)}
 ${BOOKING_CSS}</style></head><body>
 <header><div class="wrap"><img src="/logo-light.png" alt="${esc(brand.short)} — ${esc(i.company_name)}">
-${loggedIn ? '<a class="btn ghost" href="/app">Naar de administratie</a>' : ''}</div></header>
+</div></header>
 <section class="hero"><div class="wrap">
 <h1>${esc(i.company_name)}</h1>
 <p>${esc(i.tagline)}</p>

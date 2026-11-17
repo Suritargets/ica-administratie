@@ -41,6 +41,22 @@ a{color:inherit}
 .grp-body{display:flex;flex-direction:column;gap:2px}.grp.closed+.grp-body{display:none}
 .nav.sub{padding:8px 12px 8px 26px;font-size:14px}
 .tag.Deels{background:#fff4d6;color:#8a6100}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cal .h{background:#f7f8fb;padding:6px;font-size:12px;text-align:center;color:var(--mut);font-weight:600}
+.cal .d{background:#fff;min-height:104px;padding:5px 6px;cursor:pointer;position:relative;overflow:hidden}
+.cal .d.out{background:#fafbfd;cursor:default}.cal .d.off{background:#f8f9fc}
+.cal .d:not(.out):hover{background:#f3f6fd}.cal .d.sel{outline:2px solid var(--yellow);outline-offset:-2px}
+.cal .n{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;margin-bottom:2px}
+.cal .d.today .n span:first-child{background:var(--navy);color:#fff;border-radius:99px;padding:0 7px}
+.av{font-size:10.5px;font-weight:600;color:#1b7a43}.av.full{color:#a12b2b}
+.chip{font-size:11px;border-radius:5px;padding:1px 5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.a1{background:#fff4d6;color:#8a6100}.chip.a2{background:#dff5e6;color:#1b7a43}.chip.ev{background:#e4ebfa;color:#1f3d7a}.chip.evb{background:#fde4e4;color:#a12b2b}.chip.more{color:var(--mut);background:none}
+.cal .cnt{display:none}
+.slots{display:flex;flex-wrap:wrap;gap:6px}
+.slot{padding:5px 11px;border-radius:8px;font-size:13px;border:1px solid;font-family:inherit}
+.slot.vrij{background:#eaf8ef;border-color:#bfe6cc;color:#1b7a43;cursor:pointer}.slot.vrij:hover{background:#d9f2e2}
+.slot.bezet{background:#fff4d6;border-color:#f0d98a;color:#8a6100}.slot.geblokkeerd{background:#fde4e4;border-color:#f3b9b9;color:#a12b2b}.slot.verleden{background:#f1f3f7;border-color:#e3e7ee;color:#9aa4b8}
+.slot:disabled{cursor:default;opacity:1}
 .fxl{margin-top:8px;text-align:right;color:#5c6882;font-size:9pt;line-height:1.35}.fxl b{display:block;color:#14203a;font-size:11pt}.fxl span{display:block}
 .stamp{display:block;width:fit-content;margin:16px 0 0 auto;transform:rotate(-8deg);border:4px solid #1f9d55;border-radius:12px;color:#1f9d55;padding:2px 22px 4px;text-align:center;opacity:.75;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .stamp div{font-size:30pt;font-weight:800;letter-spacing:4px;line-height:1.15}.stamp small{display:block;font-size:10pt;font-weight:700;letter-spacing:1px;margin-top:-3px}
@@ -276,6 +292,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--yellow);outline-
   .nav{flex:1 1 0;flex-direction:column;gap:3px;padding:6px 0;font-size:10.5px;white-space:nowrap;overflow:hidden;border-radius:10px;text-align:center;justify-content:center;width:auto;min-width:0;color:#aab5cc}
   .nav svg{width:22px;height:22px}
   .nav.d-nav{display:none}
+  .cal .d{min-height:62px;padding:3px}.cal .chip{display:none}.cal .av{font-size:9px}.cal .cnt{display:inline-block;position:absolute;bottom:3px;right:4px;background:var(--navy);color:#fff;border-radius:99px;font-size:10px;padding:0 6px}
   .grp{display:none}.grp-body,.grp.closed+.grp-body{display:contents!important}.nav.sub{padding:6px 0;font-size:10.5px}
   .help{grid-template-columns:1fr}.help-toc{position:static;max-height:none;flex-direction:row;flex-wrap:wrap}.help-toc input{width:100%}.help-toc a{background:#f1f4f9;font-size:12px}
   .nav .lbl{font-size:0}.nav .lbl::after{content:attr(data-s);font-size:10px}
@@ -1168,6 +1185,7 @@ const ACTION_NL = {
   expense_created: 'Uitgave aangemaakt', expense_updated: 'Uitgave gewijzigd', expense_deleted: 'Uitgave verwijderd', expense_scanned: 'Bon gescand',
   expense_category_created: 'Uitgavecategorie aangemaakt', expense_category_updated: 'Uitgavecategorie gewijzigd', expense_category_deleted: 'Uitgavecategorie verwijderd',
   recurring_expense_created: 'Terugkerende uitgave aangemaakt', recurring_expense_updated: 'Terugkerende uitgave gewijzigd', recurring_expense_deleted: 'Terugkerende uitgave verwijderd', recurring_expense_run: 'Terugkerende uitgaven uitgevoerd',
+  agenda_created: 'Evenement aangemaakt', agenda_updated: 'Evenement gewijzigd', agenda_deleted: 'Evenement verwijderd',
   appointment_bevestigd: 'Afspraak bevestigd', appointment_geannuleerd: 'Afspraak geannuleerd', appointment_aangevraagd: 'Afspraak teruggezet', appointment_deleted: 'Afspraak verwijderd',
 };
 const actNL = a => ACTION_NL[a] || a;
@@ -1175,7 +1193,7 @@ async function renderActivity(m) {
   if (!can('users.manage')) { m.innerHTML = '<div class="top"><h1>Activiteit</h1></div><div class="card">Geen toegang.</div>'; return; }
   const F = S.act || (S.act = { user: '', action: '', from: '', to: '', q: '' });
   const when = d => new Date(d).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'medium' });
-  const groups = [['', 'Alle acties'], ['login', 'Inloggen'], ['logout', 'Uitloggen'], ['password', 'Wachtwoord'], ['user', 'Gebruikers'], ['offerte', 'Offertes'], ['factuur', 'Facturen'], ['creditnota', "Creditnota's"], ['payment', 'Betalingen'], ['expense', 'Uitgaven'], ['recurring_expense', 'Terugk. uitgaven'], ['recurring', 'Terugkerend'], ['client', 'Klanten'], ['catalog', 'Catalogus'], ['rate', 'Koersen'], ['settings', 'Instellingen'], ['appointment', 'Afspraken'], ['document', 'Verwijderde documenten'], ['data', 'Export']];
+  const groups = [['', 'Alle acties'], ['login', 'Inloggen'], ['logout', 'Uitloggen'], ['password', 'Wachtwoord'], ['user', 'Gebruikers'], ['offerte', 'Offertes'], ['factuur', 'Facturen'], ['creditnota', "Creditnota's"], ['payment', 'Betalingen'], ['expense', 'Uitgaven'], ['recurring_expense', 'Terugk. uitgaven'], ['recurring', 'Terugkerend'], ['client', 'Klanten'], ['catalog', 'Catalogus'], ['rate', 'Koersen'], ['settings', 'Instellingen'], ['appointment', 'Afspraken'], ['agenda', 'Agenda-evenementen'], ['document', 'Verwijderde documenten'], ['data', 'Export']];
   let rows = [], more = false, users = [];
   const qs = before => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(F)) if (v) p.set(k, v); if (before) p.set('before', before); p.set('limit', '100'); return p.toString(); };
   const load = async before => { const r = await api('audit?' + qs(before)); rows = before ? rows.concat(r.rows) : r.rows; more = r.more; users = r.users; };
@@ -2005,10 +2023,133 @@ function sheetHTML(d, s0, opt = {}) {
 }
 
 // ================= afspraken (aanvragen via de landingspagina) =================
+// ================= afspraken: agenda + lijst =================
 async function renderAppointments(m) {
-  m.innerHTML = '<div class="top"><h1>Afspraken</h1></div><div class="card muted">Laden…</div>';
+  const tab = S.apptTab || 'agenda';
+  m.innerHTML = `<div class="top"><h1>Afspraken</h1><div class="row"><button class="btn ${tab === 'agenda' ? 'pri' : ''}" data-at="agenda">Agenda</button><button class="btn ${tab === 'lijst' ? 'pri' : ''}" data-at="lijst">Lijst</button><a class="btn" href="/" target="_blank" rel="noopener">Landingspagina ↗</a></div></div><div id="apBox"></div>`;
+  m.querySelectorAll('[data-at]').forEach(b => b.onclick = () => { S.apptTab = b.dataset.at; renderAppointments(m); });
+  (tab === 'agenda' ? renderAgenda : renderApptList)($('#apBox'));
+}
+
+const hmMin = v => { const x = /^(\d{1,2}):(\d{2})$/.exec(String(v || '')); return x ? Number(x[1]) * 60 + Number(x[2]) : null; };
+const minHm = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+const longDay = d => new Date(d + 'T00:00:00').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const ptNow = () => new Date(Date.now() - 3 * 3600 * 1000); // "nu" in Surinaamse tijd (UTC-velden)
+async function apptSet(id, status) {
+  const r = await api('appointments', { method: 'POST', body: { id, status } });
+  toast(r.mailed === true ? 'Bijgewerkt — bezoeker is per e-mail op de hoogte gebracht' : r.mailed === false ? 'Bijgewerkt, maar de e-mail kon niet verstuurd worden' : 'Bijgewerkt', r.mailed === false, 4500);
+}
+
+async function renderAgenda(box) {
+  const G = S.ag || (S.ag = { month: ptNow().toISOString().slice(0, 7), sel: null });
+  box.innerHTML = '<div class="card muted">Laden…</div>';
+  let data;
+  try { data = await api('agenda?month=' + G.month); } catch (e) { box.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
+  const canEdit = can('clients.write');
+  const st = S.settings || {};
+  const A = { enabled: st.appt_enabled !== '0', days: String(st.appt_days ?? '1,2,3,4,5').split(',').map(Number), start: hmMin(st.appt_start) ?? 480, end: hmMin(st.appt_end) ?? 960, slot: Math.max(10, Number(st.appt_slot) || 30), ahead: Number(st.appt_ahead) || 60 };
+  const nowPt = ptNow(), todayIso = nowPt.toISOString().slice(0, 10), nowMin = nowPt.getUTCHours() * 60 + nowPt.getUTCMinutes();
+  const lastIso = new Date(nowPt.getTime() + A.ahead * 86400000).toISOString().slice(0, 10);
+  const live = data.appointments.filter(a => a.status !== 'geannuleerd');
+  const evOn = d => data.events.filter(e => d >= e.date && d <= (e.end_date || e.date));
+  const apOn = d => data.appointments.filter(a => a.date === d);
+
+  // beschikbaarheid van één dag: per tijdslot vrij / bezet / geblokkeerd / verleden
+  const dayInfo = d => {
+    const wd = new Date(d + 'T00:00:00Z').getUTCDay(), working = A.enabled && A.days.includes(wd);
+    const evs = evOn(d).filter(e => e.blocks), allDay = evs.some(e => e.all_day), slots = [];
+    if (working) for (let t = A.start; t + A.slot <= A.end; t += A.slot) {
+      const hm = minHm(t), ap = live.find(a => a.date === d && a.time === hm);
+      const ev = allDay ? evs.find(e => e.all_day) : evs.find(e => !e.all_day && (hmMin(e.start_time) ?? 0) < t + A.slot && (hmMin(e.end_time) ?? 0) > t);
+      const past = d < todayIso || (d === todayIso && t <= nowMin);
+      slots.push({ hm, t, state: ap ? 'bezet' : ev ? 'geblokkeerd' : past ? 'verleden' : 'vrij', ap, ev });
+    }
+    const open = working && d >= todayIso && d <= lastIso;
+    return { working, allDay, slots, free: open ? slots.filter(x => x.state === 'vrij').length : null, total: slots.length };
+  };
+
+  const [y, mo] = G.month.split('-').map(Number);
+  const first = new Date(Date.UTC(y, mo - 1, 1)), dim = new Date(Date.UTC(y, mo, 0)).getUTCDate(), lead = (first.getUTCDay() + 6) % 7;
+  const title = first.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const shift = n => { const d = new Date(Date.UTC(y, mo - 1 + n, 1)); G.month = d.toISOString().slice(0, 7); G.sel = null; renderAgenda(box); };
+
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<div class="d out"></div>');
+  for (let day = 1; day <= dim; day++) {
+    const d = `${G.month}-${String(day).padStart(2, '0')}`, info = dayInfo(d), aps = apOn(d).filter(a => a.status !== 'geannuleerd'), evs = evOn(d);
+    const chips = [
+      ...aps.map(a => `<div class="chip ${a.status === 'bevestigd' ? 'a2' : 'a1'}">${esc(a.time)} ${esc(a.name)}</div>`),
+      ...evs.map(e => `<div class="chip ${e.blocks ? 'evb' : 'ev'}">${e.all_day ? 'Hele dag' : esc(e.start_time)} ${esc(e.title)}</div>`),
+    ];
+    const av = info.allDay ? '<div class="av full">gesloten</div>' : info.free == null ? '' : info.total ? `<div class="av ${info.free ? '' : 'full'}">${info.free ? info.free + ' vrij' : 'vol'}</div>` : '';
+    cells.push(`<div class="d${d === todayIso ? ' today' : ''}${G.sel === d ? ' sel' : ''}${info.working ? '' : ' off'}" data-day="${d}"><div class="n"><span>${day}</span>${av}</div>${chips.slice(0, 3).join('')}${chips.length > 3 ? `<div class="chip more">+${chips.length - 3} meer</div>` : ''}${chips.length ? `<span class="cnt">${chips.length}</span>` : ''}</div>`);
+  }
+  while (cells.length % 7) cells.push('<div class="d out"></div>');
+
+  let panel = '';
+  if (G.sel) {
+    const d = G.sel, info = dayInfo(d), aps = apOn(d), evs = evOn(d);
+    const cls = a => ({ aangevraagd: 'Open', bevestigd: 'Betaald', geannuleerd: 'Vervallen' })[a] || '';
+    panel = `<div class="card" style="margin-top:14px"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0;text-transform:capitalize">${longDay(d)}</h2>${canEdit ? '<button class="btn pri sm" id="agNew">+ Evenement</button>' : ''}</div>
+      <h3 style="margin:8px 0 6px;font-size:14px">Beschikbaarheid</h3>
+      ${!A.enabled ? '<div class="muted">Online afspraken staan uit (Instellingen).</div>' : !info.working ? '<div class="muted">Geen online afspraken op deze dag (buiten de ingestelde werkdagen).</div>' : info.allDay ? '<div class="muted">De hele dag is geblokkeerd voor online afspraken.</div>'
+        : `<div class="slots">${info.slots.map(x => `<button type="button" class="slot ${x.state}" data-slot="${x.hm}" ${x.state === 'vrij' && canEdit ? '' : 'disabled'} title="${x.state === 'bezet' ? esc(x.ap.name) : x.state === 'geblokkeerd' ? esc(x.ev.title) : x.state === 'vrij' && canEdit ? 'Klik om te blokkeren' : ''}">${x.hm}${x.state === 'bezet' ? ' · ' + esc(x.ap.name) : ''}</button>`).join('')}</div><div class="muted" style="font-size:12px;margin-top:6px">Groen = vrij op de website · geel = bezet door een afspraak · rood = geblokkeerd door een evenement · grijs = voorbij. Klik op een vrij tijdstip om het te blokkeren.</div>`}
+      <h3 style="margin:16px 0 6px;font-size:14px">Afspraken (${aps.length})</h3>
+      ${aps.length ? `<div class="tablewrap"><table><tbody>${aps.map(a => `<tr><td style="white-space:nowrap"><b>${esc(a.time)}</b></td><td><b>${esc(a.name)}</b><br><span class="muted">${esc(a.subject || '')}</span></td><td><a href="mailto:${esc(a.email)}">${esc(a.email)}</a>${a.phone ? '<br>' + esc(a.phone) : ''}</td><td><span class="tag ${cls(a.status)}">${esc(a.status)}</span></td><td class="num" style="white-space:nowrap">${canEdit ? [a.status !== 'bevestigd' ? `<button class="btn sm pri" data-ast="bevestigd" data-id="${a.id}">Bevestigen</button>` : '', a.status !== 'geannuleerd' ? `<button class="btn sm" data-ast="geannuleerd" data-id="${a.id}">Annuleren</button>` : ''].join(' ') : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted">Geen afspraken.</div>'}
+      <h3 style="margin:16px 0 6px;font-size:14px">Evenementen (${evs.length})</h3>
+      ${evs.length ? `<div class="tablewrap"><table><tbody>${evs.map(e => `<tr><td style="white-space:nowrap"><b>${e.all_day ? 'Hele dag' : esc(e.start_time) + '–' + esc(e.end_time)}</b>${e.end_date ? `<br><span class="muted">t/m ${fdate(e.end_date)}</span>` : ''}</td><td><b>${esc(e.title)}</b><br><span class="muted">${esc(e.notes || '')}</span></td><td>${e.blocks ? '<span class="tag Vervallen">blokkeert website</span>' : '<span class="tag Concept">geen blokkade</span>'}</td><td class="num">${canEdit ? `<button class="btn sm" data-eedit="${e.id}">Bewerken</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted">Geen evenementen.</div>'}</div>`;
+  }
+
+  box.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="row"><button class="btn sm" id="agPrev">←</button><h2 style="margin:0;min-width:150px;text-align:center;text-transform:capitalize">${title}</h2><button class="btn sm" id="agNext">→</button></div><div class="row"><button class="btn sm" id="agToday">Vandaag</button>${canEdit ? '<button class="btn pri sm" id="agAdd">+ Evenement</button>' : ''}</div></div>
+    <div class="cal">${['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(x => `<div class="h">${x}</div>`).join('')}${cells.join('')}</div>
+    <div class="muted" style="font-size:12px;margin-top:8px"><span class="chip a1" style="display:inline-block">aangevraagd</span> <span class="chip a2" style="display:inline-block">bevestigd</span> <span class="chip evb" style="display:inline-block">evenement dat de website blokkeert</span> <span class="chip ev" style="display:inline-block">evenement</span> · “N vrij” = vrije tijdstippen voor bezoekers van de website</div></div>${panel}`;
+
+  const again = () => renderAgenda(box);
+  $('#agPrev', box).onclick = () => shift(-1); $('#agNext', box).onclick = () => shift(1);
+  $('#agToday', box).onclick = () => { G.month = todayIso.slice(0, 7); G.sel = todayIso; again(); };
+  box.querySelectorAll('[data-day]').forEach(c => c.onclick = () => { G.sel = c.dataset.day; again(); });
+  if ($('#agAdd', box)) $('#agAdd', box).onclick = () => eventModal(null, { date: G.sel || todayIso }, again);
+  if ($('#agNew', box)) $('#agNew', box).onclick = () => eventModal(null, { date: G.sel }, again);
+  box.querySelectorAll('[data-eedit]').forEach(b => b.onclick = () => eventModal(data.events.find(e => String(e.id) === b.dataset.eedit), {}, again));
+  box.querySelectorAll('[data-slot].vrij').forEach(b => b.onclick = () => { const t = hmMin(b.dataset.slot); eventModal(null, { date: G.sel, title: 'Geblokkeerd', start: minHm(t), end: minHm(t + A.slot) }, again); });
+  box.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { await apptSet(b.dataset.id, b.dataset.ast); again(); } catch (e) { toast(e.message, 1); } });
+}
+
+function eventModal(e, pre, done) {
+  const v = e || { title: pre.title || '', date: pre.date || ptNow().toISOString().slice(0, 10), end_date: '', all_day: false, start_time: pre.start || '09:00', end_time: pre.end || '10:00', notes: '', blocks: true };
+  const bg = document.createElement('div'); bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal"><h2>${e ? 'Evenement bewerken' : 'Nieuw evenement'}</h2><form id="ef" class="form" autocomplete="off">
+    <label class="f full">Titel<input name="title" required value="${esc(v.title)}" placeholder="Bijv. Vergadering, Vakantie, Klantbezoek"></label>
+    <label class="row full" style="gap:8px;cursor:pointer"><input type="checkbox" name="all_day" ${v.all_day ? 'checked' : ''} style="width:18px;height:18px"> Hele dag (ook meerdere dagen)</label>
+    <label class="f">Datum<input type="date" name="date" required value="${esc(v.date)}"></label>
+    <label class="f" id="eEnd">Tot en met (optioneel)<input type="date" name="end_date" value="${esc(v.end_date || '')}"></label>
+    <label class="f" id="eFrom">Van<input type="time" name="start_time" value="${esc(v.start_time || '09:00')}"></label>
+    <label class="f" id="eTo">Tot<input type="time" name="end_time" value="${esc(v.end_time || '10:00')}"></label>
+    <label class="f full">Notities<input name="notes" value="${esc(v.notes)}"></label>
+    <label class="row full" style="gap:8px;cursor:pointer"><input type="checkbox" name="blocks" ${v.blocks !== false ? 'checked' : ''} style="width:18px;height:18px"> Blokkeer dit moment voor online afspraken op de website</label></form>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><div>${e ? '<button class="btn danger" id="edel">Verwijderen</button>' : ''}</div><div class="row"><button class="btn" id="ecancel">Annuleren</button><button class="btn pri" id="esave">Opslaan</button></div></div></div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove(), f = $('#ef', bg);
+  bg.onclick = ev => { if (ev.target === bg) close(); };
+  $('#ecancel', bg).onclick = close;
+  const toggle = () => { const ad = f.all_day.checked; $('#eEnd', bg).style.display = ad ? '' : 'none'; $('#eFrom', bg).style.display = $('#eTo', bg).style.display = ad ? 'none' : ''; };
+  f.all_day.onchange = toggle; toggle();
+  $('#esave', bg).onclick = async () => {
+    if (!f.reportValidity()) return;
+    const d = { title: f.title.value, date: f.date.value, end_date: f.end_date.value, all_day: f.all_day.checked, start_time: f.start_time.value, end_time: f.end_time.value, notes: f.notes.value, blocks: f.blocks.checked };
+    if (e) d.id = e.id;
+    try { await api('agenda', { method: 'POST', body: d }); close(); toast('Opgeslagen'); done(); } catch (er) { toast(er.message, 1, 5000); }
+  };
+  if ($('#edel', bg)) $('#edel', bg).onclick = async () => {
+    if (!confirm('Dit evenement verwijderen?')) return;
+    try { await api('agenda/' + e.id, { method: 'DELETE' }); close(); toast('Verwijderd'); done(); } catch (er) { toast(er.message, 1); }
+  };
+}
+
+async function renderApptList(m) {
+  m.innerHTML = '<div class="card muted">Laden…</div>';
   let list;
-  try { list = await api('appointments'); } catch (e) { m.innerHTML = `<div class="top"><h1>Afspraken</h1></div><div class="card empty">${esc(e.message)}</div>`; return; }
+  try { list = await api('appointments'); } catch (e) { m.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
   const today = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
   const canEdit = can('clients.write'), canDel = can('clients.delete');
   const upcoming = list.filter(a => a.date >= today && a.status !== 'geannuleerd'), past = list.filter(a => !(a.date >= today && a.status !== 'geannuleerd'));
@@ -2020,12 +2161,11 @@ async function renderAppointments(m) {
     <td><span class="tag ${cls(a.status)}">${esc(a.status)}</span></td>
     <td class="num" style="white-space:nowrap">${canEdit ? [a.status !== 'bevestigd' ? `<button class="btn sm pri" data-ast="bevestigd" data-id="${a.id}">Bevestigen</button>` : '', a.status !== 'geannuleerd' ? `<button class="btn sm" data-ast="geannuleerd" data-id="${a.id}">Annuleren</button>` : ''].join(' ') : ''}${canDel ? ` <button class="btn sm danger" data-adel="${a.id}">✕</button>` : ''}</td></tr>`;
   const table = (arr, empty) => arr.length ? `<div class="tablewrap"><table><thead><tr><th>Moment</th><th>Bezoeker</th><th>Contact</th><th>Status</th><th></th></tr></thead><tbody>${arr.map(row).join('')}</tbody></table></div>` : `<div class="muted" style="padding:6px 0">${empty}</div>`;
-  m.innerHTML = `<div class="top"><h1>Afspraken</h1><a class="btn" href="/" target="_blank" rel="noopener">Landingspagina ↗</a></div>
-    <div class="card"><h2>Aankomend (${upcoming.length})</h2>${table(upcoming, 'Geen aankomende afspraken.')}</div>
+  m.innerHTML = `<div class="card"><h2>Aankomend (${upcoming.length})</h2>${table(upcoming, 'Geen aankomende afspraken.')}</div>
     ${past.length ? `<div class="card" style="margin-top:18px"><h2>Eerder / geannuleerd</h2>${table(past.slice().reverse(), '')}</div>` : ''}
     <p class="muted" style="font-size:12.5px">Aanvragen komen binnen als <b>aangevraagd</b> en houden het tijdstip bezet. Neem contact op met de bezoeker en klik op <b>Bevestigen</b>. Bij <b>Annuleren</b> komt het tijdstip weer vrij. Beschikbare dagen en tijden stel je in onder Instellingen.</p>`;
-  m.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { const r = await api('appointments', { method: 'POST', body: { id: b.dataset.id, status: b.dataset.ast } }); toast(r.mailed === true ? 'Bijgewerkt — bezoeker is per e-mail op de hoogte gebracht' : r.mailed === false ? 'Bijgewerkt, maar de e-mail kon niet verstuurd worden' : 'Bijgewerkt', r.mailed === false, 4500); renderAppointments(m); } catch (e) { toast(e.message, 1); } });
-  m.querySelectorAll('[data-adel]').forEach(b => b.onclick = async () => { if (!confirm('Deze afspraak definitief verwijderen?')) return; try { await api('appointments/' + b.dataset.adel, { method: 'DELETE' }); renderAppointments(m); } catch (e) { toast(e.message, 1); } });
+  m.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { const r = await api('appointments', { method: 'POST', body: { id: b.dataset.id, status: b.dataset.ast } }); toast(r.mailed === true ? 'Bijgewerkt — bezoeker is per e-mail op de hoogte gebracht' : r.mailed === false ? 'Bijgewerkt, maar de e-mail kon niet verstuurd worden' : 'Bijgewerkt', r.mailed === false, 4500); renderApptList(m); } catch (e) { toast(e.message, 1); } });
+  m.querySelectorAll('[data-adel]').forEach(b => b.onclick = async () => { if (!confirm('Deze afspraak definitief verwijderen?')) return; try { await api('appointments/' + b.dataset.adel, { method: 'DELETE' }); renderApptList(m); } catch (e) { toast(e.message, 1); } });
 }
 
 // ================= shared bindings =================

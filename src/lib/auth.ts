@@ -5,7 +5,7 @@ import { can, type Perm } from './perms';
 export const COOKIE = 'ica_session';
 const MAX_AGE = 60 * 60 * 12; // 12 uur
 
-export type User = { id: number; email: string; name: string; role: string };
+export type User = { id: number; email: string; name: string; role: string; is_super?: boolean };
 
 function secret() {
   const s = process.env.SESSION_SECRET;
@@ -71,9 +71,9 @@ export async function currentUser(req: Request): Promise<User | null> {
   const s = readSession(cookieOf(req, COOKIE));
   if (!s) return null;
   const u = await q1<User & { active: boolean; session_version: number }>(
-    'SELECT id, email, name, role, active, session_version FROM users WHERE id = $1', [s.u]);
+    'SELECT id, email, name, role, active, session_version, is_super FROM users WHERE id = $1', [s.u]);
   if (!u || !u.active || u.session_version !== s.v) return null;
-  return { id: u.id, email: u.email, name: u.name, role: u.role };
+  return { id: u.id, email: u.email, name: u.name, role: u.role, is_super: !!u.is_super };
 }
 
 export const allowed = (u: User | null, perm: Perm) => !!u && can(u.role, perm);

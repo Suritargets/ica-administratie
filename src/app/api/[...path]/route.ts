@@ -65,7 +65,8 @@ async function login(req: Request) {
 async function users(req: Request, me: User, id?: string) {
   const m = req.method;
   if (m === 'GET') {
-    return json(200, await q('SELECT id, email, name, role, active, last_login, created_at FROM users ORDER BY lower(name)'));
+    // de superadmin is alleen zichtbaar voor zichzelf
+    return json(200, await q('SELECT id, email, name, role, active, last_login, created_at FROM users WHERE is_super = false OR $1::boolean ORDER BY lower(name)', [!!me.is_super]));
   }
   if (m === 'POST') {
     const b = await body(req);
@@ -75,8 +76,8 @@ async function users(req: Request, me: User, id?: string) {
     if (!isRole(b.role)) return fail(400, 'Ongeldige rol');
     if (b.id) { // bijwerken
       const target = await q1<any>('SELECT * FROM users WHERE id = $1', [Number(b.id)]);
-      if (!target) return fail(404, 'Gebruiker niet gevonden');
-      const active = b.active === false || b.active === 0 ? false : true;
+      if (!target || (target.is_super && !me.is_super)) return fail(404, 'Gebruiker niet gevonden');
+      const active =b.active === false || b.active === 0 ? false : true;
       if (target.id === me.id && (!active || b.role !== 'admin')) return fail(400, 'Je kunt je eigen admin-rechten of toegang niet intrekken.');
       if (target.role === 'admin' && target.active && (!active || b.role !== 'admin')) {
         const [{ n }] = await q('SELECT COUNT(*)::int AS n FROM users WHERE role = $1 AND active AND id <> $2', ['admin', target.id]);
@@ -101,8 +102,9 @@ async function users(req: Request, me: User, id?: string) {
   }
   if (m === 'DELETE' && id) {
     const target = await q1<any>('SELECT * FROM users WHERE id = $1', [Number(id)]);
-    if (!target) return fail(404, 'Gebruiker niet gevonden');
+    if (!target || (target.is_super && !me.is_super)) return fail(404, 'Gebruiker niet gevonden');
     if (target.id === me.id) return fail(400, 'Je kunt jezelf niet verwijderen.');
+    if (target.is_super) return fail(400, 'De superadmin kan niet worden verwijderd.');
     if (target.role === 'admin' && target.active) {
       const [{ n }] = await q('SELECT COUNT(*)::int AS n FROM users WHERE role = $1 AND active AND id <> $2', ['admin', target.id]);
       if (n === 0) return fail(400, 'Er moet minimaal één actieve admin overblijven.');
@@ -150,7 +152,8 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
     }
     if (resource === 'audit' && m === 'GET') {
       if (!need('users.manage')) return FORBIDDEN();
-      return json(200, await q('SELECT at, user_name, action, detail FROM audit_log ORDER BY id DESC LIMIT 100'));
+      // acties van de superadmin zijn alleen zichtbaar voor de superadmin zelf
+      return json(200, await q('SELECT a.at, a.user_name, a.action, a.detail FROM audit_log a LEFT JOIN users u ON u.id = a.user_id WHERE $1::boolean OR COALESCE(u.is_super, false) = false ORDER BY a.id DESC LIMIT 100', [!!me.is_super]));
     }
 
     if (resource === 'settings') {
@@ -413,7 +416,7 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
         settings: await q('SELECT * FROM settings'), clients: await q('SELECT * FROM clients'), catalog: await q('SELECT * FROM catalog'),
         rates: await q('SELECT * FROM rates'), documents: await q('SELECT * FROM documents'),
         payments: await q('SELECT * FROM payments'), recurring: await q('SELECT * FROM recurring'),
-        users: await q('SELECT id, email, name, role, active, created_at FROM users'),
+        users: await q('SELECT id, email, name, role, active, created_at FROM users WHERE is_super = false OR $1::boolean', [!!me.is_super]),
       };
       await audit(me, 'data_exported');
       return new Response(JSON.stringify(data, null, 1), { headers: {

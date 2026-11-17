@@ -12,6 +12,7 @@ export const SCHEMA = [
      locked_until TIMESTAMPTZ,
      last_login TIMESTAMPTZ,
      created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_super BOOLEAN NOT NULL DEFAULT FALSE`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower ON users (lower(email))`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS clients (

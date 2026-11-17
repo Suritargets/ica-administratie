@@ -66,7 +66,7 @@ async function users(req: Request, me: User, id?: string) {
   const m = req.method;
   if (m === 'GET') {
     // de superadmin is alleen zichtbaar voor zichzelf
-    return json(200, await q('SELECT id, email, name, role, active, last_login, created_at FROM users WHERE is_super = false OR $1::boolean ORDER BY lower(name)', [!!me.is_super]));
+    return json(200, await q('SELECT id, email, name, role, active, last_login, created_at, is_super FROM users WHERE is_super = false OR $1::boolean ORDER BY lower(name)', [!!me.is_super]));
   }
   if (m === 'POST') {
     const b = await body(req);

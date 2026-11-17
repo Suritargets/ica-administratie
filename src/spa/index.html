@@ -1154,7 +1154,7 @@ async function renderUsers() {
   const when = d => new Date(d).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' });
   el.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">Gebruikers &amp; rollen</h2><button class="btn pri sm" id="uNew">+ Gebruiker</button></div>
     <div class="tablewrap"><table><thead><tr><th>Naam</th><th>E-mail</th><th>Rol</th><th>Status</th><th>Laatste login</th><th></th></tr></thead><tbody>${list.map(u => `<tr>
-      <td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(ROLE_LABEL[u.role] || u.role)}</td>
+      <td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${u.is_super ? '<b>Superadmin</b>' : esc(ROLE_LABEL[u.role] || u.role)}</td>
       <td>${u.active ? '<span class="tag Betaald">Actief</span>' : '<span class="tag Vervallen">Uitgeschakeld</span>'}</td>
       <td>${u.last_login ? when(u.last_login) : '—'}</td>
       <td class="num"><button class="btn sm" data-uedit="${u.id}">Bewerken</button></td></tr>`).join('')}</tbody></table></div>

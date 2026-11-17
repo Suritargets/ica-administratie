@@ -405,24 +405,25 @@ async function handleInner(req: Request, ctx: { params: Promise<{ path: string[]
         const base = await baseCur(), cur = await cleanCur(d.currency), fx = Number(d.fx_rate);
         const fxRate = cur === base ? 1 : (fx > 0 && (!d.fx_base || d.fx_base === base) ? fx : await rateFor(cur, d.date, base));
         const lang = ['nl', 'en'].includes(d.lang) ? d.lang : null;
+        const showCur = /^[A-Za-z]{3}$/.test(String(d.fx_show || '')) ? String(d.fx_show).toUpperCase() : null;
         try {
           if (d.id) {
             const old = await q1<any>('SELECT status, total FROM documents WHERE id = $1', [Number(d.id)]);
             const row = await q1(`UPDATE documents SET type=$1, number=$2, date=$3, due_date=$4, client_id=$5, client_json=$6, subject=$7, subject_detail=$8,
               reference=$9, items_json=$10, vat_rate=$11, subtotal=$12, vat_amount=$13, total=$14, status=$15, paid_on=$16, terms=$17, notes=$18, discount=$19,
-              currency=$20, fx_rate=$21, fx_base=$22, lang=$23, updated_by_name=$24, updated_at=now() WHERE id=$25 RETURNING *`,
+              currency=$20, fx_rate=$21, fx_base=$22, lang=$23, updated_by_name=$24, show_fx=$26, fx_show=$27, updated_at=now() WHERE id=$25 RETURNING *`,
               [d.type, d.number, d.date || null, d.due_date || null, d.client_id || null, JSON.stringify(d.client || {}), d.subject || '', d.subject_detail || '', d.reference || '',
                 JSON.stringify(items), Number(d.vat_rate) || 0, t.subtotal, t.vat_amount, t.total, d.status || '', d.paid_on || null, d.terms || '', d.notes || '', t.discount,
-                cur, fxRate, base, lang, me.name, Number(d.id)]);
+                cur, fxRate, base, lang, me.name, Number(d.id), !!d.show_fx, showCur]);
             await audit(me, `${d.type}_updated`, [d.number, old && old.status !== (d.status || '') ? `status ${old.status || '—'} → ${d.status || '—'}` : '', old && Math.abs(old.total - t.total) > 0.004 ? `totaal ${old.total} → ${t.total}` : ''].filter(Boolean).join(' · '));
             return json(200, rowToDoc(row));
           }
           const row = await q1(`INSERT INTO documents (type, number, date, due_date, client_id, client_json, subject, subject_detail, reference, items_json, vat_rate,
-            subtotal, vat_amount, total, status, paid_on, terms, notes, discount, currency, fx_rate, fx_base, lang, created_by, created_by_name, updated_by_name)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$25) RETURNING *`,
+            subtotal, vat_amount, total, status, paid_on, terms, notes, discount, currency, fx_rate, fx_base, lang, created_by, created_by_name, updated_by_name, show_fx, fx_show)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$25,$26,$27) RETURNING *`,
             [d.type, d.number, d.date || null, d.due_date || null, d.client_id || null, JSON.stringify(d.client || {}), d.subject || '', d.subject_detail || '', d.reference || '',
               JSON.stringify(items), Number(d.vat_rate) || 0, t.subtotal, t.vat_amount, t.total, d.status || '', d.paid_on || null, d.terms || '', d.notes || '', t.discount,
-              cur, fxRate, base, lang, me.id, me.name]);
+              cur, fxRate, base, lang, me.id, me.name, !!d.show_fx, showCur]);
           await audit(me, `${d.type}_created`, d.number);
           return json(200, rowToDoc(row));
         } catch (e) {

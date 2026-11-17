@@ -41,6 +41,7 @@ a{color:inherit}
 .grp-body{display:flex;flex-direction:column;gap:2px}.grp.closed+.grp-body{display:none}
 .nav.sub{padding:8px 12px 8px 26px;font-size:14px}
 .tag.Deels{background:#fff4d6;color:#8a6100}
+.fxl{margin-top:8px;text-align:right;color:#5c6882;font-size:9pt;line-height:1.35}.fxl b{display:block;color:#14203a;font-size:11pt}.fxl span{display:block}
 .stamp{display:block;width:fit-content;margin:16px 0 0 auto;transform:rotate(-8deg);border:4px solid #1f9d55;border-radius:12px;color:#1f9d55;padding:2px 22px 4px;text-align:center;opacity:.75;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .stamp div{font-size:30pt;font-weight:800;letter-spacing:4px;line-height:1.15}.stamp small{display:block;font-size:10pt;font-weight:700;letter-spacing:1px;margin-top:-3px}
 .side-foot{margin-top:auto;font-size:11px;color:#8b96ad;padding:8px;line-height:1.6}
@@ -414,6 +415,17 @@ function rateFor(cur, date) {
   const list = (S.rates || []).filter(r => r.currency === cur && r.base === base);
   const before = list.filter(r => r.date <= (date || '9999')).sort((a, b) => b.date.localeCompare(a.date))[0];
   return (before || list.sort((a, b) => a.date.localeCompare(b.date))[0])?.rate ?? null;
+}
+// Omrekening naar een andere valuta (checkbox "Toon omrekening op document")
+function fxLine(d) {
+  if (!d.show_fx) return null;
+  const cur = curOf(d), tgt = String(d.fx_show || baseCur()).toUpperCase(), base = baseCur();
+  if (tgt === cur) return null;
+  const rDoc = cur === base ? 1 : (d.fx_rate && d.fx_base === base ? d.fx_rate : rateFor(cur, d.date));
+  const rTgt = tgt === base ? 1 : rateFor(tgt, d.date);
+  if (!rDoc || !rTgt) return { cur: tgt, missing: true };
+  const rate = rDoc / rTgt;
+  return { cur: tgt, from: cur, rate, amount: calc(d.items, d.vat_rate, d.discount).total * rate };
 }
 const fxOf = d => { const c = curOf(d); if (c === baseCur()) return 1; return d.fx_rate && d.fx_base === baseCur() ? d.fx_rate : rateFor(c, d.date); };
 // omgerekend totaal in hoofdvaluta; missing = aantal documenten zonder koers
@@ -1400,6 +1412,11 @@ function renderEditor(m) {
         <div class="totline"><span>BTW <input name="vat_rate" type="number" step="0.1" value="${esc(d.vat_rate)}" style="width:56px;padding:3px 6px;border:1px solid var(--line);border-radius:6px"> %</span><span id="t-vat"></span></div>
         <div class="totline big"><span>Totaal</span><span id="t-tot"></span></div>
         <div class="totline muted" id="t-fx" style="display:none;font-size:12px"><span>Omgerekend</span><span></span></div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)">
+          <label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px"><input type="checkbox" name="show_fx" ${d.show_fx ? 'checked' : ''} style="width:16px;height:16px"> Toon omrekening op document</label>
+          <div id="fxopt" style="margin-top:8px;display:${d.show_fx ? 'block' : 'none'}"><select name="fx_show" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px">${[...new Set([...CURRENCIES, baseCur()])].map(c => `<option ${(d.fx_show || baseCur()) === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+            <div class="muted" id="fxinfo" style="font-size:12px;margin-top:6px"></div></div>
+        </div>
       </div>
       <div class="sect">${isQ ? 'Voorwaarden' : 'Afsluittekst'}</div>
       <label class="f"><textarea name="terms" rows="4">${esc(d.terms)}</textarea></label>
@@ -1429,7 +1446,7 @@ function renderEditor(m) {
   };
   const sync = () => {
     const fd = Object.fromEntries(new FormData(form));
-    Object.assign(d, fd, { vat_rate: Number(fd.vat_rate) || 0, discount: Number(fd.discount) || 0 });
+    Object.assign(d, fd, { vat_rate: Number(fd.vat_rate) || 0, discount: Number(fd.discount) || 0, show_fx: !!(form.show_fx && form.show_fx.checked), fx_show: form.fx_show ? form.fx_show.value : null });
     const base = baseCur(), foreign = curOf(d) !== base;
     if (foreign && !fxManual) { const r = rateFor(curOf(d), d.date); if (r != null && Number(form.fx_rate.value) !== r) form.fx_rate.value = r; }
     d.fx_rate = foreign ? (Number(form.fx_rate.value) || null) : 1; d.fx_base = base;
@@ -1440,6 +1457,9 @@ function renderEditor(m) {
     $('#t-sub').textContent = M(t.subtotal); $('#t-vat').textContent = M(t.vat_amount); $('#t-tot').textContent = M(t.total);
     $('#t-fx').style.display = foreign ? '' : 'none';
     $('#t-fx span:last-child').textContent = d.fx_rate ? '≈ ' + money(t.total * d.fx_rate, base) : 'geen koers — voeg toe bij Valuta';
+    $('#fxopt').style.display = d.show_fx ? 'block' : 'none';
+    const fl = fxLine(d);
+    $('#fxinfo').textContent = !d.show_fx ? '' : !fl ? 'Kies een andere valuta dan die van het document.' : fl.missing ? `Geen koers beschikbaar voor ${fl.cur} — voeg die toe bij Valuta.` : `≈ ${money(fl.amount, fl.cur)} · koers 1 ${fl.from} = ${fmtRate(fl.rate)} ${fl.cur}`;
     const c = d.client || {};
     $('#cinfo').textContent = c.name ? [c.contact, c.address, c.postal_city, c.country].filter(Boolean).join(' · ') : '';
     $('#print-root').innerHTML = sheetHTML(d, S.settings);
@@ -1527,7 +1547,7 @@ function renderEditor(m) {
     const cur = await save(true); if (!cur) return;
     recurringModal(null, async () => { go('terugkerend'); }, cur);
   };
-  if ($('#dup')) $('#dup').onclick = () => newDoc(d.type, { client_id: d.client_id, client: { ...d.client }, subject: d.subject, subject_detail: d.subject_detail, items: d.items.map(i => ({ ...i })), vat_rate: d.vat_rate, discount: d.discount, currency: curOf(d), lang: docLang(d), terms: d.terms });
+  if ($('#dup')) $('#dup').onclick = () => newDoc(d.type, { client_id: d.client_id, client: { ...d.client }, subject: d.subject, subject_detail: d.subject_detail, items: d.items.map(i => ({ ...i })), vat_rate: d.vat_rate, discount: d.discount, currency: curOf(d), lang: docLang(d), terms: d.terms, show_fx: d.show_fx, fx_show: d.fx_show });
   if ($('#toInv')) $('#toInv').onclick = async () => {
     track('convert_to_invoice');
     if (d.status !== 'Geaccepteerd') { d.status = 'Geaccepteerd'; form.status.value = 'Geaccepteerd'; await save(true); }
@@ -1647,6 +1667,8 @@ function sheetHTML(d, s0, opt = {}) {
   const TT = () => { if (isQ) return L('title_offerte'); if (d.type !== 'creditnota') return L('title_factuur');
     const t = s._lang === 'en' ? 'Credit note' : (modern ? 'Creditnota' : 'Creditnota / Credit note'); return `<span>${modern ? t.toUpperCase() : t}</span>`; };
   // BETAALD-stempel: zodra de status op Betaald staat
+  const fl = fxLine(d);
+  const fxHTML = fl && !fl.missing ? `<div class="fxl"><b>≈ ${money(fl.amount, fl.cur)}</b><span>${s._lang === 'en' ? 'rate' : 'koers'} 1 ${fl.from} = ${fmtRate(fl.rate)} ${fl.cur}</span></div>` : '';
   const stamp = d.type === 'factuur' && d.status === 'Betaald'
     ? `<div class="stamp"><div>${s._lang === 'en' ? 'PAID' : 'BETAALD'}</div>${d.paid_on ? `<small>${FD(d.paid_on)}</small>` : ''}</div>` : '';
   const lay = getLayout(s);
@@ -1672,7 +1694,7 @@ function sheetHTML(d, s0, opt = {}) {
       ? `<div class="infobox"><h4>${ICON.info}${L('info_q')}</h4>${opt.edit ? `<div style="white-space:pre-line;font-size:8.5pt">${S('quote_terms')}</div>` : `<ul>${termLines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>`}</div>`
       : `<div class="infobox"><h4>${ICON.wallet}${L('info_i')}</h4>${payLines.length ? payLines.map(x => `<p>${x}</p>`).join('') : `<p><b>${L('iban')}</b> ${esc(s.iban)}</p>${s.bic ? `<p><b>${L('bic')}</b> ${esc(s.bic)}</p>` : ''}<p><b>${L('tnv')}</b> ${esc(s.company_name)}</p>`}<p><b>${L('ref')}</b> ${esc(d.number)}</p></div>`,
     totals: () => `<div class="tots"><div><b>${L('sub')}</b><span>${M(t.subtotal)}</span></div>${t.discount ? `<div><span>${L('discount')}</span><span>−${M(t.discount)}</span></div>` : ''}<div><span>${L('vat')} (${vatTxt}%)</span><span>${M(t.vat_amount)}</span></div>
-      <div class="g">${L(isQ ? 'total_q' : 'total_i')}<span>${M(t.total)}</span></div>${stamp}</div>`,
+      <div class="g">${L(isQ ? 'total_q' : 'total_i')}<span>${M(t.total)}</span></div>${fxHTML}${stamp}</div>`,
     closing: () => `<div class="closing">${isQ ? S('quote_closing') : (opt.edit ? S('invoice_closing', s.invoice_closing) : esc(termLines.join('\n')))}${isQ ? '' : `\n\n${L('greet')}`}</div>`,
     sign: () => `<div class="sign">
       <div class="who"><b>${esc(isQ ? s.quote_signer : s.invoice_signer)}</b>${esc(isQ ? s.quote_signer_role : s.invoice_signer_role)}</div>
@@ -1690,7 +1712,7 @@ function sheetHTML(d, s0, opt = {}) {
       <tbody>${items.map(it => `<tr><td>${esc(it.desc)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</td><td class="c">${esc(String(it.qty))}</td><td class="r">${M(it.rate)}</td><td class="r">${M((Number(it.qty) || 0) * (Number(it.rate) || 0))}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#999">—</td></tr>'}</tbody></table>`,
     totals: () => `<div class="m-tots"><div><span>${L('sub')}</span><span>${M(t.subtotal)}</span></div>${t.discount ? `<div><span>${L('discount')}</span><span>−${M(t.discount)}</span></div>` : ''}
       <div><span>${L('vat')} (${String(d.vat_rate)}%)</span><span>${M(t.vat_amount)}</span></div>
-      <div class="g"><span>${L(isQ ? 'total_q' : 'total_i')}</span><span>${M(t.total)}</span></div>${stamp}</div>`,
+      <div class="g"><span>${L(isQ ? 'total_q' : 'total_i')}</span><span>${M(t.total)}</span></div>${fxHTML}${stamp}</div>`,
     info: () => isQ
       ? `<div class="m-box"><div class="ml">${L('info_q')}</div><div class="m-sub" style="white-space:pre-line">${opt.edit ? S('quote_terms') : termLines.map(esc).join('<br>')}</div></div>`
       : `<div class="m-box"><div class="ml">${L('info_i')}</div><div class="m-pay">${payLines.length ? payLines.join('<br>') : [s.iban ? `<b>${L('iban')}</b> ${esc(s.iban)}` : '', s.bic ? `<b>${L('bic')}</b> ${esc(s.bic)}` : '', `<b>${L('tnv')}</b> ${esc(s.company_name)}`].filter(Boolean).join('<br>')}</div></div>`,

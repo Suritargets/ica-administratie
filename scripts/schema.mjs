@@ -37,6 +37,8 @@ export const SCHEMA = [
   `ALTER TABLE documents DROP CONSTRAINT IF EXISTS documents_type_check`,
   `ALTER TABLE documents ADD CONSTRAINT documents_type_check CHECK (type IN ('offerte','factuur','creditnota'))`,
   `CREATE INDEX IF NOT EXISTS documents_type_date ON documents (type, date DESC)`,
+  `ALTER TABLE documents ADD COLUMN IF NOT EXISTS show_fx BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE documents ADD COLUMN IF NOT EXISTS fx_show TEXT`,
   `CREATE TABLE IF NOT EXISTS payments (
      id SERIAL PRIMARY KEY,
      invoice_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,

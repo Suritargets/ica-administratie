@@ -70,6 +70,7 @@ header img{height:52px;display:block}
 .empty{color:var(--mut)}
 footer{padding:34px 0 40px;color:var(--mut);font-size:13.5px;text-align:center}
 footer a{color:var(--mut)}
+@media(max-width:560px){.hero{padding:44px 0 64px}.card{padding:20px;margin-top:-34px}header img{height:42px}.tags{margin-top:24px}}
 ${BOOKING_CSS}</style></head><body>
 <header><div class="wrap"><img src="/logo-light.png" alt="${esc(brand.short)} — ${esc(i.company_name)}">
 </div></header>

@@ -285,6 +285,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--yellow);outline-
 .act{width:100%;max-width:440px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
 .act-head{background:var(--navy);padding:22px 26px;border-bottom:5px solid var(--yellow)}.act-head img{height:44px;display:block}.act-head div{color:#8b96ad;font-size:10px;letter-spacing:3px;font-weight:700;margin-top:6px;text-transform:uppercase}
 .act-body{padding:24px 26px}.act-foot{background:#f4f6fa;padding:10px 26px;font-size:12px;color:var(--muted);text-align:center}.act-foot a{color:var(--navy)}
+.mdrawer{position:fixed;inset:0;z-index:60;background:rgba(14,28,54,.5);display:flex;justify-content:flex-end}.mdrawer[hidden]{display:none}
+.mdp{width:min(86vw,340px);height:100%;background:var(--navy);color:#fff;overflow-y:auto;display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom))}
+.mdh{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 10px}.mdh button{background:none;border:0;color:#fff;font-size:28px;line-height:1;cursor:pointer}
+.mdg{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#8b96ad;padding:14px 10px 4px}
+.mdi{display:flex;align-items:center;gap:12px;width:100%;padding:12px 10px;border:0;background:none;color:#dbe3f2;font-size:15px;text-align:left;border-radius:10px;cursor:pointer;font-family:inherit}
+.mdi svg{width:20px;height:20px;flex:none}.mdi.on{background:#1a2e5c;color:#fff;font-weight:600}.mdi:active{background:#1a2e5c}
+.mdf{margin-top:auto;padding:14px 10px 4px;font-size:12.5px;color:#8b96ad;display:flex;flex-direction:column;gap:4px}.mdf b{color:#fff}.mdf a{color:#9cc0f0}
 @media (max-width:760px){
   /* app-shell: logobalk boven, tabbalk onder */
   .app{display:block;min-height:100vh}
@@ -296,6 +303,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--yellow);outline-
   .nav{flex:1 1 0;flex-direction:column;gap:3px;padding:6px 0;font-size:10.5px;white-space:nowrap;overflow:hidden;border-radius:10px;text-align:center;justify-content:center;width:auto;min-width:0;color:#aab5cc}
   .nav svg{width:22px;height:22px}
   .nav.d-nav{display:none}
+  .side .nav:not(.mb){display:none}.side #mMore{display:flex!important}
   .cal .d{min-height:62px;padding:3px}.cal .chip{display:none}.cal .av{font-size:9px}.cal .cnt{display:inline-block;position:absolute;bottom:3px;right:4px;background:var(--navy);color:#fff;border-radius:99px;font-size:10px;padding:0 6px}
   .grp{display:none}.grp-body,.grp.closed+.grp-body{display:contents!important}.nav.sub{padding:6px 0;font-size:10.5px}
   .help{grid-template-columns:1fr}.help-toc{position:static;max-height:none;flex-direction:row;flex-wrap:wrap}.help-toc input{width:100%}.help-toc a{background:#f1f4f9;font-size:12px}
@@ -376,17 +384,18 @@ body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catal
 </head>
 <body>
 <div class="app">
+  <div id="mDrawer" class="mdrawer" hidden><div class="mdp" role="dialog" aria-label="Menu"><div class="mdh"><b>Menu</b><button type="button" id="mdClose" aria-label="Sluiten">×</button></div><div id="mdList"></div><div class="mdf"><b id="mdName"></b><span id="mdRole"></span><a href="#" id="mdOut">Uitloggen</a></div></div></div>
   <div class="mtop"><img id="mLogo" src="/logo-light.png" alt="Logo"><span class="row" style="gap:10px;flex-wrap:nowrap"><span class="v" id="mVer"></span><button id="mHelp" aria-label="Handleiding" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #8b96ad;background:none;color:#fff;font-weight:700;cursor:pointer">?</button></span></div>
   <aside class="side">
     <div class="brand" style="flex-direction:column;align-items:flex-start;gap:6px">
       <img id="sideLogo" src="/logo-light.png" alt="Logo" style="width:170px;max-height:60px;object-fit:contain;object-position:left">
       <div class="brand-sub" style="color:#8b96ad">ADMINISTRATIE</div>
     </div>
-    <button class="nav" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="lbl" data-s="Home">Dashboard</span></button>
+    <button class="nav mb" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="lbl" data-s="Home">Dashboard</span></button>
     <button class="grp" id="salesGrp" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M12 7v10M14.5 9.5c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.4.7-2.4 1.8s1 1.5 2.4 1.9c1.4.4 2.4.8 2.4 1.9s-1 1.8-2.4 1.8c-1.1 0-2-.4-2.5-1.2"/></svg><span>Sales</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="grp-body" id="salesBody">
-    <button class="nav sub" data-view="offerte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl" data-s="Offerte">Offertes</span></button>
-    <button class="nav sub" data-view="factuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="lbl" data-s="Factuur">Facturen</span></button>
+    <button class="nav sub mb" data-view="offerte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl" data-s="Offerte">Offertes</span></button>
+    <button class="nav sub mb" data-view="factuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="lbl" data-s="Factuur">Facturen</span></button>
     <button class="nav sub d-nav" data-view="creditnota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 12h6"/></svg><span class="lbl" data-s="Credit">Creditnota's</span></button>
     <button class="nav sub d-nav" data-view="betalingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span class="lbl" data-s="Betaling">Betalingen</span></button>
     <button class="nav sub" data-view="catalogus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Items">Catalogus</span></button>
@@ -398,7 +407,7 @@ body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catal
     <button class="nav sub d-nav" data-view="uitgcat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span class="lbl" data-s="Categ.">Categorieën</span></button>
     <button class="nav sub d-nav" data-view="uitgterug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8"/><path d="M18.5 2v4h-4M5.5 22v-4h4"/></svg><span class="lbl" data-s="Terugk.">Terugkerende uitgaven</span></button>
     </div>
-    <button class="nav" data-view="klanten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span class="lbl" data-s="Klanten">Klanten</span></button>
+    <button class="nav mb" data-view="klanten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span class="lbl" data-s="Klanten">Klanten</span></button>
     <button class="nav d-nav" data-view="afspraken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="lbl" data-s="Afspraken">Afspraken</span></button>
     <button class="nav" data-view="valuta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span class="lbl" data-s="Valuta">Valuta</span></button>
     <button class="nav" data-view="bedrijf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg><span class="lbl" data-s="Bedrijf">Bedrijf</span></button>
@@ -407,6 +416,7 @@ body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catal
     <button class="nav d-nav" data-view="activiteit" id="navAct" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="lbl" data-s="Log">Activiteit</span></button>
     <button class="nav d-nav" data-view="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg><span class="lbl" data-s="Account">Mijn account</span></button>
     <button class="nav d-nav" data-view="handleiding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg><span class="lbl" data-s="Help">Handleiding</span></button>
+    <button class="nav mb" id="mMore" type="button" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="lbl" data-s="Menu">Menu</span></button>
     <div class="side-foot"><b id="whoName"></b><br><span id="whoRole" style="opacity:.8"></span> · <a href="#" id="sideOut" style="color:#9cc0f0">Uitloggen</a><br>Versie <span id="ver"></span><div class="credit" style="margin-top:8px;padding-top:8px;border-top:1px solid #23355a">Design by <a href="https://suritargets.com" target="_blank" rel="noopener">suritargets.com</a></div></div>
   </aside>
   <main class="main" id="main"></main>
@@ -2188,6 +2198,27 @@ function applyRole() {
 }
 setInterval(() => fetch('/api/ping').then(r => { if (r.status === 401) location.href = '/login'; }).catch(() => {}), 120000);
 $('#mHelp').onclick = () => go('handleiding');
+// mobiel menu: alle onderdelen in een uitschuifpaneel
+(() => {
+  const dr = $('#mDrawer'), list = $('#mdList');
+  const close = () => { dr.hidden = true; };
+  const open = () => {
+    let html = '';
+    for (const el of document.querySelectorAll('.side > .nav, .side > .grp, .side .grp-body > .nav')) {
+      if (el.id === 'mMore' || el.style.display === 'none') continue;
+      if (el.classList.contains('grp')) { html += `<div class="mdg">${esc(el.querySelector('span').textContent)}</div>`; continue; }
+      const on = el.classList.contains('on');
+      html += `<button type="button" class="mdi${on ? ' on' : ''}" data-v="${el.dataset.view}">${el.querySelector('svg').outerHTML}<span>${esc(el.querySelector('.lbl').textContent)}</span></button>`;
+    }
+    list.innerHTML = html;
+    list.querySelectorAll('.mdi').forEach(b => b.onclick = () => { close(); go(b.dataset.v); });
+    $('#mdName').textContent = ME.name; $('#mdRole').textContent = (ROLE_LABEL[ME.role] || '') + ' · v' + APP_VERSION;
+    dr.hidden = false;
+  };
+  $('#mMore').onclick = open; $('#mdClose').onclick = close;
+  dr.onclick = e => { if (e.target === dr) close(); };
+  $('#mdOut').onclick = doLogout;
+})();
 $('#whoName').textContent = ME.name; $('#whoRole').textContent = ROLE_LABEL[ME.role] || ROLE_LABEL['alleen-lezen'];
 $('#sideOut').onclick = doLogout;
 applyRole();

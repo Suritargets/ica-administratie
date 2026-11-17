@@ -39,9 +39,11 @@ export async function GET(req: Request) {
       if (!validDate(date)) return json(400, { error: 'Ongeldige datum' });
       const taken = new Set((await takenOn(date, date)).get(date) ?? []);
       const blk = blockedTimes(a, await eventsBetween(date, date), date);
-      if (blk === 'all') return json(200, { enabled: true, times: [] });
+      if (blk === 'all') return json(200, { enabled: true, times: [], taken: allTimes(a) });
       blk.forEach(t => taken.add(t));
-      return json(200, { enabled: true, times: freeTimes(a, date, taken, now) });
+      const times = freeTimes(a, date, taken, now);
+      // bezette tijden (afspraken of blokkades) tonen we anoniem als 'bezet'
+      return json(200, { enabled: true, times, taken: allTimes(a).filter(t => taken.has(t) && !times.includes(t)) });
     }
     if (month && /^\d{4}-\d{2}$/.test(month)) {
       const first = new Date(month + '-01T00:00:00Z');
@@ -50,16 +52,18 @@ export async function GET(req: Request) {
       const taken = await takenOn(isoDay(first), isoDay(last));
       const evs = await eventsBetween(isoDay(first), isoDay(last));
       const days: Record<string, number> = {};
+      const busy: Record<string, number> = {};
       for (let d = new Date(first); d <= last; d = new Date(d.getTime() + 86400000)) {
         const key = isoDay(d);
         if (dayBookable(a, key, now)) {
           const blk = blockedTimes(a, evs, key);
-          if (blk === 'all') continue;
+          if (blk === 'all') { days[key] = 0; busy[key] = allTimes(a).length; continue; }
           const tk = new Set(taken.get(key) ?? []); blk.forEach(t => tk.add(t));
           days[key] = freeTimes(a, key, tk, now).length;
+          busy[key] = allTimes(a).filter(t => tk.has(t)).length;
         }
       }
-      return json(200, { enabled: true, days, slots: allTimes(a).length });
+      return json(200, { enabled: true, days, busy, slots: allTimes(a).length });
     }
     return json(400, { error: 'Geef date of month op' });
   } catch (e) {

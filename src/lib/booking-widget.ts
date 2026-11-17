@@ -24,6 +24,10 @@ export const BOOKING_CSS = `
 .times{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
 .times button{padding:9px 16px;border-radius:10px;border:1.5px solid #cbd5e8;background:#fff;font:inherit;font-weight:600;cursor:pointer;color:var(--navy)}
 .times button:hover{border-color:var(--accent)}.times button.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.cal-g button.some{position:relative}.cal-g button.some:after{content:'';position:absolute;right:6px;top:6px;width:7px;height:7px;border-radius:50%;background:#e8a317}
+.cal-g span.x.full{background:#fdecea;color:#b42318;font-size:11px;line-height:1.05;text-align:center;border-radius:10px}
+.times button.bz,.times button.bz:hover{background:#f1f3f8;color:#9aa4ba;border-color:#e3e8f2;text-decoration:line-through;cursor:not-allowed}
+.bznote{font-size:13px;color:var(--mut);margin:-6px 0 16px}
 .hint{color:var(--mut);font-size:14.5px}
 .bf{display:grid;gap:12px}
 .bf label{font-size:13px;font-weight:600;display:block}
@@ -45,7 +49,7 @@ var MN=['januari','februari','maart','april','mei','juni','juli','augustus','sep
 var DN=['ma','di','wo','do','vr','za','zo'];
 var pb=new Date(Date.now()-3*3600*1000);
 var todayStr=pb.getUTCFullYear()+'-'+p2(pb.getUTCMonth()+1)+'-'+p2(pb.getUTCDate());
-var st={y:pb.getUTCFullYear(),m:pb.getUTCMonth(),days:{},date:null,time:null,times:null};
+var st={y:pb.getUTCFullYear(),m:pb.getUTCMonth(),days:{},busy:{},date:null,time:null,times:null,taken:[]};
 var calEl=root.querySelector('#cal'),pickEl=root.querySelector('#pick');
 function p2(n){return n<10?'0'+n:''+n}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -55,7 +59,7 @@ function loadMonth(){
   calEl.innerHTML='<div class="hint">Kalender laden…</div>';
   getJ('/api/book?month='+st.y+'-'+p2(st.m+1)).then(function(j){
     if(j.enabled===false){root.style.display='none';return}
-    st.days=j.days||{};drawCal();
+    st.days=j.days||{};st.busy=j.busy||{};drawCal();
   }).catch(function(){calEl.innerHTML='<div class="err">Kalender kon niet geladen worden. Ververs de pagina.</div>'});
 }
 function drawCal(){
@@ -64,11 +68,12 @@ function drawCal(){
   DN.forEach(function(d){h+='<div class="dn">'+d+'</div>'});
   for(var i=0;i<lead;i++)h+='<span class="e"></span>';
   for(var d=1;d<=dim;d++){
-    var key=st.y+'-'+p2(st.m+1)+'-'+p2(d),free=st.days[key];
-    if(free>0)h+='<button type="button" data-d="'+key+'" class="'+(key===st.date?'sel ':'')+(key===todayStr?'today':'')+'">'+d+'</button>';
+    var key=st.y+'-'+p2(st.m+1)+'-'+p2(d),free=st.days[key],bz=st.busy[key]||0;
+    if(free>0)h+='<button type="button" data-d="'+key+'" class="'+(key===st.date?'sel ':'')+(bz>0?'some ':'')+(key===todayStr?'today':'')+'"'+(bz>0?' title="Er zijn al afspraken geboekt"':'')+'>'+d+'</button>';
+    else if(free===0&&bz>0)h+='<span class="x full" title="Volgeboekt">'+d+'<br>vol</span>';
     else h+='<span class="x">'+d+'</span>';
   }
-  h+='</div><div class="legend">Dagen in kleur zijn beschikbaar. Tijden zijn Surinaamse tijd.</div>';
+  h+='</div><div class="legend">Dagen in kleur zijn beschikbaar. Een oranje stipje betekent dat er al afspraken zijn geboekt, "vol" betekent volgeboekt. Tijden zijn Surinaamse tijd.</div>';
   calEl.innerHTML=h;
   calEl.querySelector('#pm').onclick=function(){st.m--;if(st.m<0){st.m=11;st.y--}loadMonth()};
   calEl.querySelector('#nm').onclick=function(){st.m++;if(st.m>11){st.m=0;st.y++}loadMonth()};
@@ -77,12 +82,14 @@ function drawCal(){
 function pickDay(d){
   st.date=d;st.time=null;st.times=null;drawCal();
   pickEl.innerHTML='<h3>'+esc(nice(d))+'</h3><div class="hint">Tijden laden…</div>';
-  getJ('/api/book?date='+d).then(function(j){st.times=j.times||[];drawPick()}).catch(function(){pickEl.innerHTML='<div class="err">Tijden konden niet geladen worden.</div>'});
+  getJ('/api/book?date='+d).then(function(j){st.times=j.times||[];st.taken=j.taken||[];drawPick()}).catch(function(){pickEl.innerHTML='<div class="err">Tijden konden niet geladen worden.</div>'});
 }
 function drawPick(){
   var h='<h3>'+esc(nice(st.date))+'</h3>';
-  if(!st.times.length){pickEl.innerHTML=h+'<div class="hint">Er zijn geen tijden meer vrij op deze dag. Kies een andere dag.</div>';return}
-  h+='<div class="times">'+st.times.map(function(t){return'<button type="button" data-t="'+t+'" class="'+(t===st.time?'sel':'')+'">'+t+'</button>'}).join('')+'</div>';
+  if(!st.times.length){var tb=st.taken.length?'<div class="times">'+st.taken.map(function(t){return'<button type="button" class="bz" disabled>'+t+'</button>'}).join('')+'</div>':'';pickEl.innerHTML=h+'<div class="hint">Deze dag is volgeboekt. Kies een andere dag.</div>'+tb;return}
+  var all=st.times.concat(st.taken).sort();
+  if(st.taken.length)h+='<div class="bznote">Er zijn al afspraken geboekt op deze dag; de doorgestreepte tijden zijn bezet.</div>';
+  h+='<div class="times">'+all.map(function(t){return st.taken.indexOf(t)>=0?'<button type="button" class="bz" disabled title="Bezet">'+t+'</button>':'<button type="button" data-t="'+t+'" class="'+(t===st.time?'sel':'')+'">'+t+'</button>'}).join('')+'</div>';
   if(st.time){
     h+='<form class="bf" id="bf" novalidate><div class="two"><label>Naam *<input name="name" required maxlength="100" autocomplete="name"></label><label>E-mailadres *<input name="email" type="email" required maxlength="150" autocomplete="email"></label></div>'
      +'<div class="two"><label>Telefoon<input name="phone" type="tel" maxlength="30" autocomplete="tel"></label><label>Onderwerp<input name="subject" maxlength="120" placeholder="Bijv. administratie, visum, bedrijf starten"></label></div>'

@@ -2175,20 +2175,37 @@ async function renderAgenda(box) {
       <div class="tg-body"><div class="tg-times" style="height:${H}px">${hours.map(t => `<div style="top:${t - lo}px">${minHm(t)}</div>`).join('')}</div>${body}</div></div></div>`;
   };
 
-  // ---------- paneel voor de gekozen dag
-  let panel = '';
-  if (G.sel) {
-    const d = G.sel, info = dayInfo(d), aps = apOn(d), evs = evOn(d);
+  // ---------- overzicht van één dag (in een venster, of onder de dagweergave)
+  const panelHTML = d => {
+    const info = dayInfo(d), aps = apOn(d), evs = evOn(d);
     const cls = a => ({ aangevraagd: 'Open', bevestigd: 'Betaald', geannuleerd: 'Vervallen' })[a] || '';
-    panel = `<div class="card" style="margin-top:14px"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0;text-transform:capitalize">${longDay(d)}</h2><div class="row">${G.view !== 'dag' ? '<button class="btn sm" id="agDay">Dagweergave</button>' : ''}${canEdit ? '<button class="btn pri sm" id="agNew">+ Evenement</button>' : ''}</div></div>
-      <h3 style="margin:8px 0 6px;font-size:14px">Beschikbaarheid</h3>
-      ${!A.enabled ? '<div class="muted">Online afspraken staan uit (Instellingen).</div>' : !info.working ? '<div class="muted">Geen online afspraken op deze dag (buiten de ingestelde werkdagen).</div>' : info.allDay ? '<div class="muted">De hele dag is geblokkeerd voor online afspraken.</div>'
-        : `<div class="slots">${info.slots.map(x => `<button type="button" class="slot ${x.state}" data-slot="${x.hm}" ${x.state === 'vrij' && canEdit ? '' : 'disabled'} title="${x.state === 'bezet' ? esc(x.ap.name) : x.state === 'geblokkeerd' ? esc(x.ev.title) : x.state === 'vrij' && canEdit ? 'Klik om te blokkeren' : ''}">${x.hm}${x.state === 'bezet' ? ' · ' + esc(x.ap.name) : ''}</button>`).join('')}</div><div class="muted" style="font-size:12px;margin-top:6px">Groen = vrij op de website · geel = bezet door een afspraak · rood = geblokkeerd door een evenement · grijs = voorbij. Klik op een vrij tijdstip om het te blokkeren.</div>`}
+    return `<div class="row" style="justify-content:space-between;margin-bottom:10px;flex-wrap:wrap"><h2 style="margin:0;text-transform:capitalize">${longDay(d)}</h2><div class="row">${G.view !== 'dag' ? '<button class="btn sm" data-pa="day">Dagweergave</button>' : ''}${canEdit ? '<button class="btn pri sm" data-pa="new">+ Nieuw evenement</button>' : ''}</div></div>
+      <h3 style="margin:8px 0 6px;font-size:14px">Evenementen (${evs.length})</h3>
+      ${evs.length ? `<div class="tablewrap"><table><tbody>${evs.map(e => `<tr><td style="white-space:nowrap"><b>${e.all_day ? 'Hele dag' : esc(e.start_time) + '–' + esc(e.end_time)}</b>${e.end_date ? `<br><span class="muted">t/m ${fdate(e.end_date)}</span>` : ''}</td><td><b>${esc(e.title)}</b><br><span class="muted">${esc(e.notes || '')}</span></td><td>${e.blocks ? '<span class="tag Vervallen">blokkeert website</span>' : '<span class="tag Concept">geen blokkade</span>'}</td><td class="num">${canEdit ? `<button class="btn sm" data-eedit="${e.id}">Bewerken</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted">Geen evenementen.</div>'}
       <h3 style="margin:16px 0 6px;font-size:14px">Afspraken (${aps.length})</h3>
       ${aps.length ? `<div class="tablewrap"><table><tbody>${aps.map(a => `<tr><td style="white-space:nowrap"><b>${esc(a.time)}</b></td><td><b>${esc(a.name)}</b><br><span class="muted">${esc(a.subject || '')}</span></td><td><a href="mailto:${esc(a.email)}">${esc(a.email)}</a>${a.phone ? '<br>' + esc(a.phone) : ''}</td><td><span class="tag ${cls(a.status)}">${esc(a.status)}</span></td><td class="num" style="white-space:nowrap">${canEdit ? [a.status !== 'bevestigd' ? `<button class="btn sm pri" data-ast="bevestigd" data-id="${a.id}">Bevestigen</button>` : '', a.status !== 'geannuleerd' ? `<button class="btn sm" data-ast="geannuleerd" data-id="${a.id}">Annuleren</button>` : ''].join(' ') : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted">Geen afspraken.</div>'}
-      <h3 style="margin:16px 0 6px;font-size:14px">Evenementen (${evs.length})</h3>
-      ${evs.length ? `<div class="tablewrap"><table><tbody>${evs.map(e => `<tr><td style="white-space:nowrap"><b>${e.all_day ? 'Hele dag' : esc(e.start_time) + '–' + esc(e.end_time)}</b>${e.end_date ? `<br><span class="muted">t/m ${fdate(e.end_date)}</span>` : ''}</td><td><b>${esc(e.title)}</b><br><span class="muted">${esc(e.notes || '')}</span></td><td>${e.blocks ? '<span class="tag Vervallen">blokkeert website</span>' : '<span class="tag Concept">geen blokkade</span>'}</td><td class="num">${canEdit ? `<button class="btn sm" data-eedit="${e.id}">Bewerken</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted">Geen evenementen.</div>'}</div>`;
-  }
+      <h3 style="margin:16px 0 6px;font-size:14px">Beschikbaarheid op de website</h3>
+      ${!A.enabled ? '<div class="muted">Online afspraken staan uit (Instellingen).</div>' : !info.working ? '<div class="muted">Geen online afspraken op deze dag (buiten de ingestelde werkdagen).</div>' : info.allDay ? '<div class="muted">De hele dag is geblokkeerd voor online afspraken.</div>'
+        : `<div class="slots">${info.slots.map(x => `<button type="button" class="slot ${x.state}" data-slot="${x.hm}" ${x.state === 'vrij' && canEdit ? '' : 'disabled'} title="${x.state === 'bezet' ? esc(x.ap.name) : x.state === 'geblokkeerd' ? esc(x.ev.title) : x.state === 'vrij' && canEdit ? 'Klik om te blokkeren' : ''}">${x.hm}${x.state === 'bezet' ? ' · ' + esc(x.ap.name) : ''}</button>`).join('')}</div><div class="muted" style="font-size:12px;margin-top:6px">Groen = vrij · geel = bezet door een afspraak · rood = geblokkeerd door een evenement · grijs = voorbij. Klik op een vrij tijdstip om het te blokkeren.</div>`}`;
+  };
+  // knoppen in een dagoverzicht; 'after' ververst de agenda (en opent het overzicht opnieuw)
+  const bindPanel = (root, d, after, close) => {
+    root.querySelectorAll('[data-pa="new"]').forEach(b => b.onclick = () => eventModal(null, { date: d }, after));
+    root.querySelectorAll('[data-pa="day"]').forEach(b => b.onclick = () => { if (close) close(); G.view = 'dag'; G.date = d; again(); });
+    root.querySelectorAll('[data-eedit]').forEach(b => b.onclick = () => eventModal(data.events.find(e => String(e.id) === b.dataset.eedit), {}, after));
+    root.querySelectorAll('[data-slot].vrij').forEach(b => b.onclick = () => { const t = hmMin(b.dataset.slot); eventModal(null, { date: d, title: 'Geblokkeerd', start: minHm(t), end: minHm(t + A.slot) }, after); });
+    root.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { await apptSet(b.dataset.id, b.dataset.ast); after(); } catch (e) { toast(e.message, 1); } });
+  };
+  const openDay = d => {
+    const bg = document.createElement('div'); bg.className = 'modal-bg';
+    bg.innerHTML = `<div class="modal" style="max-width:760px"><div style="display:flex;justify-content:flex-end;margin:-6px 0 6px"><button type="button" class="btn sm" data-close>Sluiten</button></div>${panelHTML(d)}</div>`;
+    document.body.appendChild(bg);
+    const close = () => bg.remove();
+    bg.onclick = ev => { if (ev.target === bg) close(); };
+    bg.querySelector('[data-close]').onclick = close;
+    bindPanel(bg, d, async () => { close(); await again(); openDay(d); }, close);
+  };
+  const panel = G.view === 'dag' && G.sel ? `<div class="card" style="margin-top:14px">${panelHTML(G.sel)}</div>` : '';
 
   const seg = (v, l) => `<button class="btn sm ${G.view === v ? 'pri' : ''}" data-v="${v}">${l}</button>`;
   box.innerHTML = `<div class="card"><div class="row ag-head" style="justify-content:space-between;margin-bottom:10px">
@@ -2203,18 +2220,14 @@ async function renderAgenda(box) {
     G.sel = G.view === 'dag' ? G.date : null; again();
   };
   $('#agPrev', box).onclick = () => move(-1); $('#agNext', box).onclick = () => move(1);
-  $('#agToday', box).onclick = () => { G.date = todayIso; G.sel = todayIso; again(); };
+  $('#agToday', box).onclick = () => { G.date = todayIso; G.sel = G.view === 'dag' ? todayIso : null; again(); };
   box.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { G.view = b.dataset.v; if (G.view === 'dag') G.sel = G.date; again(); });
-  box.querySelectorAll('[data-day]').forEach(c => c.onclick = () => { G.sel = c.dataset.day; if (G.view !== 'maand') G.date = G.view === 'dag' ? G.sel : G.date; again(); });
-  if ($('#agAdd', box)) $('#agAdd', box).onclick = () => eventModal(null, { date: G.sel || (G.view === 'maand' ? todayIso : G.date) }, again);
-  if ($('#agNew', box)) $('#agNew', box).onclick = () => eventModal(null, { date: G.sel }, again);
-  if ($('#agDay', box)) $('#agDay', box).onclick = () => { G.view = 'dag'; G.date = G.sel; again(); };
-  box.querySelectorAll('[data-eedit]').forEach(b => b.onclick = () => eventModal(data.events.find(e => String(e.id) === b.dataset.eedit), {}, again));
+  box.querySelectorAll('[data-day]').forEach(c => c.onclick = () => { const d = c.dataset.day; if (G.view === 'dag') { G.sel = d; G.date = d; again(); } else openDay(d); });
+  if ($('#agAdd', box)) $('#agAdd', box).onclick = () => eventModal(null, { date: G.view === 'dag' ? G.date : G.view === 'maand' ? todayIso : (cols.includes(todayIso) ? todayIso : cols[0]) }, again);
+  if (G.view === 'dag') bindPanel(box, G.date, again, null);
   box.querySelectorAll('[data-evid]').forEach(b => b.onclick = ev => { ev.stopPropagation(); if (canEdit) eventModal(data.events.find(e => String(e.id) === b.dataset.evid), {}, again); });
-  box.querySelectorAll('[data-apd]').forEach(b => b.onclick = ev => { ev.stopPropagation(); G.sel = b.dataset.apd; again(); });
+  box.querySelectorAll('[data-apd]').forEach(b => b.onclick = ev => { ev.stopPropagation(); if (G.view === 'dag') again(); else openDay(b.dataset.apd); });
   box.querySelectorAll('[data-sd]').forEach(b => b.onclick = ev => { ev.stopPropagation(); const t = hmMin(b.dataset.sh); eventModal(null, { date: b.dataset.sd, title: 'Geblokkeerd', start: minHm(t), end: minHm(t + A.slot) }, again); });
-  box.querySelectorAll('[data-slot].vrij').forEach(b => b.onclick = () => { const t = hmMin(b.dataset.slot); eventModal(null, { date: G.sel, title: 'Geblokkeerd', start: minHm(t), end: minHm(t + A.slot) }, again); });
-  box.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { await apptSet(b.dataset.id, b.dataset.ast); again(); } catch (e) { toast(e.message, 1); } });
 }
 
 function eventModal(e, pre, done) {

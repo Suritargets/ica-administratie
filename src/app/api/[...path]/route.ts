@@ -512,7 +512,7 @@ async function handleInner(req: Request, ctx: { params: Promise<{ path: string[]
       const FROM = 'FROM expenses e LEFT JOIN expense_categories c ON c.id = e.category_id';
       if (id === 'scan' && m === 'POST') {
         if (!need('exp.write')) return FORBIDDEN();
-        if (!ocrConfigured()) return fail(400, 'Scannen is nog niet ingesteld (ANTHROPIC_API_KEY ontbreekt op Vercel). Je kunt de uitgave wel handmatig invullen.');
+        if (!ocrConfigured()) return fail(400, 'Scannen is nog niet ingesteld (OPENROUTER_API_KEY of ANTHROPIC_API_KEY ontbreekt op Vercel). Je kunt de uitgave wel handmatig invullen.');
         const b = await body(req);
         const data = String(b.data || ''), type = String(b.type || '');
         if (!RECEIPT_TYPES.includes(type)) return fail(400, 'Alleen afbeeldingen (JPG, PNG, WEBP, GIF) en PDF worden ondersteund.');

@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   let me;
   try { me = await currentUser(req); }
   catch (e) { console.error(e); return new Response('Serverconfiguratie onvolledig (DATABASE_URL / SESSION_SECRET).', { status: 500 }); }
-  if (!me) return new Response(null, { status: 302, headers: { Location: '/toegang', 'Cache-Control': 'no-store' } });
+  if (!me) return new Response(null, { status: 302, headers: { Location: '/login', 'Cache-Control': 'no-store' } });
 
   const C: Record<string, string> = brand.colors || {};
   const D: Record<string, string> = brand.defaults || {};

@@ -453,7 +453,7 @@ async function api(path, opts = {}) {
   try { r = await fetch('/api/' + path, { ...opts, headers: { 'Content-Type': 'application/json' }, body: opts.body ? JSON.stringify(opts.body) : undefined }); }
   catch (e) { throw new Error('Geen verbinding met de server. Controleer je internet en probeer opnieuw.'); }
   const j = await r.json().catch(() => ({}));
-  if (r.status === 401) { location.href = '/login'; throw new Error('Sessie verlopen — opnieuw inloggen…'); }
+  if (r.status === 401) { location.href = '/toegang'; throw new Error('Sessie verlopen — opnieuw inloggen…'); }
   if (!r.ok) throw new Error(j.error || 'Fout bij opslaan');
   return j;
 }
@@ -1145,7 +1145,7 @@ function renderAccount() {
   $('#pwForm').onsubmit = async e => { e.preventDefault(); try { await api('me/password', { method: 'POST', body: Object.fromEntries(new FormData(e.target)) }); e.target.reset(); toast('Wachtwoord gewijzigd'); } catch (er) { toast(er.message, 1); } };
   $('#logout').onclick = doLogout;
 }
-async function doLogout(e) { if (e && e.preventDefault) e.preventDefault(); await fetch('/api/logout', { method: 'POST' }).catch(() => {}); location.href = '/login'; }
+async function doLogout(e) { if (e && e.preventDefault) e.preventDefault(); await fetch('/api/logout', { method: 'POST' }).catch(() => {}); location.href = '/toegang'; }
 async function renderUsers() {
   const el = $('#usersCard'); if (!el) return;
   el.innerHTML = '<h2>Gebruikers &amp; rollen</h2><div class="muted">Laden…</div>';
@@ -1708,7 +1708,7 @@ function applyRole() {
   b.toggle('ro-clients', !can('clients.write')); b.toggle('ro-catalog', !can('catalog.write'));
   b.toggle('ro-rates', !can('rates.write')); b.toggle('ro-settings', !can('settings.write'));
 }
-setInterval(() => fetch('/api/ping').then(r => { if (r.status === 401) location.href = '/login'; }).catch(() => {}), 120000);
+setInterval(() => fetch('/api/ping').then(r => { if (r.status === 401) location.href = '/toegang'; }).catch(() => {}), 120000);
 $('#mHelp').onclick = () => go('handleiding');
 $('#whoName').textContent = ME.name; $('#whoRole').textContent = ROLE_LABEL[ME.role] || ROLE_LABEL['alleen-lezen'];
 $('#sideOut').onclick = doLogout;

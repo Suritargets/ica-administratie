@@ -75,7 +75,7 @@ footer{padding:34px 0 40px;color:var(--mut);font-size:13.5px;text-align:center}
 footer a{color:var(--mut)}
 ${BOOKING_CSS}</style></head><body>
 <header><div class="wrap"><img src="/logo-light.png" alt="${esc(brand.short)} — ${esc(i.company_name)}">
-<a class="btn ghost" href="${loggedIn ? '/app' : '/login'}">${loggedIn ? 'Naar de administratie' : 'Inloggen'}</a></div></header>
+${loggedIn ? '<a class="btn ghost" href="/app">Naar de administratie</a>' : ''}</div></header>
 <section class="hero"><div class="wrap">
 <h1>${esc(i.company_name)}</h1>
 <p>${esc(i.tagline)}</p>

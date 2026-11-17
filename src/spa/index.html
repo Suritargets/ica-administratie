@@ -56,6 +56,24 @@ a{color:inherit}
 .chip{font-size:11px;border-radius:5px;padding:1px 5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip.a1{background:#fff4d6;color:#8a6100}.chip.a2{background:#dff5e6;color:#1b7a43}.chip.ev{background:#e4ebfa;color:#1f3d7a}.chip.evb{background:#fde4e4;color:#a12b2b}.chip.more{color:var(--mut);background:none}
 .cal .cnt{display:none}
+
+.tg-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.tg.wide{min-width:760px}
+.tg-head,.tg-body{display:grid;grid-template-columns:46px repeat(var(--cols),minmax(0,1fr))}
+.tg-head{background:#f7f8fb;border-bottom:1px solid var(--line)}
+.tg-hd{padding:6px 4px;text-align:center;font-size:12.5px;border-left:1px solid var(--line);cursor:pointer;min-width:0}
+.tg-hd:hover{background:#eef2fb}.tg-hd.sel{outline:2px solid var(--yellow);outline-offset:-2px}
+.tg-hd.today b{background:var(--navy);color:#fff;border-radius:99px;padding:0 8px}.tg-hd .av{display:block;margin-top:2px}.tg-hd .chip{margin-top:3px;cursor:pointer}
+.tg-times{position:relative}.tg-times div{position:absolute;right:5px;font-size:10.5px;color:var(--mut);transform:translateY(-7px)}
+.tg-col{position:relative;border-left:1px solid var(--line);background-color:#fcfcfe;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 59px,#eceff5 59px,#eceff5 60px)}
+.tg-col.off{background-color:#f4f5f9}
+.tg-s{position:absolute;left:0;right:0}.tg-s.vrij{background:rgba(222,246,232,.75);cursor:pointer}.tg-s.vrij:hover{background:#c9eed7}
+.tg-s.geblokkeerd{background:rgba(253,228,228,.7)}.tg-s.verleden{background:rgba(236,239,245,.8)}
+.tg-i{position:absolute;border-radius:6px;padding:2px 5px;font-size:11.5px;line-height:1.25;overflow:hidden;cursor:pointer;border-left:3px solid;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tg-i.a1{background:#fff4d6;color:#8a6100;border-color:#e0b400}.tg-i.a2{background:#dff5e6;color:#1b7a43;border-color:#2fa862}
+.tg-i.ev{background:#e4ebfa;color:#1f3d7a;border-color:#4a73d6}.tg-i.evb{background:#fde4e4;color:#a12b2b;border-color:#d64a4a}
+.tg-now{position:absolute;left:0;right:0;border-top:2px solid #e5484d;z-index:3;pointer-events:none}
+.ag-head{flex-wrap:wrap;gap:8px}
 .slots{display:flex;flex-wrap:wrap;gap:6px}
 .slot{padding:5px 11px;border-radius:8px;font-size:13px;border:1px solid;font-family:inherit}
 .slot.vrij{background:#eaf8ef;border-color:#bfe6cc;color:#1b7a43;cursor:pointer}.slot.vrij:hover{background:#d9f2e2}
@@ -2068,14 +2086,26 @@ async function apptSet(id, status) {
 }
 
 async function renderAgenda(box) {
-  const G = S.ag || (S.ag = { month: ptNow().toISOString().slice(0, 7), sel: null });
+  const G = S.ag || (S.ag = {});
+  const nowPt = ptNow(), todayIso = nowPt.toISOString().slice(0, 10), nowMin = nowPt.getUTCHours() * 60 + nowPt.getUTCMinutes();
+  if (!G.date) G.date = (G.month ? G.month + '-01' : todayIso);
+  G.view = G.view || 'maand'; if (G.sel === undefined) G.sel = null;
+  const addD = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const monday = iso => addD(iso, -((new Date(iso + 'T00:00:00Z').getUTCDay() + 6) % 7));
+  const DN = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+  const cols = G.view === 'week' ? [0, 1, 2, 3, 4, 5, 6].map(n => addD(monday(G.date), n)) : G.view === 'dag' ? [G.date] : [];
+  if (G.view === 'dag') G.sel = G.date;
+  const months = G.view === 'maand' ? [G.date.slice(0, 7)] : [...new Set(cols.map(d => d.slice(0, 7)))];
+
   box.innerHTML = '<div class="card muted">Laden…</div>';
-  let data;
-  try { data = await api('agenda?month=' + G.month); } catch (e) { box.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
+  let results;
+  try { results = await Promise.all(months.map(mo => api('agenda?month=' + mo))); } catch (e) { box.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
+  const seen = new Set(), data = { events: [], appointments: results.flatMap(r => r.appointments) };
+  results.forEach(r => r.events.forEach(e => { if (!seen.has(e.id)) { seen.add(e.id); data.events.push(e); } }));
+
   const canEdit = can('clients.write');
   const st = S.settings || {};
   const A = { enabled: st.appt_enabled !== '0', days: String(st.appt_days ?? '1,2,3,4,5').split(',').map(Number), start: hmMin(st.appt_start) ?? 480, end: hmMin(st.appt_end) ?? 960, slot: Math.max(10, Number(st.appt_slot) || 30), ahead: Number(st.appt_ahead) || 60 };
-  const nowPt = ptNow(), todayIso = nowPt.toISOString().slice(0, 10), nowMin = nowPt.getUTCHours() * 60 + nowPt.getUTCMinutes();
   const lastIso = new Date(nowPt.getTime() + A.ahead * 86400000).toISOString().slice(0, 10);
   const live = data.appointments.filter(a => a.status !== 'geannuleerd');
   const evOn = d => data.events.filter(e => d >= e.date && d <= (e.end_date || e.date));
@@ -2095,29 +2125,62 @@ async function renderAgenda(box) {
     return { working, allDay, slots, free: open ? slots.filter(x => x.state === 'vrij').length : null, total: slots.length };
   };
 
-  const [y, mo] = G.month.split('-').map(Number);
-  const first = new Date(Date.UTC(y, mo - 1, 1)), dim = new Date(Date.UTC(y, mo, 0)).getUTCDate(), lead = (first.getUTCDay() + 6) % 7;
-  const title = first.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const shift = n => { const d = new Date(Date.UTC(y, mo - 1 + n, 1)); G.month = d.toISOString().slice(0, 7); G.sel = null; renderAgenda(box); };
+  const again = () => renderAgenda(box);
+  const [y, mo] = G.date.split('-').map(Number);
+  const first = new Date(Date.UTC(y, mo - 1, 1));
+  const isoWeek = iso => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); return Math.ceil(((d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7); };
+  const shortD = iso => new Date(iso + 'T00:00:00Z').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const title = G.view === 'maand' ? first.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    : G.view === 'week' ? `Week ${isoWeek(cols[0])} · ${shortD(cols[0])} – ${shortD(cols[6])} ${cols[6].slice(0, 4)}` : longDay(G.date);
 
-  const cells = [];
-  for (let i = 0; i < lead; i++) cells.push('<div class="d out"></div>');
-  for (let day = 1; day <= dim; day++) {
-    const d = `${G.month}-${String(day).padStart(2, '0')}`, info = dayInfo(d), aps = apOn(d).filter(a => a.status !== 'geannuleerd'), evs = evOn(d);
-    const chips = [
-      ...aps.map(a => `<div class="chip ${a.status === 'bevestigd' ? 'a2' : 'a1'}">${esc(a.time)} ${esc(a.name)}</div>`),
-      ...evs.map(e => `<div class="chip ${e.blocks ? 'evb' : 'ev'}">${e.all_day ? 'Hele dag' : esc(e.start_time)} ${esc(e.title)}</div>`),
-    ];
-    const av = info.allDay ? '<div class="av full">gesloten</div>' : info.free == null ? '' : info.total ? `<div class="av ${info.free ? '' : 'full'}">${info.free ? info.free + ' vrij' : 'vol'}</div>` : '';
-    cells.push(`<div class="d${d === todayIso ? ' today' : ''}${G.sel === d ? ' sel' : ''}${info.working ? '' : ' off'}" data-day="${d}"><div class="n"><span>${day}</span>${av}</div>${chips.slice(0, 3).join('')}${chips.length > 3 ? `<div class="chip more">+${chips.length - 3} meer</div>` : ''}${chips.length ? `<span class="cnt">${chips.length}</span>` : ''}</div>`);
-  }
-  while (cells.length % 7) cells.push('<div class="d out"></div>');
+  // ---------- maandweergave
+  const monthHTML = () => {
+    const dim = new Date(Date.UTC(y, mo, 0)).getUTCDate(), lead = (first.getUTCDay() + 6) % 7, cells = [];
+    for (let i = 0; i < lead; i++) cells.push('<div class="d out"></div>');
+    for (let day = 1; day <= dim; day++) {
+      const d = `${G.date.slice(0, 7)}-${String(day).padStart(2, '0')}`, info = dayInfo(d), aps = apOn(d).filter(a => a.status !== 'geannuleerd'), evs = evOn(d);
+      const chips = [
+        ...aps.map(a => `<div class="chip ${a.status === 'bevestigd' ? 'a2' : 'a1'}">${esc(a.time)} ${esc(a.name)}</div>`),
+        ...evs.map(e => `<div class="chip ${e.blocks ? 'evb' : 'ev'}">${e.all_day ? 'Hele dag' : esc(e.start_time)} ${esc(e.title)}</div>`),
+      ];
+      const av = info.allDay ? '<div class="av full">gesloten</div>' : info.free == null ? '' : info.total ? `<div class="av ${info.free ? '' : 'full'}">${info.free ? info.free + ' vrij' : 'vol'}</div>` : '';
+      cells.push(`<div class="d${d === todayIso ? ' today' : ''}${G.sel === d ? ' sel' : ''}${info.working ? '' : ' off'}" data-day="${d}"><div class="n"><span>${day}</span>${av}</div>${chips.slice(0, 3).join('')}${chips.length > 3 ? `<div class="chip more">+${chips.length - 3} meer</div>` : ''}${chips.length ? `<span class="cnt">${chips.length}</span>` : ''}</div>`);
+    }
+    while (cells.length % 7) cells.push('<div class="d out"></div>');
+    return `<div class="cal">${DN.map(x => `<div class="h">${x}</div>`).join('')}${cells.join('')}</div>`;
+  };
 
+  // ---------- week- en dagweergave (tijdraster, 1 minuut = 1px)
+  const gridHTML = () => {
+    let lo = Math.min(A.start, 8 * 60), hi = Math.max(A.end, 17 * 60);
+    for (const d of cols) for (const e of evOn(d)) if (!e.all_day) { lo = Math.min(lo, hmMin(e.start_time) ?? lo); hi = Math.max(hi, hmMin(e.end_time) ?? hi); }
+    lo = Math.max(0, Math.floor(lo / 60) * 60); hi = Math.min(1440, Math.ceil(hi / 60) * 60);
+    const H = hi - lo, hours = []; for (let t = lo; t < hi; t += 60) hours.push(t);
+    const heads = cols.map((d, i) => { const info = dayInfo(d), ad = evOn(d).filter(e => e.all_day);
+      return `<div class="tg-hd${d === todayIso ? ' today' : ''}${G.sel === d ? ' sel' : ''}" data-day="${d}"><b>${DN[(new Date(d + 'T00:00:00Z').getUTCDay() + 6) % 7]} ${Number(d.slice(8))}</b>${info.free != null && info.total ? `<span class="av ${info.free ? '' : 'full'}">${info.allDay ? 'gesloten' : info.free ? info.free + ' vrij' : 'vol'}</span>` : ''}${ad.map(e => `<div class="chip ${e.blocks ? 'evb' : 'ev'}" data-evid="${e.id}">${esc(e.title)}</div>`).join('')}</div>`; }).join('');
+    const body = cols.map(d => {
+      const info = dayInfo(d);
+      const slots = info.slots.map(x => `<div class="tg-s ${x.state}" ${x.state === 'vrij' && canEdit ? `data-sd="${d}" data-sh="${x.hm}" title="Klik om te blokkeren"` : ''} style="top:${x.t - lo}px;height:${A.slot}px"></div>`).join('');
+      const items = [
+        ...apOn(d).filter(a => a.status !== 'geannuleerd').map(a => ({ s: hmMin(a.time), e: hmMin(a.time) + A.slot, cls: a.status === 'bevestigd' ? 'a2' : 'a1', attr: `data-apd="${d}"`, html: `<b>${esc(a.time)}</b> ${esc(a.name)}` })),
+        ...evOn(d).filter(e => !e.all_day).map(e => ({ s: hmMin(e.start_time), e: hmMin(e.end_time), cls: e.blocks ? 'evb' : 'ev', attr: `data-evid="${e.id}"`, html: `<b>${esc(e.start_time)}</b> ${esc(e.title)}` })),
+      ].filter(x => x.s != null && x.e != null).sort((a, b) => a.s - b.s);
+      const laneEnd = []; items.forEach(it => { let l = laneEnd.findIndex(en => en <= it.s); if (l < 0) { l = laneEnd.length; laneEnd.push(0); } laneEnd[l] = it.e; it.l = l; });
+      const n = Math.max(1, laneEnd.length);
+      const blocks = items.map(it => `<div class="tg-i ${it.cls}" ${it.attr} style="top:${it.s - lo}px;height:${Math.max(18, it.e - it.s - 2)}px;left:${it.l * 100 / n}%;width:calc(${100 / n}% - 3px)">${it.html}</div>`).join('');
+      const nowLine = d === todayIso && nowMin >= lo && nowMin < hi ? `<div class="tg-now" style="top:${nowMin - lo}px"></div>` : '';
+      return `<div class="tg-col${info.working ? '' : ' off'}" style="height:${H}px">${slots}${blocks}${nowLine}</div>`;
+    }).join('');
+    return `<div class="tg-wrap"><div class="tg${cols.length > 1 ? ' wide' : ''}" style="--cols:${cols.length}"><div class="tg-head"><div></div>${heads}</div>
+      <div class="tg-body"><div class="tg-times" style="height:${H}px">${hours.map(t => `<div style="top:${t - lo}px">${minHm(t)}</div>`).join('')}</div>${body}</div></div></div>`;
+  };
+
+  // ---------- paneel voor de gekozen dag
   let panel = '';
   if (G.sel) {
     const d = G.sel, info = dayInfo(d), aps = apOn(d), evs = evOn(d);
     const cls = a => ({ aangevraagd: 'Open', bevestigd: 'Betaald', geannuleerd: 'Vervallen' })[a] || '';
-    panel = `<div class="card" style="margin-top:14px"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0;text-transform:capitalize">${longDay(d)}</h2>${canEdit ? '<button class="btn pri sm" id="agNew">+ Evenement</button>' : ''}</div>
+    panel = `<div class="card" style="margin-top:14px"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0;text-transform:capitalize">${longDay(d)}</h2><div class="row">${G.view !== 'dag' ? '<button class="btn sm" id="agDay">Dagweergave</button>' : ''}${canEdit ? '<button class="btn pri sm" id="agNew">+ Evenement</button>' : ''}</div></div>
       <h3 style="margin:8px 0 6px;font-size:14px">Beschikbaarheid</h3>
       ${!A.enabled ? '<div class="muted">Online afspraken staan uit (Instellingen).</div>' : !info.working ? '<div class="muted">Geen online afspraken op deze dag (buiten de ingestelde werkdagen).</div>' : info.allDay ? '<div class="muted">De hele dag is geblokkeerd voor online afspraken.</div>'
         : `<div class="slots">${info.slots.map(x => `<button type="button" class="slot ${x.state}" data-slot="${x.hm}" ${x.state === 'vrij' && canEdit ? '' : 'disabled'} title="${x.state === 'bezet' ? esc(x.ap.name) : x.state === 'geblokkeerd' ? esc(x.ev.title) : x.state === 'vrij' && canEdit ? 'Klik om te blokkeren' : ''}">${x.hm}${x.state === 'bezet' ? ' · ' + esc(x.ap.name) : ''}</button>`).join('')}</div><div class="muted" style="font-size:12px;margin-top:6px">Groen = vrij op de website · geel = bezet door een afspraak · rood = geblokkeerd door een evenement · grijs = voorbij. Klik op een vrij tijdstip om het te blokkeren.</div>`}
@@ -2127,17 +2190,29 @@ async function renderAgenda(box) {
       ${evs.length ? `<div class="tablewrap"><table><tbody>${evs.map(e => `<tr><td style="white-space:nowrap"><b>${e.all_day ? 'Hele dag' : esc(e.start_time) + '–' + esc(e.end_time)}</b>${e.end_date ? `<br><span class="muted">t/m ${fdate(e.end_date)}</span>` : ''}</td><td><b>${esc(e.title)}</b><br><span class="muted">${esc(e.notes || '')}</span></td><td>${e.blocks ? '<span class="tag Vervallen">blokkeert website</span>' : '<span class="tag Concept">geen blokkade</span>'}</td><td class="num">${canEdit ? `<button class="btn sm" data-eedit="${e.id}">Bewerken</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="muted">Geen evenementen.</div>'}</div>`;
   }
 
-  box.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="row"><button class="btn sm" id="agPrev">←</button><h2 style="margin:0;min-width:150px;text-align:center;text-transform:capitalize">${title}</h2><button class="btn sm" id="agNext">→</button></div><div class="row"><button class="btn sm" id="agToday">Vandaag</button>${canEdit ? '<button class="btn pri sm" id="agAdd">+ Evenement</button>' : ''}</div></div>
-    <div class="cal">${['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(x => `<div class="h">${x}</div>`).join('')}${cells.join('')}</div>
+  const seg = (v, l) => `<button class="btn sm ${G.view === v ? 'pri' : ''}" data-v="${v}">${l}</button>`;
+  box.innerHTML = `<div class="card"><div class="row ag-head" style="justify-content:space-between;margin-bottom:10px">
+      <div class="row"><button class="btn sm" id="agPrev">←</button><h2 style="margin:0;min-width:150px;text-align:center;text-transform:capitalize">${title}</h2><button class="btn sm" id="agNext">→</button></div>
+      <div class="row">${seg('maand', 'Maand')}${seg('week', 'Week')}${seg('dag', 'Dag')}<button class="btn sm" id="agToday">Vandaag</button>${canEdit ? '<button class="btn pri sm" id="agAdd">+ Evenement</button>' : ''}</div></div>
+    ${G.view === 'maand' ? monthHTML() : gridHTML()}
     <div class="muted" style="font-size:12px;margin-top:8px"><span class="chip a1" style="display:inline-block">aangevraagd</span> <span class="chip a2" style="display:inline-block">bevestigd</span> <span class="chip evb" style="display:inline-block">evenement dat de website blokkeert</span> <span class="chip ev" style="display:inline-block">evenement</span> · “N vrij” = vrije tijdstippen voor bezoekers van de website</div></div>${panel}`;
 
-  const again = () => renderAgenda(box);
-  $('#agPrev', box).onclick = () => shift(-1); $('#agNext', box).onclick = () => shift(1);
-  $('#agToday', box).onclick = () => { G.month = todayIso.slice(0, 7); G.sel = todayIso; again(); };
-  box.querySelectorAll('[data-day]').forEach(c => c.onclick = () => { G.sel = c.dataset.day; again(); });
-  if ($('#agAdd', box)) $('#agAdd', box).onclick = () => eventModal(null, { date: G.sel || todayIso }, again);
+  const move = n => {
+    if (G.view === 'maand') G.date = new Date(Date.UTC(y, mo - 1 + n, 1)).toISOString().slice(0, 10);
+    else G.date = addD(G.date, G.view === 'week' ? 7 * n : n);
+    G.sel = G.view === 'dag' ? G.date : null; again();
+  };
+  $('#agPrev', box).onclick = () => move(-1); $('#agNext', box).onclick = () => move(1);
+  $('#agToday', box).onclick = () => { G.date = todayIso; G.sel = todayIso; again(); };
+  box.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { G.view = b.dataset.v; if (G.view === 'dag') G.sel = G.date; again(); });
+  box.querySelectorAll('[data-day]').forEach(c => c.onclick = () => { G.sel = c.dataset.day; if (G.view !== 'maand') G.date = G.view === 'dag' ? G.sel : G.date; again(); });
+  if ($('#agAdd', box)) $('#agAdd', box).onclick = () => eventModal(null, { date: G.sel || (G.view === 'maand' ? todayIso : G.date) }, again);
   if ($('#agNew', box)) $('#agNew', box).onclick = () => eventModal(null, { date: G.sel }, again);
+  if ($('#agDay', box)) $('#agDay', box).onclick = () => { G.view = 'dag'; G.date = G.sel; again(); };
   box.querySelectorAll('[data-eedit]').forEach(b => b.onclick = () => eventModal(data.events.find(e => String(e.id) === b.dataset.eedit), {}, again));
+  box.querySelectorAll('[data-evid]').forEach(b => b.onclick = ev => { ev.stopPropagation(); if (canEdit) eventModal(data.events.find(e => String(e.id) === b.dataset.evid), {}, again); });
+  box.querySelectorAll('[data-apd]').forEach(b => b.onclick = ev => { ev.stopPropagation(); G.sel = b.dataset.apd; again(); });
+  box.querySelectorAll('[data-sd]').forEach(b => b.onclick = ev => { ev.stopPropagation(); const t = hmMin(b.dataset.sh); eventModal(null, { date: b.dataset.sd, title: 'Geblokkeerd', start: minHm(t), end: minHm(t + A.slot) }, again); });
   box.querySelectorAll('[data-slot].vrij').forEach(b => b.onclick = () => { const t = hmMin(b.dataset.slot); eventModal(null, { date: G.sel, title: 'Geblokkeerd', start: minHm(t), end: minHm(t + A.slot) }, again); });
   box.querySelectorAll('[data-ast]').forEach(b => b.onclick = async () => { try { await apptSet(b.dataset.id, b.dataset.ast); again(); } catch (e) { toast(e.message, 1); } });
 }

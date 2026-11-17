@@ -403,6 +403,7 @@ const plain = s => String(s ?? '').replace(/<br\s*\/?>/gi, ' ').replace(/<\/?(b|
 const _fmt = {};
 // bedragen in de valuta/notatie van de instellingen (EUR → € 1.234,56 · SRD + en-US → SRD 1,234.56)
 const CURRENCIES = ['SRD', 'USD', 'EUR', 'ANG', 'GBP'];
+const FX_CURS = ['SRD', 'EUR', 'USD']; // valuta's waarin op het document kan worden omgerekend
 const defCur = () => String(((typeof S !== 'undefined' && S.settings) || {}).currency || 'EUR').toUpperCase().trim() || 'EUR';
 const curOf = d => (d && d.currency) || defCur();
 const eur = n => money(n, defCur());
@@ -1663,7 +1664,7 @@ function renderEditor(m) {
         <div class="totline muted" id="t-fx" style="display:none;font-size:12px"><span>Omgerekend</span><span></span></div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)">
           <label style="display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px"><input type="checkbox" name="show_fx" ${d.show_fx ? 'checked' : ''} style="width:16px;height:16px"> Toon omrekening op document</label>
-          <div id="fxopt" style="margin-top:8px;display:${d.show_fx ? 'block' : 'none'}"><select name="fx_show" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px">${[...new Set([...CURRENCIES, baseCur()])].map(c => `<option ${(d.fx_show || baseCur()) === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+          <div id="fxopt" style="margin-top:8px;display:${d.show_fx ? 'block' : 'none'}"><select name="fx_show" style="padding:6px 8px;border:1px solid var(--line);border-radius:8px">${(() => { const o = FX_CURS.filter(c => c !== curOf(d)), pick = o.includes(d.fx_show) ? d.fx_show : (o.includes(baseCur()) ? baseCur() : o[0]); return o.map(c => `<option ${pick === c ? 'selected' : ''}>${c}</option>`).join(''); })()}</select>
             <div class="muted" id="fxinfo" style="font-size:12px;margin-top:6px"></div></div>
         </div>
       </div>
@@ -1696,6 +1697,12 @@ function renderEditor(m) {
   const sync = () => {
     const fd = Object.fromEntries(new FormData(form));
     Object.assign(d, fd, { vat_rate: Number(fd.vat_rate) || 0, discount: Number(fd.discount) || 0, show_fx: !!(form.show_fx && form.show_fx.checked), fx_show: form.fx_show ? form.fx_show.value : null });
+    { // keuzelijst: alleen SRD / EUR / USD, zonder de valuta van het document zelf
+      const o = FX_CURS.filter(c => c !== curOf(d)), sel = form.fx_show;
+      if ([...sel.options].map(x => x.value).join() !== o.join()) sel.innerHTML = o.map(c => `<option>${c}</option>`).join('');
+      sel.value = o.includes(d.fx_show) ? d.fx_show : (o.includes(baseCur()) ? baseCur() : o[0]);
+      d.fx_show = sel.value;
+    }
     const base = baseCur(), foreign = curOf(d) !== base;
     if (foreign && !fxManual) { const r = rateFor(curOf(d), d.date); if (r != null && Number(form.fx_rate.value) !== r) form.fx_rate.value = r; }
     d.fx_rate = foreign ? (Number(form.fx_rate.value) || null) : 1; d.fx_base = base;

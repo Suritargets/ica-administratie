@@ -41,6 +41,8 @@ a{color:inherit}
 .grp-body{display:flex;flex-direction:column;gap:2px}.grp.closed+.grp-body{display:none}
 .nav.sub{padding:8px 12px 8px 26px;font-size:14px}
 .tag.Deels{background:#fff4d6;color:#8a6100}
+.stamp{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%) rotate(-18deg);border:5px solid #1f9d55;border-radius:14px;color:#1f9d55;padding:4px 30px 6px;text-align:center;opacity:.6;pointer-events:none;z-index:6;-webkit-print-color-adjust:exact;print-color-adjust:exact;mix-blend-mode:multiply}
+.stamp div{font-size:52pt;font-weight:800;letter-spacing:5px;line-height:1.15}.stamp small{display:block;font-size:13pt;font-weight:700;letter-spacing:1px;margin-top:-4px}
 .side-foot{margin-top:auto;font-size:11px;color:#8b96ad;padding:8px;line-height:1.6}
 .credit a{color:var(--accent-dark,var(--yellow));text-decoration:none;font-weight:600}.credit a:hover{text-decoration:underline}
 .mfoot{display:none}
@@ -1396,6 +1398,7 @@ function renderEditor(m) {
   drawItems(); sync();
 
   form.addEventListener('input', e => {
+    if (e.target.name === 'status' && d.type === 'factuur') { if (e.target.value === 'Betaald' && form.paid_on && !form.paid_on.value) form.paid_on.value = today(); }
     const row = e.target.closest('.item');
     if (row) { const it = d.items[row.dataset.i], k = e.target.dataset.k; it[k] = (k === 'qty' || k === 'rate') ? e.target.value : e.target.value; }
     sync();
@@ -1646,7 +1649,10 @@ function sheetHTML(d, s0, opt = {}) {
   const pushAt = lay.pushDown ? lay.rows.findIndex(r => r.includes('closing') || r.includes('sign')) : -1;
   const rows = lay.rows.map((r, ri) => `<div class="rw ${ri === pushAt && ri > 0 ? 'push' : ''} ${r.length > 1 ? 'two' : ''} ${r.includes('totals') && r.length > 1 ? (r[0] === 'totals' ? 'tl' : 'tr') : ''}">${r.map(block).join('')}</div>`).join('');
   const wm = lay.watermark ? `<img class="wm${s.logo ? ' wm-custom' : ''}" src="${s.logo || '/watermark.png'}" alt="">` : '';
-  if (modern) return `<div class="sheet modern${opt.edit ? ' editing' : ''}">
+  // BETAALD-stempel: zodra de status op Betaald staat
+  const stamp = d.type === 'factuur' && d.status === 'Betaald'
+    ? `<div class="stamp"><div>${s._lang === 'en' ? 'PAID' : 'BETAALD'}</div>${d.paid_on ? `<small>${FD(d.paid_on)}</small>` : ''}</div>` : '';
+  if (modern) return `<div class="sheet modern${opt.edit ? ' editing' : ''}">${stamp}
   <div class="m-top"></div>
   <div class="m-head"><div class="m-logo"><img src="${s.logo || '/logo.png'}" alt=""></div>
     <div class="m-ttl"><h1>${TT()}</h1><div class="m-no">${esc(d.number)}</div>${isQ && s.tagline ? `<div class="m-tag">${S('tagline')}</div>` : ''}</div></div>
@@ -1654,7 +1660,7 @@ function sheetHTML(d, s0, opt = {}) {
   <div class="sh-body">${wm}${rows}</div>
   <div class="m-foot"><div><i></i><span>${esc(s.company_name)}</span></div><span>${esc(d.number)}</span></div>
 </div>`;
-  return `<div class="sheet${opt.edit ? ' editing' : ''}">
+  return `<div class="sheet${opt.edit ? ' editing' : ''}">${stamp}
   <div class="sh-head">
     ${logoHTML(s)}
     <svg class="sh-wave" viewBox="0 0 210 20" preserveAspectRatio="none">

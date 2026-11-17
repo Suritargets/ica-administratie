@@ -1699,7 +1699,8 @@ function renderEditor(m) {
         <label class="f">Taal document<select name="lang">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${docLang(d) === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
         <label class="f">Valuta<select name="currency">${[...new Set([...CURRENCIES, curOf(d)])].map(c => `<option ${curOf(d) === c ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
         <label class="f" id="fxf" style="display:none">Koers → <span id="fxb"></span><input name="fx_rate" type="number" step="any" inputmode="decimal" value="${esc(d.fx_rate ?? '')}" title="1 documentvaluta = koers × hoofdvaluta"></label>
-        <label class="f">Status<select name="status">${STATUS[d.type].map(s => `<option ${d.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+        <label class="f">Status<select name="status">${STATUS[d.type].map(s => `<option ${(d.status === s || (s === 'Deels betaald' && isPart(d))) ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+        ${d.type === 'factuur' ? `<label class="f full" id="partf" style="display:none">Ontvangen bedrag (totaal tot nu toe, ${esc(curOf(d))})<input name="part_amount" type="number" step="0.01" min="0" inputmode="decimal" value="${d.paid_amount > 0 ? esc(d.paid_amount) : ''}" placeholder="Bijv. 500,00"><span class="muted" id="partn" style="font-size:12.5px;margin-top:4px;display:block"></span></label>` : ''}
         <label class="f">${isQ ? 'Datum' : 'Factuurdatum'}<input type="date" name="date" value="${esc(d.date)}"></label>
         <label class="f">${isQ ? 'Geldig tot' : 'Vervaldatum'}<input type="date" name="due_date" value="${esc(d.due_date)}"></label>
         ${d.type === 'factuur' ? `<label class="f">Betaald op<input type="date" name="paid_on" value="${esc(d.paid_on)}"></label><label class="f">Offertenr. (referentie)<input name="reference" value="${esc(d.reference)}" list="qlist"></label>
@@ -1787,8 +1788,16 @@ function renderEditor(m) {
     fitPreview();
   };
   drawItems(); sync();
+  const partUI = () => {
+    const f = $('#partf', form); if (!f) return;
+    const on = form.status.value === 'Deels betaald'; f.style.display = on ? '' : 'none';
+    if (on) { const t = calc(d.items, d.vat_rate, d.discount).total, got = Number(form.part_amount.value) || 0;
+      $('#partn', form).textContent = got > 0 ? `Nog open: ${money(Math.max(t - got, 0), curOf(d))} van ${money(t, curOf(d))}` : `Totaal factuur: ${money(t, curOf(d))}. Vul in hoeveel er al is ontvangen.`; }
+  };
+  partUI();
 
   form.addEventListener('input', e => {
+    if (e.target.name === 'status' || e.target.name === 'part_amount') partUI();
     if (e.target.name === 'status' && d.type === 'factuur') { if (e.target.value === 'Betaald' && form.paid_on && !form.paid_on.value) form.paid_on.value = today(); }
     const row = e.target.closest('.item');
     if (row) { const it = d.items[row.dataset.i], k = e.target.dataset.k; it[k] = (k === 'qty' || k === 'rate') ? e.target.value : e.target.value; }
@@ -1851,7 +1860,17 @@ function renderEditor(m) {
   const save = async (quiet) => {
     sync();
     if (d.type === 'factuur' && d.status === 'Betaald' && !d.paid_on) d.paid_on = today();
-    try { const sv = await api('docs', { method: 'POST', body: d }); S.doc = await api('docs/' + sv.id); S.docs = await api('docs'); if (!quiet) toast('Opgeslagen'); renderEditor(m); return S.doc; }
+    let delta = 0;
+    if (d.type === 'factuur' && d.status === 'Deels betaald') {
+      const got = Number(String(form.part_amount.value).replace(',', '.')) || 0;
+      if (!(got > 0)) { toast('Vul het ontvangen bedrag in.', 1); return; }
+      delta = Math.round((got - (d.paid_amount || 0)) * 100) / 100;
+      if (delta < -0.005) { toast('Het bedrag is lager dan al ontvangen is. Verwijder een betaling via Betalingen om te corrigeren.', 1); return; }
+      d.status = 'Open';
+    }
+    try { const sv = await api('docs', { method: 'POST', body: d });
+      if (delta > 0.005) await api('payments', { method: 'POST', body: { invoice_id: sv.id, amount: delta, date: d.paid_on || today(), method: 'Bank', note: 'Deelbetaling' } });
+      S.doc = await api('docs/' + sv.id); S.docs = await api('docs'); if (!quiet) toast('Opgeslagen'); renderEditor(m); return S.doc; }
     catch (e) { toast(e.message, 1); }
   };
   $('#save').onclick = () => save();

@@ -376,6 +376,7 @@ body[data-view=catalogus].ro-catalog .modal-bg #save,.ro-catalog #cimp,.ro-catal
     <button class="nav" data-view="bedrijf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg><span class="lbl" data-s="Bedrijf">Bedrijf</span></button>
     <button class="nav" data-view="instellingen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="lbl" data-s="Instel.">Instellingen</span></button>
     <button class="nav d-nav" data-view="gebruikers" id="navUsers" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M22 21v-1a6 6 0 0 0-4-5.6"/></svg><span class="lbl" data-s="Users">Gebruikers</span></button>
+    <button class="nav d-nav" data-view="activiteit" id="navAct" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="lbl" data-s="Log">Activiteit</span></button>
     <button class="nav d-nav" data-view="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg><span class="lbl" data-s="Account">Mijn account</span></button>
     <button class="nav d-nav" data-view="handleiding"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg><span class="lbl" data-s="Help">Handleiding</span></button>
     <div class="side-foot"><b id="whoName"></b><br><span id="whoRole" style="opacity:.8"></span> · <a href="#" id="sideOut" style="color:#9cc0f0">Uitloggen</a><br>Versie <span id="ver"></span><div class="credit" style="margin-top:8px;padding-top:8px;border-top:1px solid #23355a">Design by <a href="https://suritargets.com" target="_blank" rel="noopener">suritargets.com</a></div></div>
@@ -495,7 +496,7 @@ function render0() {
   document.querySelectorAll('.nav').forEach(b => b.classList.toggle('on', b.dataset.view === (S.doc ? S.doc.type : S.view === 'sjabloon' ? 'bedrijf' : S.view)));
   const m = $('#main');
   if (S.doc) return renderEditor(m);
-  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, creditnota: renderList, betalingen: renderPayments, terugkerend: renderRecurring, klanten: renderClients, afspraken: renderAppointments, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings, gebruikers: renderUsersView, account: renderAccountView })[S.view](m);
+  ({ dashboard: renderDashboard, offerte: renderList, factuur: renderList, creditnota: renderList, betalingen: renderPayments, terugkerend: renderRecurring, klanten: renderClients, afspraken: renderAppointments, catalogus: renderCatalog, valuta: renderFx, handleiding: renderHelp, bedrijf: renderCompany, sjabloon: renderTemplate, instellingen: renderSettings, gebruikers: renderUsersView, activiteit: renderActivity, account: renderAccountView })[S.view](m);
 }
 
 // ================= dashboard =================
@@ -1131,11 +1132,60 @@ function renderUsersView(m) {
   m.innerHTML = '<div class="top"><h1>Gebruikers</h1></div><div class="card" id="usersCard"></div>';
   renderUsers();
 }
+const ACTION_NL = {
+  login: 'Ingelogd', login_failed: 'Mislukte inlogpoging', logout: 'Uitgelogd', password_changed: 'Wachtwoord gewijzigd',
+  user_created: 'Gebruiker aangemaakt', user_updated: 'Gebruiker gewijzigd', user_deleted: 'Gebruiker verwijderd',
+  settings_saved: 'Instellingen opgeslagen', data_exported: 'Gegevens geëxporteerd',
+  client_created: 'Klant aangemaakt', client_updated: 'Klant gewijzigd', client_deleted: 'Klant verwijderd',
+  catalog_created: 'Catalogus-item aangemaakt', catalog_updated: 'Catalogus-item gewijzigd', catalog_deleted: 'Catalogus-item verwijderd',
+  rate_saved: 'Koers opgeslagen', rate_deleted: 'Koers verwijderd',
+  offerte_created: 'Offerte aangemaakt', offerte_updated: 'Offerte gewijzigd', factuur_created: 'Factuur aangemaakt', factuur_updated: 'Factuur gewijzigd',
+  creditnota_created: 'Creditnota aangemaakt', creditnota_updated: 'Creditnota gewijzigd', document_deleted: 'Document verwijderd',
+  payment_added: 'Betaling geregistreerd', payment_deleted: 'Betaling verwijderd',
+  recurring_created: 'Terugkerende factuur aangemaakt', recurring_updated: 'Terugkerende factuur gewijzigd', recurring_deleted: 'Terugkerende factuur verwijderd', recurring_run: 'Terugkerende facturen uitgevoerd',
+  appointment_bevestigd: 'Afspraak bevestigd', appointment_geannuleerd: 'Afspraak geannuleerd', appointment_aangevraagd: 'Afspraak teruggezet', appointment_deleted: 'Afspraak verwijderd',
+};
+const actNL = a => ACTION_NL[a] || a;
+async function renderActivity(m) {
+  if (!can('users.manage')) { m.innerHTML = '<div class="top"><h1>Activiteit</h1></div><div class="card">Geen toegang.</div>'; return; }
+  const F = S.act || (S.act = { user: '', action: '', from: '', to: '', q: '' });
+  const when = d => new Date(d).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'medium' });
+  const groups = [['', 'Alle acties'], ['login', 'Inloggen'], ['logout', 'Uitloggen'], ['password', 'Wachtwoord'], ['user', 'Gebruikers'], ['offerte', 'Offertes'], ['factuur', 'Facturen'], ['creditnota', "Creditnota's"], ['payment', 'Betalingen'], ['recurring', 'Terugkerend'], ['client', 'Klanten'], ['catalog', 'Catalogus'], ['rate', 'Koersen'], ['settings', 'Instellingen'], ['appointment', 'Afspraken'], ['document', 'Verwijderde documenten'], ['data', 'Export']];
+  let rows = [], more = false, users = [];
+  const qs = before => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(F)) if (v) p.set(k, v); if (before) p.set('before', before); p.set('limit', '100'); return p.toString(); };
+  const load = async before => { const r = await api('audit?' + qs(before)); rows = before ? rows.concat(r.rows) : r.rows; more = r.more; users = r.users; };
+  m.innerHTML = '<div class="top"><h1>Activiteit</h1></div><div class="card"><div class="muted">Laden…</div></div>';
+  try { await load(); } catch (e) { m.querySelector('.card').textContent = e.message; return; }
+  const draw = () => {
+    m.innerHTML = `<div class="top"><h1>Activiteit</h1><button class="btn sm" id="aCsv">Export CSV</button></div>
+    <div class="card"><p class="muted" style="margin-top:0">Wie deed wat en wanneer. Elke wijziging, inlogpoging en export wordt vastgelegd (inclusief IP-adres).</p>
+    <div class="filters"><select id="aUser"><option value="">Alle gebruikers</option>${users.map(u => `<option ${F.user === u ? 'selected' : ''}>${esc(u)}</option>`).join('')}</select>
+      <select id="aAct">${groups.map(([k, l]) => `<option value="${k}" ${F.action === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      <input id="aFrom" type="date" title="Vanaf" value="${esc(F.from)}"><input id="aTo" type="date" title="Tot en met" value="${esc(F.to)}">
+      <input id="aQ" placeholder="Zoek in details…" value="${esc(F.q)}"></div>
+    <div class="tablewrap"><table class="list"><thead><tr><th>Tijdstip</th><th>Gebruiker</th><th>Actie</th><th>Details</th><th>IP</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td style="white-space:nowrap">${when(r.at)}</td><td>${esc(r.user_name || '—')}</td><td>${r.action === 'login_failed' ? `<span class="tag Vervallen">${esc(actNL(r.action))}</span>` : esc(actNL(r.action))}</td><td>${esc(r.detail || '')}</td><td class="muted">${esc(r.ip || '')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Geen activiteit gevonden.</td></tr>'}</tbody></table></div>
+    ${more ? '<div style="text-align:center;margin-top:12px"><button class="btn" id="aMore">Meer laden</button></div>' : ''}</div>`;
+    const refresh = async () => { try { await load(); draw(); } catch (e) { toast(e.message, 1); } };
+    $('#aUser').onchange = e => { F.user = e.target.value; refresh(); };
+    $('#aAct').onchange = e => { F.action = e.target.value; refresh(); };
+    $('#aFrom').onchange = e => { F.from = e.target.value; refresh(); };
+    $('#aTo').onchange = e => { F.to = e.target.value; refresh(); };
+    let t; $('#aQ').oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(async () => { try { await load(); draw(); const i = $('#aQ'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); } catch (er) { toast(er.message, 1); } }, 400); };
+    if ($('#aMore')) $('#aMore').onclick = async () => { try { await load(rows[rows.length - 1].id); draw(); } catch (e) { toast(e.message, 1); } };
+    $('#aCsv').onclick = () => {
+      const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const csv = '\ufeff' + ['Tijdstip;Gebruiker;Actie;Details;IP'].concat(rows.map(r => [when(r.at), r.user_name, actNL(r.action), r.detail, r.ip].map(q).join(';'))).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `activiteit-${today()}.csv`; a.click();
+    };
+  };
+  draw();
+}
 function renderAccountView(m) {
   m.innerHTML = '<div class="top"><h1>Mijn account</h1></div><div class="card" id="acctCard"></div>';
   renderAccount();
 }
-if (typeof can === 'function' && can('users.manage')) { const nu = document.getElementById('navUsers'); if (nu) nu.style.display = ''; }
+if (typeof can === 'function' && can('users.manage')) { for (const id of ['navUsers', 'navAct']) { const nu = document.getElementById(id); if (nu) nu.style.display = ''; } }
 function renderAccount() {
   const el = $('#acctCard'); if (!el) return;
   el.innerHTML = `<h2>Mijn account</h2>
@@ -1152,7 +1202,7 @@ async function renderUsers() {
   const el = $('#usersCard'); if (!el) return;
   el.innerHTML = '<h2>Gebruikers &amp; rollen</h2><div class="muted">Laden…</div>';
   let list = [], log = [];
-  try { [list, log] = await Promise.all([api('users'), api('audit').catch(() => [])]); } catch (e) { el.innerHTML = '<h2>Gebruikers &amp; rollen</h2><div class="muted">' + esc(e.message) + '</div>'; return; }
+  try { [list, log] = await Promise.all([api('users'), api('audit?limit=20').then(r => r.rows).catch(() => [])]); } catch (e) { el.innerHTML = '<h2>Gebruikers &amp; rollen</h2><div class="muted">' + esc(e.message) + '</div>'; return; }
   const when = d => new Date(d).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' });
   el.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 style="margin:0">Gebruikers &amp; rollen</h2><button class="btn pri sm" id="uNew">+ Gebruiker</button></div>
     <div class="tablewrap"><table><thead><tr><th>Naam</th><th>E-mail</th><th>Rol</th><th>Status</th><th>Laatste login</th><th></th></tr></thead><tbody>${list.map(u => `<tr>

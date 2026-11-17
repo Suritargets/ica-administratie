@@ -67,6 +67,8 @@ export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS audit_log (
      id BIGSERIAL PRIMARY KEY, at TIMESTAMPTZ NOT NULL DEFAULT now(),
      user_id INTEGER, user_name TEXT, action TEXT NOT NULL, detail TEXT)`,
+  `ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS ip TEXT`,
+  `CREATE INDEX IF NOT EXISTS audit_log_at ON audit_log (at DESC)`,
   `CREATE TABLE IF NOT EXISTS appointments (
      id SERIAL PRIMARY KEY,
      date TEXT NOT NULL, time TEXT NOT NULL,

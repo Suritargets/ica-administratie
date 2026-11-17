@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { q, q1 } from '@/lib/db';
 import { allowed, currentUser, hashPassword, makeSession, passwordProblem, sameOrigin, sessionCookie, verifyPassword, type User } from '@/lib/auth';
 import { isRole, permsOf, type Perm } from '@/lib/perms';
@@ -22,8 +23,10 @@ function rowToDoc(r: any) {
   const { client_json, items_json, ...rest } = r;
   return { ...rest, client: JSON.parse(client_json || '{}'), items: JSON.parse(items_json || '[]') };
 }
+// IP-adres van het huidige verzoek, zodat elke auditregel weet vanaf waar de actie kwam
+const reqCtx = new AsyncLocalStorage<{ ip: string }>();
 const audit = (u: User | null, action: string, detail = '') =>
-  q('INSERT INTO audit_log (user_id, user_name, action, detail) VALUES ($1, $2, $3, $4)', [u?.id ?? null, u?.name ?? null, action, detail]).catch(() => {});
+  q('INSERT INTO audit_log (user_id, user_name, action, detail, ip) VALUES ($1, $2, $3, $4, $5)', [u?.id ?? null, u?.name ?? null, action, String(detail).slice(0, 500), reqCtx.getStore()?.ip ?? null]).catch(() => {});
 const isUnique = (e: any) => e?.code === '23505';
 
 // Status van een factuur volgt de betalingen: volledig betaald → Betaald, anders weer Open
@@ -117,7 +120,11 @@ async function users(req: Request, me: User, id?: string) {
 }
 
 // ---------- hoofd-router ----------
-async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
+function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
+  const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim().slice(0, 64) || '';
+  return reqCtx.run({ ip }, () => handleInner(req, ctx));
+}
+async function handleInner(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
   if (!sameOrigin(req)) return fail(403, 'Geweigerd (origin)');
   const { path } = await ctx.params;
   const [resource, id, sub] = path;
@@ -126,7 +133,10 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
 
   try {
     if (resource === 'login' && m === 'POST') return await login(req);
-    if (resource === 'logout' && m === 'POST') return json(200, { ok: true }, { 'Set-Cookie': sessionCookie('', 0) });
+    if (resource === 'logout' && m === 'POST') {
+      try { const u = await currentUser(req); if (u) await audit(u, 'logout'); } catch {}
+      return json(200, { ok: true }, { 'Set-Cookie': sessionCookie('', 0) });
+    }
 
     const me = await currentUser(req);
     if (!me) return fail(401, 'Niet ingelogd');
@@ -153,7 +163,20 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
     if (resource === 'audit' && m === 'GET') {
       if (!need('users.manage')) return FORBIDDEN();
       // acties van de superadmin zijn alleen zichtbaar voor de superadmin zelf
-      return json(200, await q('SELECT a.at, a.user_name, a.action, a.detail FROM audit_log a LEFT JOIN users u ON u.id = a.user_id WHERE $1::boolean OR COALESCE(u.is_super, false) = false ORDER BY a.id DESC LIMIT 100', [!!me.is_super]));
+      const sp = url.searchParams;
+      const lim = Math.min(Math.max(parseInt(sp.get('limit') || '50', 10) || 50, 1), 500);
+      const cond: string[] = ['($1::boolean OR COALESCE(u.is_super, false) = false)'];
+      const args: any[] = [!!me.is_super];
+      const add = (sql: string, v: any) => { args.push(v); cond.push(sql.replace('?', '$' + args.length)); };
+      if (sp.get('user')) add('a.user_name = ?', sp.get('user'));
+      if (sp.get('action')) add('a.action LIKE ?', sp.get('action') + '%');
+      if (/^\d{4}-\d{2}-\d{2}$/.test(sp.get('from') || '')) add("a.at >= (?::date)::timestamp + interval '3 hours'", sp.get('from'));
+      if (/^\d{4}-\d{2}-\d{2}$/.test(sp.get('to') || '')) add("a.at < (?::date + 1)::timestamp + interval '3 hours'", sp.get('to'));
+      if (sp.get('q')) add("(a.detail ILIKE ? OR a.action ILIKE ?)", '%' + sp.get('q') + '%');
+      if (Number(sp.get('before')) > 0) add('a.id < ?', Number(sp.get('before')));
+      const rows = await q(`SELECT a.id, a.at, a.user_name, a.action, a.detail, a.ip FROM audit_log a LEFT JOIN users u ON u.id = a.user_id WHERE ${cond.join(' AND ')} ORDER BY a.id DESC LIMIT ${lim + 1}`, args);
+      const names = await q('SELECT DISTINCT a.user_name FROM audit_log a LEFT JOIN users u ON u.id = a.user_id WHERE a.user_name IS NOT NULL AND ($1::boolean OR COALESCE(u.is_super, false) = false) ORDER BY 1', [!!me.is_super]);
+      return json(200, { rows: rows.slice(0, lim), more: rows.length > lim, users: names.map((r: any) => r.user_name) });
     }
 
     if (resource === 'settings') {
@@ -177,6 +200,7 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
         const vals = CLIENT_FIELDS.map(k => k === 'lang' ? (['nl', 'en'].includes(c.lang) ? c.lang : null) : (c[k] ?? ''));
         if (c.id) {
           const row = await q1(`UPDATE clients SET ${CLIENT_FIELDS.map((k, i) => `${k} = $${i + 1}`).join(', ')} WHERE id = $${CLIENT_FIELDS.length + 1} RETURNING *`, [...vals, Number(c.id)]);
+          await audit(me, 'client_updated', String(c.name));
           return json(200, row);
         }
         const row = await q1(`INSERT INTO clients (${CLIENT_FIELDS.join(', ')}) VALUES (${CLIENT_FIELDS.map((_, i) => '$' + (i + 1)).join(', ')}) RETURNING *`, vals);
@@ -208,13 +232,16 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
           round2(c.price), c.active === false || c.active === 0 || c.active === '0' ? 0 : 1, await cleanCur(c.currency)];
         if (c.id) {
           const row = await q1(`UPDATE catalog SET ${CATALOG_FIELDS.map((k, i) => `${k} = $${i + 1}`).join(', ')}, updated_at = now() WHERE id = $${CATALOG_FIELDS.length + 1} RETURNING *`, [...vals, Number(c.id)]);
+          await audit(me, 'catalog_updated', String(c.name));
           return json(200, row);
         }
+        await audit(me, 'catalog_created', String(c.name));
         return json(200, await q1(`INSERT INTO catalog (${CATALOG_FIELDS.join(', ')}) VALUES (${CATALOG_FIELDS.map((_, i) => '$' + (i + 1)).join(', ')}) RETURNING *`, vals));
       }
       if (m === 'DELETE' && id) {
         if (!need('catalog.delete')) return FORBIDDEN();
         await q('DELETE FROM catalog WHERE id = $1', [Number(id)]);
+        await audit(me, 'catalog_deleted', `#${id}`);
         return json(200, { ok: true });
       }
     }
@@ -232,11 +259,13 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
           const docs = await q<{ id: number; date: string }>('SELECT id, date FROM documents WHERE currency = $1 AND (fx_rate IS NULL OR fx_base IS NULL OR fx_base <> $2)', [cur, base]);
           for (const doc of docs) await q('UPDATE documents SET fx_rate = $1, fx_base = $2 WHERE id = $3', [await rateFor(cur, doc.date, base), base, doc.id]);
         }
+        await audit(me, 'rate_saved', `${cur} ${rate} (${date})`);
         return json(200, { ok: true });
       }
       if (m === 'DELETE' && id) {
         if (!need('rates.write')) return FORBIDDEN();
         await q('DELETE FROM rates WHERE id = $1', [Number(id)]);
+        await audit(me, 'rate_deleted', `#${id}`);
         return json(200, { ok: true });
       }
     }
@@ -378,13 +407,14 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
         const lang = ['nl', 'en'].includes(d.lang) ? d.lang : null;
         try {
           if (d.id) {
+            const old = await q1<any>('SELECT status, total FROM documents WHERE id = $1', [Number(d.id)]);
             const row = await q1(`UPDATE documents SET type=$1, number=$2, date=$3, due_date=$4, client_id=$5, client_json=$6, subject=$7, subject_detail=$8,
               reference=$9, items_json=$10, vat_rate=$11, subtotal=$12, vat_amount=$13, total=$14, status=$15, paid_on=$16, terms=$17, notes=$18, discount=$19,
               currency=$20, fx_rate=$21, fx_base=$22, lang=$23, updated_by_name=$24, updated_at=now() WHERE id=$25 RETURNING *`,
               [d.type, d.number, d.date || null, d.due_date || null, d.client_id || null, JSON.stringify(d.client || {}), d.subject || '', d.subject_detail || '', d.reference || '',
                 JSON.stringify(items), Number(d.vat_rate) || 0, t.subtotal, t.vat_amount, t.total, d.status || '', d.paid_on || null, d.terms || '', d.notes || '', t.discount,
                 cur, fxRate, base, lang, me.name, Number(d.id)]);
-            await audit(me, `${d.type}_updated`, d.number);
+            await audit(me, `${d.type}_updated`, [d.number, old && old.status !== (d.status || '') ? `status ${old.status || '—'} → ${d.status || '—'}` : '', old && Math.abs(old.total - t.total) > 0.004 ? `totaal ${old.total} → ${t.total}` : ''].filter(Boolean).join(' · '));
             return json(200, rowToDoc(row));
           }
           const row = await q1(`INSERT INTO documents (type, number, date, due_date, client_id, client_json, subject, subject_detail, reference, items_json, vat_rate,

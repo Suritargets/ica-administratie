@@ -45,6 +45,7 @@ a{color:inherit}
 .grp-body{display:flex;flex-direction:column;gap:2px}.grp.closed+.grp-body{display:none}
 .nav.sub{padding:8px 12px 8px 26px;font-size:14px}
 .tag.Deels{background:#fff4d6;color:#8a6100}
+.stamp.part{border-color:#d9822b;color:#c46a12}.stamp.part div{font-size:22pt;letter-spacing:2px}.stamp.part small{font-size:9.5pt}
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .cal .h{background:#f7f8fb;padding:6px;font-size:12px;text-align:center;color:var(--mut);font-weight:600}
 .cal .d{background:#fff;min-height:104px;padding:5px 6px;cursor:pointer;position:relative;overflow:hidden}
@@ -545,12 +546,13 @@ function toast(msg, err, ms = 2600) {
   const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), ms);
 }
-const STATUS = { offerte: ['Concept', 'Verzonden', 'Geaccepteerd', 'Afgewezen', 'Verlopen'], factuur: ['Concept', 'Open', 'Betaald', 'Vervallen'], creditnota: ['Concept', 'Verzonden', 'Verwerkt'] };
+const STATUS = { offerte: ['Concept', 'Verzonden', 'Geaccepteerd', 'Afgewezen', 'Verlopen'], factuur: ['Concept', 'Open', 'Deels betaald', 'Betaald', 'Vervallen'], creditnota: ['Concept', 'Verzonden', 'Verwerkt'] };
 const TYPE_NL = { offerte: 'offerte', factuur: 'factuur', creditnota: 'creditnota' };
 const effStatus = d => (d.type === 'factuur' && d.status === 'Open' && d.due_date && d.due_date < today()) ? 'Vervallen'
   : (d.type === 'factuur' && d.status === 'Open' && d.paid_amount > 0) ? 'Deels betaald'
   : (d.type === 'offerte' && ['Concept', 'Verzonden'].includes(d.status) && d.due_date && d.due_date < today()) ? 'Verlopen' : d.status;
-const tag = d => { const s = effStatus(d) || '—'; return `<span class="tag ${esc(s)}">${esc(s)}</span>`; };
+const isPart = d => d.type === 'factuur' && d.status === 'Open' && d.paid_amount > 0 && d.paid_amount < d.total - 0.005;
+const tag = d => { const s = effStatus(d) || '—'; const part = isPart(d) ? `<div class="muted" style="font-size:11.5px;margin-top:2px">${s === 'Deels betaald' ? '' : 'deels betaald · '}ontvangen ${money(d.paid_amount, curOf(d))}, open ${money(Math.max(d.total - d.paid_amount, 0), curOf(d))}</div>` : ''; return `<span class="tag ${esc(s)}">${esc(s)}</span>${part}`; };
 
 // ================= state =================
 const S = { settings: {}, clients: [], docs: [], catalog: [], rates: [], view: 'dashboard', doc: null, filter: { q: '', status: '' } };
@@ -645,7 +647,7 @@ function exportCSV(type, rows) {
   const n = v => String(v ?? '').replace('.', ',');
   const lines = rows.map(d => isQ
     ? [d.number, d.date, d.client?.name, d.client?.contact, d.subject, effStatus(d), curOf(d), n(d.subtotal), d.vat_rate, n(d.vat_amount), n(d.total), d.due_date, d.notes]
-    : [d.number, d.date, d.client?.name, d.client?.contact, d.subject, d.due_date, curOf(d), n(d.subtotal), d.vat_rate, n(d.vat_amount), n(d.total), effStatus(d), d.paid_on, n(d.status === 'Betaald' ? 0 : d.total), d.reference, d.notes]);
+    : [d.number, d.date, d.client?.name, d.client?.contact, d.subject, d.due_date, curOf(d), n(d.subtotal), d.vat_rate, n(d.vat_amount), n(d.total), effStatus(d), d.paid_on, n(d.status === 'Betaald' ? 0 : Math.max(d.total - (d.paid_amount || 0), 0)), d.reference, d.notes]);
   const csv = '﻿' + [head, ...lines].map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `${type}-register-${today()}.csv`; a.click();
 }
@@ -898,7 +900,7 @@ const HELP = () => { const N = esc(BRAND.name || 'de app'), K = '<kbd>', k = '</
   ['factuur', 'Facturen', `
     <p>Ga naar <a data-go="factuur">Facturen</a> → <b>+ Nieuwe factuur</b>, of maak hem vanuit een offerte.</p>
     <ul><li><b>Vervaldatum:</b> factuurdatum + betalingstermijn uit Instellingen.</li>
-    <li><b>Status:</b> Concept, Open of Betaald. Een open factuur na de vervaldatum toont als <i>Vervallen</i> (rood).</li>
+    <li><b>Status:</b> Concept, Open, Deels betaald (zodra een deelbetaling is vastgelegd; met ontvangen en openstaand bedrag en een oranje stempel op de factuur) of Betaald. Een open factuur na de vervaldatum toont als <i>Vervallen</i> (rood).</li>
     <li><b>✓ Markeer betaald</b> zet de status op Betaald met de datum van vandaag.</li>
     <li>Concept-facturen tellen <b>niet</b> mee in de totalen.</li></ul>
     <p><b>Lijsten:</b> zoek op nummer, klant of omschrijving en filter op status of valuta. Onderaan staat het totaal (per valuta). <b>Export CSV</b> geeft het register voor Excel.</p>`],
@@ -1990,6 +1992,8 @@ function sheetHTML(d, s0, opt = {}) {
   const fxHTML = fl && !fl.missing ? `<div class="fxl"><b>≈ ${money(fl.amount, fl.cur)}</b><span>${s._lang === 'en' ? 'rate' : 'koers'} 1 ${fl.from} = ${fmtRate(fl.rate)} ${fl.cur}</span></div>` : '';
   const stamp = d.type === 'factuur' && d.status === 'Betaald'
     ? `<div class="stamp"><div>${s._lang === 'en' ? 'PAID' : 'BETAALD'}</div>${d.paid_on ? `<small>${FD(d.paid_on)}</small>` : ''}</div>` : '';
+  const stampPart = isPart(d)
+    ? `<div class="stamp part"><div>${s._lang === 'en' ? 'PARTLY PAID' : 'DEELS BETAALD'}</div><small>${s._lang === 'en' ? 'received' : 'ontvangen'} ${M(d.paid_amount)} · ${s._lang === 'en' ? 'open' : 'openstaand'} ${M(Math.max(d.total - d.paid_amount, 0))}</small></div>` : '';
   const lay = getLayout(s);
   const R = {
     title: () => `<div class="sh-title">
@@ -2013,7 +2017,7 @@ function sheetHTML(d, s0, opt = {}) {
       ? `<div class="infobox"><h4>${ICON.info}${L('info_q')}</h4>${opt.edit ? `<div style="white-space:pre-line;font-size:8.5pt">${S('quote_terms')}</div>` : `<ul>${termLines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>`}</div>`
       : `<div class="infobox"><h4>${ICON.wallet}${L('info_i')}</h4>${payLines.length ? payLines.map(x => `<p>${x}</p>`).join('') : `<p><b>${L('iban')}</b> ${esc(s.iban)}</p>${s.bic ? `<p><b>${L('bic')}</b> ${esc(s.bic)}</p>` : ''}<p><b>${L('tnv')}</b> ${esc(s.company_name)}</p>`}<p><b>${L('ref')}</b> ${esc(d.number)}</p></div>`,
     totals: () => `<div class="tots"><div><b>${L('sub')}</b><span>${M(t.subtotal)}</span></div>${t.discount ? `<div><span>${L('discount')}</span><span>−${M(t.discount)}</span></div>` : ''}<div><span>${L('vat')} (${vatTxt}%)</span><span>${M(t.vat_amount)}</span></div>
-      <div class="g">${L(isQ ? 'total_q' : 'total_i')}<span>${M(t.total)}</span></div>${fxHTML}${stamp}</div>`,
+      <div class="g">${L(isQ ? 'total_q' : 'total_i')}<span>${M(t.total)}</span></div>${fxHTML}${stamp}${stampPart}</div>`,
     closing: () => `<div class="closing">${isQ ? S('quote_closing') : (opt.edit ? S('invoice_closing', s.invoice_closing) : esc(termLines.join('\n')))}${isQ ? '' : `\n\n${L('greet')}`}</div>`,
     sign: () => `<div class="sign">
       <div class="who"><b>${esc(isQ ? s.quote_signer : s.invoice_signer)}</b>${esc(isQ ? s.quote_signer_role : s.invoice_signer_role)}</div>
@@ -2031,7 +2035,7 @@ function sheetHTML(d, s0, opt = {}) {
       <tbody>${items.map(it => `<tr><td>${esc(it.desc)}${it.sub ? `<small>${esc(it.sub)}</small>` : ''}</td><td class="c">${esc(String(it.qty))}</td><td class="r">${M(it.rate)}</td><td class="r">${M((Number(it.qty) || 0) * (Number(it.rate) || 0))}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:#999">—</td></tr>'}</tbody></table>`,
     totals: () => `<div class="m-tots"><div><span>${L('sub')}</span><span>${M(t.subtotal)}</span></div>${t.discount ? `<div><span>${L('discount')}</span><span>−${M(t.discount)}</span></div>` : ''}
       <div><span>${L('vat')} (${String(d.vat_rate)}%)</span><span>${M(t.vat_amount)}</span></div>
-      <div class="g"><span>${L(isQ ? 'total_q' : 'total_i')}</span><span>${M(t.total)}</span></div>${fxHTML}${stamp}</div>`,
+      <div class="g"><span>${L(isQ ? 'total_q' : 'total_i')}</span><span>${M(t.total)}</span></div>${fxHTML}${stamp}${stampPart}</div>`,
     info: () => isQ
       ? `<div class="m-box"><div class="ml">${L('info_q')}</div><div class="m-sub" style="white-space:pre-line">${opt.edit ? S('quote_terms') : termLines.map(esc).join('<br>')}</div></div>`
       : `<div class="m-box"><div class="ml">${L('info_i')}</div><div class="m-pay">${payLines.length ? payLines.join('<br>') : [s.iban ? `<b>${L('iban')}</b> ${esc(s.iban)}` : '', s.bic ? `<b>${L('bic')}</b> ${esc(s.bic)}` : '', `<b>${L('tnv')}</b> ${esc(s.company_name)}`].filter(Boolean).join('<br>')}</div></div>`,
